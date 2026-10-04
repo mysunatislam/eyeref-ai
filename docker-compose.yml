@@ -1,0 +1,26 @@
+# EyeRef AI research stack. `docker compose up --build`, then open http://localhost:3000
+# Camera access needs HTTPS or localhost; for phones on the LAN put a TLS proxy in front.
+services:
+  api:
+    build: ./backend
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      EYEREF_CORS_ORIGINS: http://localhost:3000
+    volumes:
+      - eyeref-data:/data
+      - ./ml/artifacts:/models:ro
+    ports:
+      - "8000:8000"
+  web:
+    build:
+      context: ./apps/web
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+volumes:
+  eyeref-data:

@@ -1,0 +1,105 @@
+{
+ "$defs": {
+  "QualitySubscores": {
+   "properties": {
+    "sharpness": {
+     "default": 0.0,
+     "title": "Sharpness",
+     "type": "number"
+    },
+    "exposure": {
+     "default": 0.0,
+     "title": "Exposure",
+     "type": "number"
+    },
+    "saturation": {
+     "default": 0.0,
+     "title": "Saturation",
+     "type": "number"
+    },
+    "glare": {
+     "default": 0.0,
+     "title": "Glare",
+     "type": "number"
+    },
+    "pupil_visibility": {
+     "default": 0.0,
+     "title": "Pupil Visibility",
+     "type": "number"
+    },
+    "pupil_size": {
+     "default": 0.0,
+     "title": "Pupil Size",
+     "type": "number"
+    },
+    "head_pose": {
+     "default": 1.0,
+     "title": "Head Pose",
+     "type": "number"
+    },
+    "gaze": {
+     "default": 0.0,
+     "title": "Gaze",
+     "type": "number"
+    },
+    "motion": {
+     "default": 1.0,
+     "title": "Motion",
+     "type": "number"
+    },
+    "distance": {
+     "default": 1.0,
+     "title": "Distance",
+     "type": "number"
+    },
+    "illumination": {
+     "default": 0.0,
+     "title": "Illumination",
+     "type": "number"
+    }
+   },
+   "title": "QualitySubscores",
+   "type": "object"
+  }
+ },
+ "properties": {
+  "score": {
+   "title": "Score",
+   "type": "number"
+  },
+  "grade": {
+   "enum": [
+    "excellent",
+    "acceptable",
+    "poor",
+    "reject"
+   ],
+   "title": "Grade",
+   "type": "string"
+  },
+  "subscores": {
+   "$ref": "#/$defs/QualitySubscores"
+  },
+  "hard_failures": {
+   "items": {
+    "type": "string"
+   },
+   "title": "Hard Failures",
+   "type": "array"
+  },
+  "advisories": {
+   "items": {
+    "type": "string"
+   },
+   "title": "Advisories",
+   "type": "array"
+  }
+ },
+ "required": [
+  "score",
+  "grade",
+  "subscores"
+ ],
+ "title": "QualityAssessment",
+ "type": "object"
+}

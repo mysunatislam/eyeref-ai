@@ -1,0 +1,152 @@
+{
+ "description": "Camera + illumination geometry for one phone/webcam model.\n\n``flash_offset_mm`` is the vector from the camera lens centre to the\nlight-source centre, expressed in the *captured image* frame with the\ndevice in its reference orientation (x right, y up, as seen in the\nnon-mirrored image).  ``aperture_diameter_mm`` is the entrance-pupil\ndiameter (focal length / f-number); eccentricity is measured from its edge.",
+ "properties": {
+  "id": {
+   "title": "Id",
+   "type": "string"
+  },
+  "manufacturer": {
+   "default": "generic",
+   "title": "Manufacturer",
+   "type": "string"
+  },
+  "model": {
+   "default": "unknown",
+   "title": "Model",
+   "type": "string"
+  },
+  "camera": {
+   "default": "rear",
+   "enum": [
+    "rear",
+    "front",
+    "webcam",
+    "external"
+   ],
+   "title": "Camera",
+   "type": "string"
+  },
+  "focal_length_mm": {
+   "anyOf": [
+    {
+     "type": "number"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "default": null,
+   "title": "Focal Length Mm"
+  },
+  "f_number": {
+   "anyOf": [
+    {
+     "type": "number"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "default": null,
+   "title": "F Number"
+  },
+  "sensor_width_mm": {
+   "anyOf": [
+    {
+     "type": "number"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "default": null,
+   "title": "Sensor Width Mm"
+  },
+  "hfov_deg": {
+   "default": 65.0,
+   "title": "Hfov Deg",
+   "type": "number"
+  },
+  "flash_offset_mm": {
+   "anyOf": [
+    {
+     "maxItems": 2,
+     "minItems": 2,
+     "prefixItems": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "number"
+      }
+     ],
+     "type": "array"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "default": null,
+   "title": "Flash Offset Mm"
+  },
+  "aperture_diameter_mm": {
+   "default": 2.5,
+   "title": "Aperture Diameter Mm",
+   "type": "number"
+  },
+  "gradient_gain": {
+   "anyOf": [
+    {
+     "type": "number"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "default": null,
+   "title": "Gradient Gain"
+  },
+  "gradient_rel_sd": {
+   "default": 0.35,
+   "title": "Gradient Rel Sd",
+   "type": "number"
+  },
+  "photometric_gain_rgb": {
+   "default": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "maxItems": 3,
+   "minItems": 3,
+   "prefixItems": [
+    {
+     "type": "number"
+    },
+    {
+     "type": "number"
+    },
+    {
+     "type": "number"
+    }
+   ],
+   "title": "Photometric Gain Rgb",
+   "type": "array"
+  },
+  "calibration_version": {
+   "default": "uncalibrated",
+   "title": "Calibration Version",
+   "type": "string"
+  },
+  "notes": {
+   "default": "",
+   "title": "Notes",
+   "type": "string"
+  }
+ },
+ "required": [
+  "id"
+ ],
+ "title": "DeviceProfile",
+ "type": "object"
+}

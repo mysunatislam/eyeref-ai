@@ -1,0 +1,26 @@
+# secrets: never commit credentials
+.env
+.env.*
+!.env.example
+*.secrets.env
+mairaapi.json
+recommender.json
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+backend/data/
+*.db
+
+# ml
+ml/data/
+ml/runs/
+
+# web
+node_modules/
+.next/
+apps/web/public/mediapipe/
+*.tsbuildinfo

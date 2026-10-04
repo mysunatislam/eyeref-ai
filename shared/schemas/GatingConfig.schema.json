@@ -1,0 +1,66 @@
+{
+ "properties": {
+  "min_usable_frames_per_meridian": {
+   "default": 3,
+   "title": "Min Usable Frames Per Meridian",
+   "type": "integer"
+  },
+  "max_se_ci_halfwidth_quantitative": {
+   "default": 1.0,
+   "title": "Max Se Ci Halfwidth Quantitative",
+   "type": "number"
+  },
+  "min_class_confidence_screening": {
+   "default": 0.8,
+   "title": "Min Class Confidence Screening",
+   "type": "number"
+  },
+  "astigmatism_quantification_enabled": {
+   "default": false,
+   "title": "Astigmatism Quantification Enabled",
+   "type": "boolean"
+  },
+  "min_distinct_meridians_for_cyl": {
+   "default": 3,
+   "title": "Min Distinct Meridians For Cyl",
+   "type": "integer"
+  },
+  "max_cyl_ci_width": {
+   "default": 1.0,
+   "title": "Max Cyl Ci Width",
+   "type": "number"
+  },
+  "max_axis_sd_deg": {
+   "default": 15.0,
+   "title": "Max Axis Sd Deg",
+   "type": "number"
+  },
+  "reflex_asymmetry_ratio": {
+   "default": 1.35,
+   "title": "Reflex Asymmetry Ratio",
+   "type": "number"
+  },
+  "calibration_sd_uncalibrated": {
+   "default": 0.5,
+   "title": "Calibration Sd Uncalibrated",
+   "type": "number"
+  },
+  "calibration_sd_calibrated": {
+   "default": 0.2,
+   "title": "Calibration Sd Calibrated",
+   "type": "number"
+  },
+  "population_prior_mean": {
+   "default": -0.5,
+   "title": "Population Prior Mean",
+   "type": "number"
+  },
+  "population_prior_sd": {
+   "default": 2.0,
+   "title": "Population Prior Sd",
+   "type": "number"
+  }
+ },
+ "title": "GatingConfig",
+ "type": "object"
+}

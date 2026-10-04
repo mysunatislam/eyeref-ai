@@ -1,0 +1,82 @@
+# Dataset
+
+## Principles
+
+- **Pseudonymous.** Subjects are identified only by a random study code, such as `SITE1-0042`. The
+  key that links a code to an identity stays on paper or in the site's secure study log, never in
+  EyeRef.
+- **Consent first.**
+  - The API returns 403 for any subject without `consent_research`.
+  - Images need a separate `consent_image_storage`.
+  - Deleting a subject cascades to its sessions, captures, predictions and ground truth, and deletes
+    the encrypted image objects.
+- **No face images.** The app stores only eye crops, about 1.6 × the iris diameter, and only with
+  consent.
+- **Simulated data is flagged** at the session level, and exports exclude it unless
+  `include_simulated=true` is passed.
+
+## Schema (backend/eyeref/db/models.py)
+
+| Table | Key fields |
+| --- | --- |
+| `subjects` | `code` (unique, pseudonymous), `age_group`, `consent_research`, `consent_image_storage`, `consent_version`, `wears_correction`, `iris_color`, `site` |
+| `devices` | `id`, manufacturer, model, camera, full `DeviceProfile` JSON, `calibration_version` |
+| `capture_sessions` | subject, device, `protocol_version`, operator, `ambient_lux`, room condition, **`cycloplegia`**, `condition_label`, `simulated` |
+| `captures` | session, eye, frame index, timestamp, `working_distance_m`, illumination, **`meridian_deg`**, metadata JSON, features JSON, quality JSON / score / grade, `pupil_diameter_mm`, encrypted `image_key` |
+| `ground_truth` | subject, eye, **method** (autorefractor, subjective, cycloplegic, retinoscopy, trial_lens, lensmeter), sphere / cylinder / axis (**stored as minus cylinder**), SE, vertex distance, instrument, examiner, raw printout JSON |
+| `predictions` | session, eye, output level, SE + CI, sphere, cylinder, axis, M/J0/J45, confidence, class, **model name and version, calibration version, device profile, extractor version**, full report JSON |
+
+JSON Schemas of the exchange models live in `shared/schemas` and are regenerated with `make schemas`.
+
+`GET /api/dataset/export?fmt=csv` produces one row per capture. Each row holds the flattened `f_*`
+features and the `gt_<method>_{sph,cyl,axis,se}` columns for that eye. This is the training table
+format used by `ml/`.
+
+## Investigator workflow (Mode 2)
+
+1. Consent, then assign a study code. Record the code↔identity link outside EyeRef.
+2. Do the camera capture in **Dataset** or **Assess** mode with the standard protocol (4 meridians ×
+   5 frames, 1 m, dim room).
+3. Take the reference measurement within 30 minutes, in the same room conditions where possible:
+   - an autorefractor at minimum;
+   - subjective refraction where available;
+   - cycloplegic refraction for anyone under 18.
+4. In the **Dataset** page, enter the code and the reference refraction. Plus-cylinder printouts are
+   converted to minus cylinder automatically.
+5. Export pairs as CSV, or upload the record to the research server with consent.
+6. Once a week, check the agreement panel (MAE, bias, limits of agreement) and the rejection rate.
+
+## Labels
+
+- **Primary label:** spherical equivalent from the best available reference. The priority order is
+  cycloplegic, then subjective, then autorefractor, then retinoscopy.
+- **Training targets:** M, J0 and J45 from the reference, plus the **per-meridian power**
+  P(θ) = M + J0·cos 2θ + J45·sin 2θ at each capture's meridian.
+- Axis is recorded but always modelled through J0/J45.
+
+## Optically valid augmentations (ml/eyeref_ml/datasets/augment.py)
+
+These are allowed:
+
+- **Small in-plane rotations** (≤ 6°), with the meridian label rotated by the same angle.
+- **Horizontal flip.** This changes the labels as well:
+  - axis becomes 180° − axis;
+  - J45 becomes −J45;
+  - OD becomes OS, and OS becomes OD;
+  - the source direction is mirrored.
+- **Exposure and gamma** (±15%), **sensor noise** and **mild blur** (σ ≤ 0.8 px).
+- **Colour jitter** of the iris and skin. The fundus reflex hue must not be changed, because it carries
+  information.
+
+These are **not** allowed:
+
+- scaling the pupil without changing the label (crescent width is relative to the pupil);
+- vertical flips, unless the source angle is flipped too;
+- mixing frames from different subjects, or any synthetic crescent editing on real images.
+
+## Splits
+
+- Splits are always made **by subject**: no person appears in both train and test, and both eyes and
+  all frames of a person stay together. `assert_no_leakage` runs in every training script.
+- Cross-device generalisation is tested by **leave-one-device-out**.
+- A calibration subset, also subject-disjoint, is used for conformal intervals and early stopping.

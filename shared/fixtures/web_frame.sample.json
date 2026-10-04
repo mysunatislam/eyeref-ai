@@ -1,0 +1,162 @@
+{
+ "metadata": {
+  "eye": "OD",
+  "timestamp": "2026-10-04T12:51:27.670Z",
+  "working_distance_m": 1.0592248070585855,
+  "distance_source": "simulated",
+  "distance_sd_m": 0.05,
+  "device_rotation_deg": 0,
+  "head_pose": {
+   "yaw_deg": 2.6647525511525503,
+   "pitch_deg": -0.7593794465495995,
+   "roll_deg": -0.9366615579887689
+  },
+  "illumination": "flash",
+  "source_angle_image_deg": null,
+  "eccentricity_mm": null,
+  "mirrored": false,
+  "age_group": "adult_18_39",
+  "frame_index": 0,
+  "simulated": true,
+  "motion_px_per_frame": 0.751760573864229
+ },
+ "features": {
+  "pupil": {
+   "cx": 79.51322470582458,
+   "cy": 79.07036250298407,
+   "r": 26.224220658342734
+  },
+  "iris": {
+   "cx": 81.13565786905212,
+   "cy": 77.69573471342427,
+   "r": 52.847819915119274
+  },
+  "glint": [
+   78.78947368421052,
+   81
+  ],
+  "pupil_diameter_mm": 5.805790706133378,
+  "pupil_to_iris_ratio": 0.4962214278746478,
+  "pupil_ellipse_eccentricity": 0.07367165412365208,
+  "reflex_mean_luma": 0.2971554146044784,
+  "reflex_mean_rgb": [
+   149.14894636015325,
+   48.07088122605364,
+   25.977969348659006
+  ],
+  "reflex_red_chroma": 0.6634349772185658,
+  "reflex_entropy": 3.1771219962177737,
+  "crescent_present": true,
+  "crescent_area_fraction": 0.7082755432269995,
+  "crescent_width_norm": 0.666722439080051,
+  "crescent_width_mm": 3.870850940381538,
+  "crescent_side": -1,
+  "crescent_centroid_offset_norm": -0.23673118997109777,
+  "crescent_orientation_deg": 89.71240436213128,
+  "crescent_contrast": 1.884231935500405,
+  "crescent_separability": 0.9117197640801304,
+  "gradient_along_source": -0.40774258393229107,
+  "gradient_perpendicular": -0.0010064452415804747,
+  "dominant_gradient_deg": 89.84953024039919,
+  "asymmetry_index": -0.3476648619551386,
+  "profile_along_source": [
+   0.7050109108289083,
+   0.7167756160100301,
+   0.714161237080892,
+   0.7163398861885071,
+   0.7098039388656616,
+   0.7054466406504313,
+   0.6901960968971252,
+   0.6814815004666647,
+   0.6758170127868652,
+   0.8117647171020508,
+   0.9851851860682169,
+   1,
+   0.8840958674748739,
+   0.6849673390388489,
+   0.5263616740703583,
+   0.40130719542503357,
+   0.3494553466637929,
+   0.34030502041180927,
+   0.3263616661230723,
+   0.32723312576611835,
+   0.3132897714773814
+  ],
+  "profile_perpendicular": [
+   0.6618736584981283,
+   0.6644880374272665,
+   0.6553377111752828,
+   0.6675381461779276,
+   0.6610021988550822,
+   0.6705882549285889,
+   0.657516360282898,
+   0.6657952268918356,
+   0.7019608020782471,
+   0.843572994073232,
+   0.9851851860682169,
+   0.9751634001731873,
+   0.8065359592437744,
+   0.6666666865348816,
+   0.6636165777842203,
+   0.6692810654640198,
+   0.6631808479626974,
+   0.6657952268918356,
+   0.6697167952855428,
+   0.6562091708183289,
+   0.6483660340309143
+  ],
+  "profile_poly_coeffs": [
+   1.292420131493181,
+   -0.3826003257280982,
+   -0.7152531222695271,
+   -0.06353184750418082
+  ],
+  "radial_profile": [
+   0.707843154668808,
+   0.6812035348908655,
+   0.6616147837218116,
+   0.6304766917280082,
+   0.5956155741801027,
+   0.5818757293400941,
+   0.5696920223551394,
+   0.5360294284182601
+  ],
+  "glint_offset_norm": [
+   -0.02759857122327164,
+   0.07358226283083287
+  ],
+  "source_angle_image_deg": 270,
+  "extractor_version": "pr-features-1.0.0"
+ },
+ "quality": {
+  "score": 0.9541,
+  "grade": "excellent",
+  "subscores": {
+   "sharpness": 0.6655350705104871,
+   "exposure": 1,
+   "saturation": 1,
+   "glare": 1,
+   "pupil_visibility": 1,
+   "pupil_size": 1,
+   "head_pose": 1,
+   "gaze": 1,
+   "motion": 1,
+   "distance": 1,
+   "illumination": 1
+  },
+  "hard_failures": [],
+  "advisories": []
+ },
+ "estimate": {
+  "meridian_deg": 90.93666155798877,
+  "status": "quantitative",
+  "power_d": 2.959235476838468,
+  "sigma_d": 0.9830246308973511,
+  "interval_d": null,
+  "estimator": "physics-crescent-inversion",
+  "estimator_version": "1.0.0",
+  "notes": [
+   "Crescent-width inversion (Bobier-Braddick model)."
+  ]
+ }
+}

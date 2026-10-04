@@ -1,0 +1,719 @@
+{
+ "$defs": {
+  "CaptureMetadata": {
+   "properties": {
+    "eye": {
+     "enum": [
+      "OD",
+      "OS"
+     ],
+     "title": "Eye",
+     "type": "string"
+    },
+    "timestamp": {
+     "format": "date-time",
+     "title": "Timestamp",
+     "type": "string"
+    },
+    "working_distance_m": {
+     "default": 1.0,
+     "title": "Working Distance M",
+     "type": "number"
+    },
+    "distance_source": {
+     "default": "manual",
+     "enum": [
+      "iris",
+      "manual",
+      "calibrated",
+      "simulated"
+     ],
+     "title": "Distance Source",
+     "type": "string"
+    },
+    "distance_sd_m": {
+     "default": 0.08,
+     "title": "Distance Sd M",
+     "type": "number"
+    },
+    "device_rotation_deg": {
+     "default": 0.0,
+     "title": "Device Rotation Deg",
+     "type": "number"
+    },
+    "head_pose": {
+     "$ref": "#/$defs/HeadPose"
+    },
+    "illumination": {
+     "default": "flash",
+     "enum": [
+      "flash",
+      "torch",
+      "external_visible",
+      "nir850",
+      "none"
+     ],
+     "title": "Illumination",
+     "type": "string"
+    },
+    "source_angle_image_deg": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Source Angle Image Deg"
+    },
+    "eccentricity_mm": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Eccentricity Mm"
+    },
+    "mirrored": {
+     "default": false,
+     "title": "Mirrored",
+     "type": "boolean"
+    },
+    "age_group": {
+     "default": "unknown",
+     "title": "Age Group",
+     "type": "string"
+    },
+    "frame_index": {
+     "default": 0,
+     "title": "Frame Index",
+     "type": "integer"
+    },
+    "simulated": {
+     "default": false,
+     "title": "Simulated",
+     "type": "boolean"
+    },
+    "ambient_luma": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Ambient Luma"
+    },
+    "motion_px_per_frame": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Motion Px Per Frame"
+    }
+   },
+   "required": [
+    "eye"
+   ],
+   "title": "CaptureMetadata",
+   "type": "object"
+  },
+  "Circle": {
+   "properties": {
+    "cx": {
+     "title": "Cx",
+     "type": "number"
+    },
+    "cy": {
+     "title": "Cy",
+     "type": "number"
+    },
+    "r": {
+     "title": "R",
+     "type": "number"
+    }
+   },
+   "required": [
+    "cx",
+    "cy",
+    "r"
+   ],
+   "title": "Circle",
+   "type": "object"
+  },
+  "HeadPose": {
+   "properties": {
+    "yaw_deg": {
+     "default": 0.0,
+     "title": "Yaw Deg",
+     "type": "number"
+    },
+    "pitch_deg": {
+     "default": 0.0,
+     "title": "Pitch Deg",
+     "type": "number"
+    },
+    "roll_deg": {
+     "default": 0.0,
+     "title": "Roll Deg",
+     "type": "number"
+    }
+   },
+   "title": "HeadPose",
+   "type": "object"
+  },
+  "MeridionalEstimate": {
+   "properties": {
+    "meridian_deg": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Meridian Deg"
+    },
+    "status": {
+     "enum": [
+      "quantitative",
+      "interval",
+      "insufficient"
+     ],
+     "title": "Status",
+     "type": "string"
+    },
+    "power_d": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Power D"
+    },
+    "sigma_d": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Sigma D"
+    },
+    "interval_d": {
+     "anyOf": [
+      {
+       "maxItems": 2,
+       "minItems": 2,
+       "prefixItems": [
+        {
+         "type": "number"
+        },
+        {
+         "type": "number"
+        }
+       ],
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Interval D"
+    },
+    "estimator": {
+     "title": "Estimator",
+     "type": "string"
+    },
+    "estimator_version": {
+     "title": "Estimator Version",
+     "type": "string"
+    },
+    "notes": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Notes",
+     "type": "array"
+    }
+   },
+   "required": [
+    "meridian_deg",
+    "status",
+    "estimator",
+    "estimator_version"
+   ],
+   "title": "MeridionalEstimate",
+   "type": "object"
+  },
+  "PhotorefractionFeatures": {
+   "description": "Interpretable per-frame features.  All lengths are in pixels unless *_mm\nor *_norm (normalised by pupil radius).",
+   "properties": {
+    "pupil": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/Circle"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null
+    },
+    "iris": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/Circle"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null
+    },
+    "glint": {
+     "anyOf": [
+      {
+       "maxItems": 2,
+       "minItems": 2,
+       "prefixItems": [
+        {
+         "type": "number"
+        },
+        {
+         "type": "number"
+        }
+       ],
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Glint"
+    },
+    "pupil_diameter_mm": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Pupil Diameter Mm"
+    },
+    "pupil_to_iris_ratio": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Pupil To Iris Ratio"
+    },
+    "pupil_ellipse_eccentricity": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Pupil Ellipse Eccentricity"
+    },
+    "reflex_mean_luma": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Reflex Mean Luma"
+    },
+    "reflex_mean_rgb": {
+     "anyOf": [
+      {
+       "maxItems": 3,
+       "minItems": 3,
+       "prefixItems": [
+        {
+         "type": "number"
+        },
+        {
+         "type": "number"
+        },
+        {
+         "type": "number"
+        }
+       ],
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Reflex Mean Rgb"
+    },
+    "reflex_red_chroma": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Reflex Red Chroma"
+    },
+    "reflex_entropy": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Reflex Entropy"
+    },
+    "crescent_present": {
+     "default": false,
+     "title": "Crescent Present",
+     "type": "boolean"
+    },
+    "crescent_area_fraction": {
+     "default": 0.0,
+     "title": "Crescent Area Fraction",
+     "type": "number"
+    },
+    "crescent_width_norm": {
+     "default": 0.0,
+     "title": "Crescent Width Norm",
+     "type": "number"
+    },
+    "crescent_width_mm": {
+     "default": 0.0,
+     "title": "Crescent Width Mm",
+     "type": "number"
+    },
+    "crescent_side": {
+     "default": 0,
+     "title": "Crescent Side",
+     "type": "integer"
+    },
+    "crescent_centroid_offset_norm": {
+     "default": 0.0,
+     "title": "Crescent Centroid Offset Norm",
+     "type": "number"
+    },
+    "crescent_orientation_deg": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Crescent Orientation Deg"
+    },
+    "crescent_contrast": {
+     "default": 1.0,
+     "title": "Crescent Contrast",
+     "type": "number"
+    },
+    "crescent_separability": {
+     "default": 0.0,
+     "title": "Crescent Separability",
+     "type": "number"
+    },
+    "gradient_along_source": {
+     "default": 0.0,
+     "title": "Gradient Along Source",
+     "type": "number"
+    },
+    "gradient_perpendicular": {
+     "default": 0.0,
+     "title": "Gradient Perpendicular",
+     "type": "number"
+    },
+    "dominant_gradient_deg": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Dominant Gradient Deg"
+    },
+    "asymmetry_index": {
+     "default": 0.0,
+     "title": "Asymmetry Index",
+     "type": "number"
+    },
+    "profile_along_source": {
+     "items": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "title": "Profile Along Source",
+     "type": "array"
+    },
+    "profile_perpendicular": {
+     "items": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "title": "Profile Perpendicular",
+     "type": "array"
+    },
+    "profile_poly_coeffs": {
+     "items": {
+      "type": "number"
+     },
+     "title": "Profile Poly Coeffs",
+     "type": "array"
+    },
+    "radial_profile": {
+     "items": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "title": "Radial Profile",
+     "type": "array"
+    },
+    "glint_offset_norm": {
+     "anyOf": [
+      {
+       "maxItems": 2,
+       "minItems": 2,
+       "prefixItems": [
+        {
+         "type": "number"
+        },
+        {
+         "type": "number"
+        }
+       ],
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Glint Offset Norm"
+    },
+    "source_angle_image_deg": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Source Angle Image Deg"
+    },
+    "extractor_version": {
+     "default": "0",
+     "title": "Extractor Version",
+     "type": "string"
+    }
+   },
+   "title": "PhotorefractionFeatures",
+   "type": "object"
+  },
+  "QualityAssessment": {
+   "properties": {
+    "score": {
+     "title": "Score",
+     "type": "number"
+    },
+    "grade": {
+     "enum": [
+      "excellent",
+      "acceptable",
+      "poor",
+      "reject"
+     ],
+     "title": "Grade",
+     "type": "string"
+    },
+    "subscores": {
+     "$ref": "#/$defs/QualitySubscores"
+    },
+    "hard_failures": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Hard Failures",
+     "type": "array"
+    },
+    "advisories": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Advisories",
+     "type": "array"
+    }
+   },
+   "required": [
+    "score",
+    "grade",
+    "subscores"
+   ],
+   "title": "QualityAssessment",
+   "type": "object"
+  },
+  "QualitySubscores": {
+   "properties": {
+    "sharpness": {
+     "default": 0.0,
+     "title": "Sharpness",
+     "type": "number"
+    },
+    "exposure": {
+     "default": 0.0,
+     "title": "Exposure",
+     "type": "number"
+    },
+    "saturation": {
+     "default": 0.0,
+     "title": "Saturation",
+     "type": "number"
+    },
+    "glare": {
+     "default": 0.0,
+     "title": "Glare",
+     "type": "number"
+    },
+    "pupil_visibility": {
+     "default": 0.0,
+     "title": "Pupil Visibility",
+     "type": "number"
+    },
+    "pupil_size": {
+     "default": 0.0,
+     "title": "Pupil Size",
+     "type": "number"
+    },
+    "head_pose": {
+     "default": 1.0,
+     "title": "Head Pose",
+     "type": "number"
+    },
+    "gaze": {
+     "default": 0.0,
+     "title": "Gaze",
+     "type": "number"
+    },
+    "motion": {
+     "default": 1.0,
+     "title": "Motion",
+     "type": "number"
+    },
+    "distance": {
+     "default": 1.0,
+     "title": "Distance",
+     "type": "number"
+    },
+    "illumination": {
+     "default": 0.0,
+     "title": "Illumination",
+     "type": "number"
+    }
+   },
+   "title": "QualitySubscores",
+   "type": "object"
+  }
+ },
+ "properties": {
+  "metadata": {
+   "$ref": "#/$defs/CaptureMetadata"
+  },
+  "features": {
+   "$ref": "#/$defs/PhotorefractionFeatures"
+  },
+  "quality": {
+   "$ref": "#/$defs/QualityAssessment"
+  },
+  "estimate": {
+   "anyOf": [
+    {
+     "$ref": "#/$defs/MeridionalEstimate"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "default": null
+  }
+ },
+ "required": [
+  "metadata",
+  "features",
+  "quality"
+ ],
+ "title": "FrameRecord",
+ "type": "object"
+}

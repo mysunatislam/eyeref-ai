@@ -1,0 +1,8 @@
+# Research ML stack (training, evaluation, export). Install the backend requirements too.
+-r ../backend/requirements.txt
+pandas==3.0.6
+scikit-learn==1.9.1
+torch==2.14.1
+onnx==1.23.1
+pillow==12.3.0
+pytest==9.1.1

@@ -1,0 +1,209 @@
+{
+ "id": "contract-fixture",
+ "simulated": true,
+ "eyes": {
+  "OD": {
+   "eye": "OD",
+   "output_level": "screening",
+   "message": "Quantitative refraction unreliable (95% interval ±1.13 D). Result suggests hyperopia. Repeat measurement or obtain clinical refraction.",
+   "se_d": null,
+   "se_ci95": [
+    1.8882076803787855,
+    4.1538026375100365
+   ],
+   "sph_d": null,
+   "sph_ci95": null,
+   "cyl_d": null,
+   "cyl_ci95": null,
+   "axis_deg": null,
+   "axis_uncertainty_deg": null,
+   "power_vector": {
+    "M": 3.0449238452224794,
+    "J0": 0.023069348864714116,
+    "J45": -0.0034072194321174525
+   },
+   "power_vector_sd": {
+    "M": 0.5875982512351554,
+    "J0": 0.29997221675562485,
+    "J45": 0.30684249260940677
+   },
+   "refractive_class": "hyperopia",
+   "severity": null,
+   "class_probabilities": {
+    "myopia": 8.081455504793666e-10,
+    "emmetropia": 0.000007424355730090149,
+    "hyperopia": 0.9999925748361244
+   },
+   "astigmatism_status": "screening_only",
+   "astigmatism_probability": 0.46366666666666667,
+   "confidence": 0.9999925748361244,
+   "quality_grade": "excellent",
+   "median_quality": 0.9506,
+   "n_frames": 16,
+   "n_usable_frames": 16,
+   "meridians": [
+    {
+     "meridian_deg": 0,
+     "n_frames": 4,
+     "n_usable": 4,
+     "status": "quantitative",
+     "power_d": 3.08969033662983,
+     "sigma_d": 0.820272240726725,
+     "temporal_sd_d": 0.12871337333923782,
+     "interval_d": null,
+     "frame_powers": []
+    },
+    {
+     "meridian_deg": 45,
+     "n_frames": 4,
+     "n_usable": 4,
+     "status": "quantitative",
+     "power_d": 3.1632534116701305,
+     "sigma_d": 0.922144664169767,
+     "temporal_sd_d": 0.16607589990430957,
+     "interval_d": null,
+     "frame_powers": []
+    },
+    {
+     "meridian_deg": 90,
+     "n_frames": 4,
+     "n_usable": 4,
+     "status": "quantitative",
+     "power_d": 2.9152297689975293,
+     "sigma_d": 0.8265385179594821,
+     "temporal_sd_d": 0.10553072982385248,
+     "interval_d": null,
+     "frame_powers": []
+    },
+    {
+     "meridian_deg": 135,
+     "n_frames": 4,
+     "n_usable": 4,
+     "status": "quantitative",
+     "power_d": 3.18149226541549,
+     "sigma_d": 0.88251667677876,
+     "temporal_sd_d": 0.10276858710082379,
+     "interval_d": null,
+     "frame_powers": []
+    }
+   ],
+   "reflex_mean_luma": 0.3069838126392922,
+   "dead_zone_d": null,
+   "research": null,
+   "notes": [
+    "Non-cycloplegic measurement: accommodation uncertainty of ±0.35 D (SD) included for this age group. True refraction may be more hyperopic than measured.",
+    "CYL/AXIS quantification is disabled until validated on controlled multi-meridian data."
+   ]
+  },
+  "OS": {
+   "eye": "OS",
+   "output_level": "screening",
+   "message": "Quantitative refraction unreliable (95% interval ±1.16 D). Result suggests hyperopia. Repeat measurement or obtain clinical refraction.",
+   "se_d": null,
+   "se_ci95": [
+    1.8944836109405945,
+    4.213322780477702
+   ],
+   "sph_d": null,
+   "sph_ci95": null,
+   "cyl_d": null,
+   "cyl_ci95": null,
+   "axis_deg": null,
+   "axis_uncertainty_deg": null,
+   "power_vector": {
+    "M": 3.078383999945967,
+    "J0": 0.006332786548248164,
+    "J45": -0.009480623806753644
+   },
+   "power_vector_sd": {
+    "M": 0.6014075184210647,
+    "J0": 0.3055699523460214,
+    "J45": 0.30753869829086
+   },
+   "refractive_class": "hyperopia",
+   "severity": null,
+   "class_probabilities": {
+    "myopia": 1.3452251534928905e-9,
+    "emmetropia": 0.000009049983461850708,
+    "hyperopia": 0.999990948671313
+   },
+   "astigmatism_status": "screening_only",
+   "astigmatism_probability": 0.47533333333333333,
+   "confidence": 0.999990948671313,
+   "quality_grade": "excellent",
+   "median_quality": 0.95575,
+   "n_frames": 16,
+   "n_usable_frames": 16,
+   "meridians": [
+    {
+     "meridian_deg": 0,
+     "n_frames": 4,
+     "n_usable": 4,
+     "status": "quantitative",
+     "power_d": 3.1050953340522747,
+     "sigma_d": 0.8951104379289986,
+     "temporal_sd_d": 0.09298643597258828,
+     "interval_d": null,
+     "frame_powers": []
+    },
+    {
+     "meridian_deg": 45,
+     "n_frames": 4,
+     "n_usable": 4,
+     "status": "quantitative",
+     "power_d": 3.119227221113067,
+     "sigma_d": 0.9321468881649404,
+     "temporal_sd_d": 0.1585861293322395,
+     "interval_d": null,
+     "frame_powers": []
+    },
+    {
+     "meridian_deg": 90,
+     "n_frames": 4,
+     "n_usable": 4,
+     "status": "quantitative",
+     "power_d": 3.051832496300771,
+     "sigma_d": 0.8774324305521292,
+     "temporal_sd_d": 0.09489262124274676,
+     "interval_d": null,
+     "frame_powers": []
+    },
+    {
+     "meridian_deg": 135,
+     "n_frames": 4,
+     "n_usable": 4,
+     "status": "quantitative",
+     "power_d": 3.195139628724516,
+     "sigma_d": 0.8903992242330512,
+     "temporal_sd_d": 0.20611145303805295,
+     "interval_d": null,
+     "frame_powers": []
+    }
+   ],
+   "reflex_mean_luma": 0.29816151179774397,
+   "dead_zone_d": null,
+   "research": null,
+   "notes": [
+    "Non-cycloplegic measurement: accommodation uncertainty of ±0.35 D (SD) included for this age group. True refraction may be more hyperopic than measured.",
+    "CYL/AXIS quantification is disabled until validated on controlled multi-meridian data."
+   ]
+  }
+ },
+ "anisometropia_probability": 0.19128411287465885,
+ "se_difference_d": -0.03346015472348762,
+ "reflex_asymmetry_ratio": 1.0295889995605227,
+ "reflex_asymmetry_flag": false,
+ "referral_reasons": [],
+ "interpretation": "SIMULATED DATA. Your measurements show a pattern consistent with hyperopia refractive error.",
+ "disclaimer": "Experimental research prototype. This is a screening estimate, not an eyeglass prescription, and it does not replace a comprehensive eye examination. Abnormal red reflexes can indicate conditions unrelated to refractive error. Sudden vision loss, eye pain, flashes, floaters or trauma require urgent professional assessment.",
+ "provenance": {
+  "model_name": "physics-crescent-inversion",
+  "model_version": "1.0.0",
+  "estimator_kind": "physics-heuristic",
+  "calibration_version": "sim-bench-1",
+  "device_profile": "simulated-phone",
+  "extractor_version": "pr-features-1.0.0",
+  "app_version": "0.1.0",
+  "timestamp": "2026-10-04T12:51:29.825Z"
+ }
+}

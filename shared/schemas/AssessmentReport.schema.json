@@ -1,0 +1,578 @@
+{
+ "$defs": {
+  "EyeResult": {
+   "properties": {
+    "eye": {
+     "enum": [
+      "OD",
+      "OS"
+     ],
+     "title": "Eye",
+     "type": "string"
+    },
+    "output_level": {
+     "enum": [
+      "quantitative",
+      "screening",
+      "repeat"
+     ],
+     "title": "Output Level",
+     "type": "string"
+    },
+    "message": {
+     "title": "Message",
+     "type": "string"
+    },
+    "se_d": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Se D"
+    },
+    "se_ci95": {
+     "anyOf": [
+      {
+       "maxItems": 2,
+       "minItems": 2,
+       "prefixItems": [
+        {
+         "type": "number"
+        },
+        {
+         "type": "number"
+        }
+       ],
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Se Ci95"
+    },
+    "sph_d": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Sph D"
+    },
+    "sph_ci95": {
+     "anyOf": [
+      {
+       "maxItems": 2,
+       "minItems": 2,
+       "prefixItems": [
+        {
+         "type": "number"
+        },
+        {
+         "type": "number"
+        }
+       ],
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Sph Ci95"
+    },
+    "cyl_d": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Cyl D"
+    },
+    "cyl_ci95": {
+     "anyOf": [
+      {
+       "maxItems": 2,
+       "minItems": 2,
+       "prefixItems": [
+        {
+         "type": "number"
+        },
+        {
+         "type": "number"
+        }
+       ],
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Cyl Ci95"
+    },
+    "axis_deg": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Axis Deg"
+    },
+    "axis_uncertainty_deg": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Axis Uncertainty Deg"
+    },
+    "power_vector": {
+     "anyOf": [
+      {
+       "additionalProperties": {
+        "type": "number"
+       },
+       "type": "object"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Power Vector"
+    },
+    "power_vector_sd": {
+     "anyOf": [
+      {
+       "additionalProperties": {
+        "type": "number"
+       },
+       "type": "object"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Power Vector Sd"
+    },
+    "refractive_class": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Refractive Class"
+    },
+    "severity": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Severity"
+    },
+    "class_probabilities": {
+     "anyOf": [
+      {
+       "additionalProperties": {
+        "type": "number"
+       },
+       "type": "object"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Class Probabilities"
+    },
+    "astigmatism_status": {
+     "default": "not_assessed",
+     "enum": [
+      "quantified",
+      "screening_only",
+      "not_assessed"
+     ],
+     "title": "Astigmatism Status",
+     "type": "string"
+    },
+    "astigmatism_probability": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Astigmatism Probability"
+    },
+    "confidence": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Confidence"
+    },
+    "quality_grade": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Quality Grade"
+    },
+    "median_quality": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Median Quality"
+    },
+    "n_frames": {
+     "default": 0,
+     "title": "N Frames",
+     "type": "integer"
+    },
+    "n_usable_frames": {
+     "default": 0,
+     "title": "N Usable Frames",
+     "type": "integer"
+    },
+    "meridians": {
+     "items": {
+      "$ref": "#/$defs/MeridianSummary"
+     },
+     "title": "Meridians",
+     "type": "array"
+    },
+    "reflex_mean_luma": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Reflex Mean Luma"
+    },
+    "dead_zone_d": {
+     "anyOf": [
+      {
+       "maxItems": 2,
+       "minItems": 2,
+       "prefixItems": [
+        {
+         "type": "number"
+        },
+        {
+         "type": "number"
+        }
+       ],
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Dead Zone D"
+    },
+    "notes": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Notes",
+     "type": "array"
+    }
+   },
+   "required": [
+    "eye",
+    "output_level",
+    "message"
+   ],
+   "title": "EyeResult",
+   "type": "object"
+  },
+  "MeridianSummary": {
+   "properties": {
+    "meridian_deg": {
+     "title": "Meridian Deg",
+     "type": "number"
+    },
+    "n_frames": {
+     "title": "N Frames",
+     "type": "integer"
+    },
+    "n_usable": {
+     "title": "N Usable",
+     "type": "integer"
+    },
+    "status": {
+     "enum": [
+      "quantitative",
+      "interval",
+      "insufficient"
+     ],
+     "title": "Status",
+     "type": "string"
+    },
+    "power_d": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Power D"
+    },
+    "sigma_d": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Sigma D"
+    },
+    "temporal_sd_d": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Temporal Sd D"
+    },
+    "interval_d": {
+     "anyOf": [
+      {
+       "maxItems": 2,
+       "minItems": 2,
+       "prefixItems": [
+        {
+         "type": "number"
+        },
+        {
+         "type": "number"
+        }
+       ],
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Interval D"
+    },
+    "frame_powers": {
+     "items": {
+      "type": "number"
+     },
+     "title": "Frame Powers",
+     "type": "array"
+    }
+   },
+   "required": [
+    "meridian_deg",
+    "n_frames",
+    "n_usable",
+    "status"
+   ],
+   "title": "MeridianSummary",
+   "type": "object"
+  },
+  "Provenance": {
+   "properties": {
+    "model_name": {
+     "title": "Model Name",
+     "type": "string"
+    },
+    "model_version": {
+     "title": "Model Version",
+     "type": "string"
+    },
+    "estimator_kind": {
+     "title": "Estimator Kind",
+     "type": "string"
+    },
+    "calibration_version": {
+     "title": "Calibration Version",
+     "type": "string"
+    },
+    "device_profile": {
+     "title": "Device Profile",
+     "type": "string"
+    },
+    "extractor_version": {
+     "title": "Extractor Version",
+     "type": "string"
+    },
+    "app_version": {
+     "default": "0.1.0",
+     "title": "App Version",
+     "type": "string"
+    },
+    "timestamp": {
+     "format": "date-time",
+     "title": "Timestamp",
+     "type": "string"
+    }
+   },
+   "required": [
+    "model_name",
+    "model_version",
+    "estimator_kind",
+    "calibration_version",
+    "device_profile",
+    "extractor_version"
+   ],
+   "title": "Provenance",
+   "type": "object"
+  }
+ },
+ "properties": {
+  "id": {
+   "title": "Id",
+   "type": "string"
+  },
+  "simulated": {
+   "title": "Simulated",
+   "type": "boolean"
+  },
+  "eyes": {
+   "additionalProperties": {
+    "$ref": "#/$defs/EyeResult"
+   },
+   "title": "Eyes",
+   "type": "object"
+  },
+  "anisometropia_probability": {
+   "anyOf": [
+    {
+     "type": "number"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "default": null,
+   "title": "Anisometropia Probability"
+  },
+  "se_difference_d": {
+   "anyOf": [
+    {
+     "type": "number"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "default": null,
+   "title": "Se Difference D"
+  },
+  "reflex_asymmetry_ratio": {
+   "anyOf": [
+    {
+     "type": "number"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "default": null,
+   "title": "Reflex Asymmetry Ratio"
+  },
+  "reflex_asymmetry_flag": {
+   "default": false,
+   "title": "Reflex Asymmetry Flag",
+   "type": "boolean"
+  },
+  "referral_reasons": {
+   "items": {
+    "type": "string"
+   },
+   "title": "Referral Reasons",
+   "type": "array"
+  },
+  "interpretation": {
+   "default": "",
+   "title": "Interpretation",
+   "type": "string"
+  },
+  "disclaimer": {
+   "default": "Experimental research prototype. This is a screening estimate, not an eyeglass prescription, and it does not replace a comprehensive eye examination. Abnormal red reflexes can indicate conditions unrelated to refractive error. Sudden vision loss, eye pain, flashes, floaters or trauma require urgent professional assessment.",
+   "title": "Disclaimer",
+   "type": "string"
+  },
+  "provenance": {
+   "$ref": "#/$defs/Provenance"
+  }
+ },
+ "required": [
+  "simulated",
+  "eyes",
+  "provenance"
+ ],
+ "title": "AssessmentReport",
+ "type": "object"
+}

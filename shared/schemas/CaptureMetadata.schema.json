@@ -1,0 +1,154 @@
+{
+ "$defs": {
+  "HeadPose": {
+   "properties": {
+    "yaw_deg": {
+     "default": 0.0,
+     "title": "Yaw Deg",
+     "type": "number"
+    },
+    "pitch_deg": {
+     "default": 0.0,
+     "title": "Pitch Deg",
+     "type": "number"
+    },
+    "roll_deg": {
+     "default": 0.0,
+     "title": "Roll Deg",
+     "type": "number"
+    }
+   },
+   "title": "HeadPose",
+   "type": "object"
+  }
+ },
+ "properties": {
+  "eye": {
+   "enum": [
+    "OD",
+    "OS"
+   ],
+   "title": "Eye",
+   "type": "string"
+  },
+  "timestamp": {
+   "format": "date-time",
+   "title": "Timestamp",
+   "type": "string"
+  },
+  "working_distance_m": {
+   "default": 1.0,
+   "title": "Working Distance M",
+   "type": "number"
+  },
+  "distance_source": {
+   "default": "manual",
+   "enum": [
+    "iris",
+    "manual",
+    "calibrated",
+    "simulated"
+   ],
+   "title": "Distance Source",
+   "type": "string"
+  },
+  "distance_sd_m": {
+   "default": 0.08,
+   "title": "Distance Sd M",
+   "type": "number"
+  },
+  "device_rotation_deg": {
+   "default": 0.0,
+   "title": "Device Rotation Deg",
+   "type": "number"
+  },
+  "head_pose": {
+   "$ref": "#/$defs/HeadPose"
+  },
+  "illumination": {
+   "default": "flash",
+   "enum": [
+    "flash",
+    "torch",
+    "external_visible",
+    "nir850",
+    "none"
+   ],
+   "title": "Illumination",
+   "type": "string"
+  },
+  "source_angle_image_deg": {
+   "anyOf": [
+    {
+     "type": "number"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "default": null,
+   "title": "Source Angle Image Deg"
+  },
+  "eccentricity_mm": {
+   "anyOf": [
+    {
+     "type": "number"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "default": null,
+   "title": "Eccentricity Mm"
+  },
+  "mirrored": {
+   "default": false,
+   "title": "Mirrored",
+   "type": "boolean"
+  },
+  "age_group": {
+   "default": "unknown",
+   "title": "Age Group",
+   "type": "string"
+  },
+  "frame_index": {
+   "default": 0,
+   "title": "Frame Index",
+   "type": "integer"
+  },
+  "simulated": {
+   "default": false,
+   "title": "Simulated",
+   "type": "boolean"
+  },
+  "ambient_luma": {
+   "anyOf": [
+    {
+     "type": "number"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "default": null,
+   "title": "Ambient Luma"
+  },
+  "motion_px_per_frame": {
+   "anyOf": [
+    {
+     "type": "number"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "default": null,
+   "title": "Motion Px Per Frame"
+  }
+ },
+ "required": [
+  "eye"
+ ],
+ "title": "CaptureMetadata",
+ "type": "object"
+}
