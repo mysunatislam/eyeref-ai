@@ -1,13 +1,17 @@
+import { useId } from "react";
+
 export function Logo({ className }: { className?: string }) {
+  // One gradient per instance: a hidden copy (the header, on paper) must not break another.
+  const g = `eyeref-g-${useId().replace(/[^\w-]/g, "")}`;
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden="true">
       <defs>
-        <linearGradient id="eyeref-g" x1="0" y1="0" x2="1" y2="1">
+        <linearGradient id={g} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="var(--accent)" />
           <stop offset="1" stopColor="var(--accent-2)" />
         </linearGradient>
       </defs>
-      <rect x="1" y="1" width="30" height="30" rx="9" fill="url(#eyeref-g)" />
+      <rect x="1" y="1" width="30" height="30" rx="9" fill={`url(#${g})`} />
       <path
         d="M5 16c3-5 7-7.5 11-7.5S24 11 27 16c-3 5-7 7.5-11 7.5S8 21 5 16Z"
         fill="none"

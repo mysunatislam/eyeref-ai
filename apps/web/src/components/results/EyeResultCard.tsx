@@ -16,7 +16,7 @@ export const LEVEL: Record<OutputLevel, { label: string; tone: "ok" | "warn" | "
   repeat: { label: "Repeat measurement", tone: "bad" },
 };
 
-const CLASS_LABEL = {
+export const CLASS_LABEL = {
   myopia: "Myopia (near-sighted)",
   emmetropia: "No significant error",
   hyperopia: "Hyperopia (far-sighted)",

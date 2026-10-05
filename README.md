@@ -42,6 +42,7 @@ first, then astigmatism later.
 | Bayesian M/J0/J45 fusion, gating, anisometropia, reflex asymmetry | **WORKING** | Gating limits are configurable (`GatingConfig`) |
 | Guided capture UI (lighting, distance, positioning, 4 meridians, torch pulses, countdown, overlays) | **WORKING** | Torch control needs Chrome on Android; iOS Safari has no torch API |
 | Device rotation (meridian) from the tilt sensor | **PARTIALLY WORKING** | Sign convention for a rear camera aimed at a subject must be bench-verified |
+| Printable referral report (one A4 page, or save as PDF) | **WORKING** | Gated output only: never prints SPH/CYL/AXIS. Simulated data is watermarked. A browser test checks that it fits one page in light colours |
 | Simulation Mode, simulator, synthetic dataset | **SIMULATED** | Always labelled |
 | Model comparison (physics, ridge, poly, RF, GBM, hybrid NN, hybrid CNN), conformal intervals, subject-level and leave-device-out splits | **SIMULATED** | Trained and evaluated on synthetic data only |
 | Learned estimator for real eyes | **REQUIRES TRAINING DATA** | Exported ONNX models are tagged `trained_on_simulated` and **refuse** real frames |
