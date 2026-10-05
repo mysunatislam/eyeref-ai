@@ -42,7 +42,7 @@ export EYEREF_ENV=production   # refuse to start without tokens or an image-encr
 | GET | `/health` | Status and version |
 | GET | `/api/models` | Available estimators and their versions (the physics estimator, and the ONNX model if loaded) |
 | GET | `/api/devices` | Device profiles |
-| POST | `/api/devices` | Add or replace a device profile (`DeviceProfile`) |
+| POST | `/api/devices` | Add or replace a device profile (`DeviceProfile`). The id is up to 64 letters, digits, `.`, `_` or `-`, because it names the profile's file |
 | GET | `/api/meta/extractor` | Feature-extractor version |
 
 ## Analysis

@@ -78,5 +78,7 @@ def save_profile(profile: DeviceProfile, directory: str | Path) -> Path:
     d = Path(directory)
     d.mkdir(parents=True, exist_ok=True)
     path = d / f"{profile.id}.json"
+    if path.resolve().parent != d.resolve():  # the id pattern already rules this out
+        raise ValueError(f"device profile id {profile.id!r} is not a plain file name")
     path.write_text(json.dumps(profile.model_dump(), indent=2))
     return path

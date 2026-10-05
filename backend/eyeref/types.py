@@ -30,7 +30,8 @@ class DeviceProfile(BaseModel):
     diameter (focal length / f-number); eccentricity is measured from its edge.
     """
 
-    id: str
+    #: names the profile's file on the server, so it cannot contain a path
+    id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
     manufacturer: str = "generic"
     model: str = "unknown"
     camera: Literal["rear", "front", "webcam", "external"] = "rear"

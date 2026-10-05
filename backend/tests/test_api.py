@@ -96,3 +96,12 @@ def test_each_capture_keeps_its_own_image(client, tmp_path):
     assert stored == dict(zip(ids, images, strict=True))
     assert client.delete(f"/api/subjects/{sub['id']}").status_code == 200
     assert not list((tmp_path / "objects").rglob("*.png"))
+
+
+def test_a_device_profile_id_is_a_plain_name_not_a_path(client, tmp_path):
+    for bad in ("../escaped", "a/b", "..", ".hidden", "", "x" * 65):
+        assert client.post("/api/devices", json={"id": bad}).status_code == 422, bad
+    assert not list(tmp_path.rglob("escaped*"))
+    assert client.post("/api/devices", json={"id": "lab-phone.v2_rear"}).status_code == 200
+    assert (tmp_path / "device_profiles" / "lab-phone.v2_rear.json").exists()
+    assert "lab-phone.v2_rear" in {d["id"] for d in client.get("/api/devices").json()}
