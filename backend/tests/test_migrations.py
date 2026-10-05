@@ -75,34 +75,93 @@ def test_every_migration_can_be_undone_and_applied_again(tmp_path):
     assert current_revision(engine) == HEAD
 
 
+def _insert(conn, model, /, **values):  # positional, since devices have a "model" column
+    conn.execute(model.__table__.insert().values(**values))
+
+
+def _subject(conn, sid: str) -> None:
+    _insert(conn, m.Subject, id=sid, code=f"SITE1-{sid}", age_group="adult_18_39", consent_research=True,
+            consent_image_storage=False, simulated=False, created_at=datetime.now(UTC))
+
+
+def _visit(conn, sid: str, ses: str, **session) -> None:
+    _insert(conn, m.CaptureSession, id=ses, subject_id=sid, device_id="d1", protocol_version="guided-1",
+            cycloplegia=False, simulated=False, started_at=datetime.now(UTC), **session)
+
+
+def _reference(conn, gid: str, sid: str, **visit) -> None:
+    _insert(conn, m.GroundTruth, id=gid, subject_id=sid, eye="OD", method="autorefractor", sphere=-1.0, cylinder=0.0,
+            spherical_equivalent=-1.0, measured_at=datetime.now(UTC), **visit)
+
+
+def _device(conn) -> None:
+    _insert(conn, m.Device, id="d1", manufacturer="lab", model="phone", camera="rear", profile={},
+            calibration_version="v1", created_at=datetime.now(UTC))
+
+
+def _seed_research_data(engine, **session):
+    """One subject with a session, a capture and a reference measured at that session, as plain inserts."""
+    with engine.begin() as conn:
+        _subject(conn, "s1")
+        _device(conn)
+        _visit(conn, "s1", "ses1", **session)
+        _insert(conn, m.Capture, id="c1", session_id="ses1", eye="OD", frame_index=0, timestamp=datetime.now(UTC),
+                illumination="flash", metadata_json={}, image_encrypted=False)
+        _reference(conn, "g1", "s1", session_id="ses1")
+
+
+def _research_rows(engine) -> list[int]:
+    with engine.connect() as conn:
+        return [conn.execute(text(f"select count(*) from {t}")).scalar_one()
+                for t in ("subjects", "capture_sessions", "captures", "ground_truth")]
+
+
 @pytest.mark.skipif((SERVER_URL or "sqlite").split(":")[0] != "sqlite", reason="others alter tables in place")
 def test_rebuilding_a_table_while_migrating_keeps_the_rows_that_refer_to_it(tmp_path):
     # SQLite alters a table by copying it and dropping the original. With foreign keys enforced, the
     # drop would cascade to every session and capture of every subject.
     engine = make_engine(fresh_database(tmp_path))
-    now = datetime.now(UTC)
-    with engine.begin() as conn:
-        conn.execute(m.Subject.__table__.insert().values(
-            id="s1", code="SITE1-0001", age_group="adult_18_39", consent_research=True, consent_image_storage=False,
-            simulated=False, created_at=now))
-        conn.execute(m.Device.__table__.insert().values(
-            id="d1", manufacturer="lab", model="phone", camera="rear", profile={}, calibration_version="v1",
-            created_at=now))
-        conn.execute(m.CaptureSession.__table__.insert().values(
-            id="ses1", subject_id="s1", device_id="d1", protocol_version="guided-1", cycloplegia=False,
-            simulated=False, started_at=now))
-        conn.execute(m.Capture.__table__.insert().values(
-            id="c1", session_id="ses1", eye="OD", frame_index=0, timestamp=now, illumination="flash",
-            metadata_json={}, image_encrypted=False))
+    _seed_research_data(engine)
     with migrating(engine) as conn:
         ops = Operations(MigrationContext.configure(conn))
         with ops.batch_alter_table("subjects", recreate="always") as batch:
             batch.alter_column("site", type_=String(128))
+    assert _research_rows(engine) == [1, 1, 1, 1]
     with engine.connect() as conn:
-        counts = [conn.execute(text(f"select count(*) from {t}")).scalar_one()
-                  for t in ("subjects", "capture_sessions", "captures")]
-        assert counts == [1, 1, 1]
         assert conn.exec_driver_sql("PRAGMA foreign_keys").scalar_one() == 1  # enforced again afterwards
+
+
+def test_stepping_back_to_the_baseline_keeps_the_research_data(tmp_path):
+    engine = make_engine(fresh_database(tmp_path))
+    _seed_research_data(engine, client_ref="rec-1")
+    downgrade(engine, BASELINE_REVISION)
+    assert current_revision(engine) == BASELINE_REVISION
+    assert _research_rows(engine) == [1, 1, 1, 1]
+    upgrade(engine)
+    assert current_revision(engine) == HEAD
+
+
+def test_references_recorded_before_visits_were_linked_join_the_only_visit(tmp_path):
+    url = fresh_database(tmp_path)
+    old = connect(url)
+    upgrade(old, "0003")
+    with old.begin() as conn:
+        _device(conn)
+        _subject(conn, "one")  # one visit: its reference was measured there
+        _visit(conn, "one", "one-v1")
+        _reference(conn, "g-one", "one")
+        _subject(conn, "two")  # two visits: nothing says which
+        _visit(conn, "two", "two-v1")
+        _visit(conn, "two", "two-v2")
+        _reference(conn, "g-two", "two")
+        _subject(conn, "none")  # no visit yet
+        _reference(conn, "g-none", "none")
+    old.dispose()
+
+    engine = make_engine(url)
+    with engine.connect() as conn:
+        linked = dict(conn.execute(text("select id, session_id from ground_truth")).all())
+    assert linked == {"g-one": "one-v1", "g-two": None, "g-none": None}
 
 
 def test_an_older_version_refuses_a_database_a_newer_one_migrated(tmp_path):

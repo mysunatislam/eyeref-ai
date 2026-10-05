@@ -26,15 +26,20 @@
 | `devices` | `id`, manufacturer, model, camera, full `DeviceProfile` JSON, `calibration_version` |
 | `capture_sessions` | subject, device, `protocol_version`, operator, `ambient_lux`, room condition, **`cycloplegia`**, `condition_label`, `simulated` |
 | `captures` | session, eye, frame index, timestamp, `working_distance_m`, illumination, **`meridian_deg`**, metadata JSON, features JSON, quality JSON / score / grade, `pupil_diameter_mm`, encrypted `image_key` |
-| `ground_truth` | subject, eye, **method** (autorefractor, subjective, cycloplegic, retinoscopy, trial_lens, lensmeter), sphere / cylinder / axis (**stored as minus cylinder**), SE, vertex distance, instrument, examiner, raw printout JSON |
+| `ground_truth` | subject, **visit** (the session it was measured at), eye, **method** (autorefractor, subjective, cycloplegic, retinoscopy, trial_lens, lensmeter), sphere / cylinder / axis (**stored as minus cylinder**), SE, vertex distance, instrument, examiner, raw printout JSON |
 | `predictions` | session, eye, output level, SE + CI, sphere, cylinder, axis, M/J0/J45, confidence, class, **model name and version, calibration version, device profile, extractor version**, full report JSON |
 | `audit_events` | time, actor (token fingerprint), action, subject id, details (ids, counts and flags only). No foreign keys, so events outlive what they describe |
 
 JSON Schemas of the exchange models live in `shared/schemas` and are regenerated with `make schemas`.
 
 `GET /api/dataset/export?fmt=csv` produces one row per capture. Each row holds the flattened `f_*`
-features and the `gt_<method>_{sph,cyl,axis,se}` columns for that eye. This is the training table
-format used by `ml/`.
+features, `session_started_at`, and the `gt_<method>_{sph,cyl,axis,se}` columns for that eye. This
+is the training table format used by `ml/`.
+
+A capture is paired only with a reference measured at the same visit, as the validation protocol
+requires. If a method was recorded twice for an eye at one visit, the later entry counts. A reference
+recorded without a visit is used only while the subject has a single visit; once there are two, it
+could belong to either, so it is paired with neither. Uploads from the web app always name the visit.
 
 ## Investigator workflow (Mode 2)
 
@@ -47,7 +52,10 @@ format used by `ml/`.
    - cycloplegic refraction for anyone under 18.
 4. In the **Dataset** page, enter the code and the reference refraction. Plus-cylinder printouts are
    converted to minus cylinder automatically.
-5. Export pairs as CSV, or upload the record to the research server with consent.
+5. Export pairs as CSV, or upload the record to the research server with consent. Consent is
+   confirmed for each record at each visit. The upload stores the whole record or nothing, so a
+   failed upload can simply be sent again, and a second visit for the same code becomes another
+   session of the same subject.
 6. Once a week, check the agreement panel (MAE, bias, limits of agreement) and the rejection rate.
 
 ## Labels

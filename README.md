@@ -27,7 +27,7 @@ first, then astigmatism later.
 | Mode | Purpose |
 | --- | --- |
 | **Mode 1 · Camera research mode** | Guided capture → on-device pipeline → gated report. Physics estimator only. |
-| **Mode 2 · Hybrid validation / dataset collection** | Same capture, plus pseudonymous subject codes, reference refraction entry (autorefractor, subjective, cycloplegic), local agreement stats, CSV export, and consented upload to the research API. |
+| **Mode 2 · Hybrid validation / dataset collection** | Same capture, plus pseudonymous subject codes, reference refraction entry (autorefractor, subjective, cycloplegic), local agreement stats, CSV export, and consented upload to the research API. Each record uploads in one request that stores all of it or nothing, is safe to retry, and adds repeat visits to the same subject. |
 | **Simulation Mode** (default on first launch) | Renders virtual eyes with known refraction and runs the **real** pipeline on them. Everything is labelled **SIMULATED DATA**. |
 
 ## Status matrix

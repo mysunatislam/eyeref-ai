@@ -17,10 +17,11 @@ export function normalizeGt(g: GroundTruthEntry): GroundTruthEntry {
   return { ...g, sphere: t.sph, cylinder: t.cyl, axis: t.axis };
 }
 
+/** The record's reference for one eye: the best method taken, and of that method the latest entry, as on the server. */
 export function bestGt(a: StoredAssessment, eye: EyeSide): GroundTruthEntry | null {
   const gts = (a.groundTruth ?? []).filter((g) => g.eye === eye);
   for (const m of METHOD_PRIORITY) {
-    const g = gts.find((x) => x.method === m);
+    const g = gts.findLast((x) => x.method === m);
     if (g) return normalizeGt(g);
   }
   return null;

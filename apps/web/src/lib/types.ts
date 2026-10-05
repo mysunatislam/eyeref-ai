@@ -242,6 +242,18 @@ export interface StoredAssessment {
   visionTests: VisionTestResult[];
   simTruth?: Record<EyeSide, { sph: number; cyl: number; axis: number | null; se: number }>;
   groundTruth?: GroundTruthEntry[];
+  /** set once the record is stored on a research server (Dataset collection) */
+  upload?: UploadReceipt;
+}
+
+/** Where and when a record was stored on the research server, and what went with it. */
+export interface UploadReceipt {
+  at: string;
+  server: string;
+  subjectId: string;
+  sessionId: string;
+  captures: number;
+  imagesStored: number;
 }
 
 export interface GroundTruthEntry {

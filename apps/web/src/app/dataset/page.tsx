@@ -1,5 +1,5 @@
 "use client";
-import { CloudUpload, Download, FlaskConical, Loader2, Plus, Trash2 } from "lucide-react";
+import { CloudCheck, CloudUpload, Download, FlaskConical, Loader2, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { download } from "@/components/results/ReportView";
@@ -9,15 +9,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Field, Input, Select } from "@/components/ui/field";
 import { Stat } from "@/components/ui/stat";
 import { Switch } from "@/components/ui/switch";
-import { api, ApiError, connOf } from "@/lib/api";
+import { api, ApiError, buildUpload, connOf } from "@/lib/api";
 import { agreement, normalizeGt, pairRows, toCsv } from "@/lib/dataset";
+import { DEVICE_PROFILES } from "@/lib/devices";
 import { formatAxis, formatDiopters, sphericalEquivalent } from "@/lib/optics/powerVector";
 import { PROTOCOL_VERSION } from "@/lib/protocol/protocol";
 import { useSettings } from "@/lib/settings";
 import { saveAssessment } from "@/lib/storage/db";
 import { useAssessments } from "@/lib/storage/hooks";
-import type { EyeSide, GroundTruthEntry, StoredAssessment } from "@/lib/types";
-import { cn, fmt, formatDateTime, pct } from "@/lib/utils";
+import type { EyeSide, GroundTruthEntry, StoredAssessment, UploadReceipt } from "@/lib/types";
+import { cn, fmt, formatDateTime, pct, plural } from "@/lib/utils";
+
+const CONSENT_VERSION = "eyeref-consent-1.0";
 
 const METHODS: GroundTruthEntry["method"][] = [
   "autorefractor",
@@ -104,15 +107,115 @@ function GtForm({ onAdd }: { onAdd: (g: GroundTruthEntry) => void }) {
   );
 }
 
-export default function DatasetPage() {
-  const { items, reload } = useAssessments();
+/**
+ * Sends one record to the research server in a single request, which stores all of it or nothing.
+ * Consent is given for this record: switching to another record starts with both switches off.
+ */
+function UploadCard({ record: a, onSaved }: { record: StoredAssessment; onSaved: () => void }) {
   const [s] = useSettings();
-  const [incSim, setIncSim] = useState(false);
-  const [selId, setSelId] = useState<string | null>(null);
   const [consentResearch, setConsentResearch] = useState(false);
   const [consentImages, setConsentImages] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [log, setLog] = useState<string[]>([]);
+  const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
+  const crops = a.frames.filter((f) => f.cropDataUrl).length;
+
+  const upload = async () => {
+    const conn = connOf(s);
+    setBusy(true);
+    setStatus(null);
+    try {
+      const deviceId = a.report.provenance.deviceProfile;
+      const device = [...s.customDevices, ...DEVICE_PROFILES].find((d) => d.id === deviceId);
+      const consent = { research: consentResearch, images: consentImages, version: CONSENT_VERSION };
+      const r = await api.uploadAssessment(
+        conn,
+        buildUpload(a, consent, { protocolVersion: PROTOCOL_VERSION, device }),
+      );
+      const receipt: UploadReceipt = {
+        at: new Date().toISOString(),
+        server: conn.url,
+        subjectId: r.subjectId,
+        sessionId: r.sessionId,
+        captures: r.captures,
+        imagesStored: r.imagesStored,
+      };
+      await saveAssessment({ ...a, upload: r.alreadyUploaded && a.upload ? a.upload : receipt });
+      onSaved();
+      const unencrypted = r.imagesStored > 0 && r.imagesEncrypted === false;
+      setStatus({
+        ok: true,
+        text: r.alreadyUploaded
+          ? "This record was already on the research server. Nothing was stored twice."
+          : `Stored ${plural(r.captures, "capture")}, ${r.imagesStored} with eye images, and the result` +
+            (r.subjectCreated ? "." : `, as another visit for ${a.profile.datasetCode}.`) +
+            (unencrypted
+              ? " The server does not encrypt images at rest (EYEREF_STORAGE_KEY is not set)."
+              : ""),
+      });
+    } catch (e) {
+      const why = e instanceof ApiError ? e.message : (e as Error).message;
+      setStatus({ ok: false, text: `Not uploaded, and nothing was stored. ${why}` });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div>
+          <CardTitle>Upload to the research server</CardTitle>
+          <CardDescription>
+            Optional. Sends this record to the backend at <code>{s.apiUrl}</code> in one request, which stores
+            all of it or nothing. Requires written research consent; images only with separate image consent.
+          </CardDescription>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {a.upload && (
+          <p className="text-ink-2 flex gap-2 text-sm">
+            <CloudCheck className="text-ok mt-0.5 size-4 shrink-0" aria-hidden />
+            <span>
+              Stored on {a.upload.server} on {formatDateTime(a.upload.at)}:{" "}
+              {plural(a.upload.captures, "capture")}, {a.upload.imagesStored} with eye images. Ground truth
+              added after that stays on this device.
+            </span>
+          </p>
+        )}
+        <Switch
+          checked={consentResearch}
+          onChange={setConsentResearch}
+          label="Signed research consent on file"
+          description="For this person and this visit. The server refuses to store anything without it."
+        />
+        <Switch
+          checked={consentImages}
+          onChange={setConsentImages}
+          label="Separate consent to store eye images"
+          description={
+            crops
+              ? `Without it, only features, quality and metadata are uploaded. This record holds ${plural(crops, "eye image")}.`
+              : "This record holds no eye images, so only features, quality and metadata are uploaded."
+          }
+        />
+        <Button onClick={upload} disabled={!consentResearch || busy || !a.profile.datasetCode}>
+          {busy ? <Loader2 className="animate-spin" /> : <CloudUpload />} Upload record
+        </Button>
+        {!a.profile.datasetCode && (
+          <p className="text-muted text-xs">Assign a pseudonymous subject code above first.</p>
+        )}
+        <p role="status" className={cn("text-sm", status?.ok === false ? "text-bad" : "text-ink-2")}>
+          {status?.text}
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+export default function DatasetPage() {
+  const { items, reload } = useAssessments();
+  const [incSim, setIncSim] = useState(false);
+  const [selId, setSelId] = useState<string | null>(null);
   const list = useMemo(() => (items ?? []).filter((a) => incSim || !a.report.simulated), [items, incSim]);
   const sel = list.find((a) => a.id === selId) ?? list[0] ?? null;
   const rows = useMemo(() => pairRows(list), [list]);
@@ -122,56 +225,6 @@ export default function DatasetPage() {
   const update = async (a: StoredAssessment, patch: Partial<StoredAssessment>) => {
     await saveAssessment({ ...a, ...patch });
     reload();
-  };
-
-  const upload = async (a: StoredAssessment) => {
-    const conn = connOf(s);
-    setBusy(true);
-    const out: string[] = [];
-    const say = (m: string) => (out.push(m), setLog([...out]));
-    try {
-      const code = a.profile.datasetCode;
-      if (!code) throw new Error("Assign a pseudonymous subject code first.");
-      const subj = await api.createSubject(conn, {
-        code,
-        ageGroup: a.profile.ageGroup,
-        consentResearch,
-        consentImageStorage: consentImages,
-        consentVersion: "eyeref-consent-1.0",
-        wearsCorrection: a.profile.wearsCorrection,
-      });
-      say(`Subject ${code} created.`);
-      for (const g of a.groundTruth ?? []) await api.addGroundTruth(conn, subj.id, g);
-      say(`${a.groundTruth?.length ?? 0} ground-truth entries uploaded.`);
-      const ses = await api.createSession(conn, {
-        subjectId: subj.id,
-        deviceId: a.report.provenance.deviceProfile,
-        protocolVersion: PROTOCOL_VERSION,
-        simulated: a.report.simulated,
-      });
-      let n = 0;
-      let imgs = 0;
-      for (const f of a.frames) {
-        const image = consentImages && f.cropDataUrl ? await (await fetch(f.cropDataUrl)).blob() : undefined;
-        const r = await api.addCapture(conn, ses.id, {
-          metadata: f.metadata,
-          features: f.features,
-          quality: f.quality,
-          image,
-        });
-        n++;
-        if (r.imageStored) imgs++;
-      }
-      say(
-        `${n} captures uploaded (${imgs} with images${imgs ? ", encrypted at rest if the server key is set" : ""}).`,
-      );
-      await api.addPrediction(conn, ses.id, a.report);
-      say("Prediction with model version uploaded. Done.");
-    } catch (e) {
-      say(`Failed: ${e instanceof ApiError ? `${e.status} ${e.message}` : (e as Error).message}`);
-    } finally {
-      setBusy(false);
-    }
   };
 
   return (
@@ -237,6 +290,7 @@ export default function DatasetPage() {
             >
               <div className="flex items-center gap-2 font-medium">
                 {a.report.simulated && <FlaskConical className="text-sim size-3.5" />}
+                {a.upload && <CloudCheck className="text-ok size-3.5" role="img" aria-label="Uploaded" />}
                 {a.profile.datasetCode ?? <span className="text-warn">no code</span>}
                 <span className="text-muted text-xs font-normal">{a.profile.label}</span>
               </div>
@@ -328,46 +382,7 @@ export default function DatasetPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <div>
-                  <CardTitle>Upload to the research server</CardTitle>
-                  <CardDescription>
-                    Optional. Sends this record to the backend at <code>{s.apiUrl}</code>. Requires written
-                    research consent; images only with separate image consent.
-                  </CardDescription>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Switch
-                  checked={consentResearch}
-                  onChange={setConsentResearch}
-                  label="Signed research consent on file"
-                  description="The server refuses to store anything without it."
-                />
-                <Switch
-                  checked={consentImages}
-                  onChange={setConsentImages}
-                  label="Separate consent to store eye images"
-                  description="Without it, only features, quality and metadata are uploaded."
-                />
-                <Button
-                  onClick={() => upload(sel)}
-                  disabled={!consentResearch || busy || !sel.profile.datasetCode}
-                >
-                  {busy ? <Loader2 className="animate-spin" /> : <CloudUpload />} Upload record
-                </Button>
-                {log.length > 0 && (
-                  <ul className="bg-surface-2 space-y-1 rounded-lg p-3 text-xs">
-                    {log.map((l, i) => (
-                      <li key={i} className={l.startsWith("Failed") ? "text-bad" : "text-ink-2"}>
-                        {l}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </CardContent>
-            </Card>
+            <UploadCard key={sel.id} record={sel} onSaved={reload} />
           </div>
         )}
       </div>

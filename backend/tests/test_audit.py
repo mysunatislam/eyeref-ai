@@ -89,7 +89,7 @@ def test_every_change_and_read_is_recorded_once_with_who_did_it(client):
     details = [e["details"] for e in events]
     assert details[0] == {"device_id": "lab-phone", "calibration_version": "lab-2026-10"}
     assert details[1] == {"consent_research": True, "consent_image_storage": True, "consent_version": "v2"}
-    assert details[2] == {"ground_truth_id": gt["id"], "eye": "OD", "method": "autorefractor"}
+    assert details[2] == {"ground_truth_id": gt["id"], "session_id": None, "eye": "OD", "method": "autorefractor"}
     assert details[3] == {"session_id": ses, "device_id": "generic-phone-rear", "simulated": False}
     assert details[4] == {"session_id": ses, "capture_id": with_image["id"], "eye": "OD", "image_stored": True}
     assert details[5] == {"session_id": ses, "capture_id": without["id"], "eye": "OD", "image_stored": False}
