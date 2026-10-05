@@ -13,6 +13,8 @@ import { processFrame } from "../inference/pipeline";
 import { makeSubject, SIM_DEVICE, simulateFrame } from "../simulation/session";
 import type { FrameRecord } from "../types";
 
+const FIXTURE_TIME = "2026-01-01T00:00:00.000Z";
+
 describe("API boundary", () => {
   it("keeps upper-case keys and round-trips camel/snake", () => {
     const x = { seCi95: [1, 2], powerVector: { M: 1, J0: 2, J45: 3 }, eyes: { OD: { nUsableFrames: 1 } } };
@@ -46,7 +48,9 @@ describe("API boundary", () => {
     expect(rep.simulated).toBe(true);
     const dir = resolve(__dirname, "../../../../../shared/fixtures");
     mkdirSync(dir, { recursive: true });
-    writeFileSync(resolve(dir, "web_report.sample.json"), JSON.stringify(snake(slimReport(rep)), null, 1));
-    writeFileSync(resolve(dir, "web_frame.sample.json"), JSON.stringify(snake(frames[0]), null, 1));
+    // fixed timestamps keep the committed fixtures stable from run to run
+    const pin = (_k: string, v: unknown) => (_k === "timestamp" ? FIXTURE_TIME : v);
+    writeFileSync(resolve(dir, "web_report.sample.json"), JSON.stringify(snake(slimReport(rep)), pin, 1));
+    writeFileSync(resolve(dir, "web_frame.sample.json"), JSON.stringify(snake(frames[0]), pin, 1));
   });
 });
