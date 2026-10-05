@@ -44,6 +44,7 @@ first, then astigmatism later.
 | Device rotation (meridian) from the tilt sensor | **PARTIALLY WORKING** | Sign convention for a rear camera aimed at a subject must be bench-verified |
 | Printable referral report (one A4 page, or save as PDF) | **WORKING** | Gated output only: never prints SPH/CYL/AXIS. Simulated data is watermarked. A browser test checks that it fits one page in light colours |
 | Encrypted backup and restore of on-device history | **WORKING** | AES-256-GCM with a passphrase key (PBKDF2-SHA-256, 600,000 iterations), entirely in the browser. Restore never overwrites and rejects records that mix simulated and real data |
+| On-device data care: eye-image retention, storage protection, backup reminder | **WORKING** | Eye images can be deleted on their own or expire after 7, 30 or 90 days, keeping results; the limit covers records from older versions too and is applied each time the app opens. The browser is asked to keep the data only when the user taps the button |
 | Simulation Mode, simulator, synthetic dataset | **SIMULATED** | Always labelled |
 | Model comparison (physics, ridge, poly, RF, GBM, hybrid NN, hybrid CNN), conformal intervals, subject-level and leave-device-out splits | **SIMULATED** | Trained and evaluated on synthetic data only |
 | Learned estimator for real eyes | **REQUIRES TRAINING DATA** | Exported ONNX models are tagged `trained_on_simulated` and **refuse** real frames |
@@ -138,7 +139,8 @@ scripts/         export_schemas.py, run-all.sh
 
 - Analysis happens on the device. Nothing is uploaded unless an investigator uploads a consented record.
 - Landmarks are used only for geometry. There is no face recognition.
-- Eye crops are stored locally only with consent, and they can be deleted from History.
+- Eye crops are stored locally only with consent. History can delete them on their own, keeping the
+  results, or remove them automatically once they are 7, 30 or 90 days old.
 - Plain JSON exports leave eye images out. A backup keeps them only inside a file encrypted on the
   device with the user's passphrase, which EyeRef never sees.
 - The server refuses to store data without research consent, and refuses images without separate

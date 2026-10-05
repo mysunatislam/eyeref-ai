@@ -6,41 +6,34 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/field";
 import { Switch } from "@/components/ui/switch";
+import { useSettings } from "@/lib/settings";
 import {
   BackupError,
   countImages,
   decryptBackup,
   encryptBackup,
+  lastBackupSummary,
   MIN_PASSPHRASE_LENGTH,
   planRestore,
   readBackupFile,
   withoutImages,
   type BackupFile,
 } from "@/lib/storage/backup";
-import { addAssessments, listIds } from "@/lib/storage/db";
+import { addAssessments, listIds, removeExpiredImages } from "@/lib/storage/db";
 import type { StoredAssessment } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { plural } from "@/lib/utils";
+import { type Status, StatusLine } from "./StatusLine";
 
-type Status = { tone: "ok" | "bad"; text: string } | null;
-
-const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 const message = (e: unknown) =>
   e instanceof BackupError ? e.message : "Something went wrong. Nothing was changed.";
-
-function StatusLine({ status }: { status: Status }) {
-  return (
-    <p role="status" className={cn("min-h-4 text-xs", status?.tone === "bad" ? "text-bad" : "text-ok")}>
-      {status?.text}
-    </p>
-  );
-}
 
 /**
  * Encrypted backups of this device's history, and restoring them on any device. The
  * passphrase never leaves the browser, and EyeRef cannot recover it.
  */
-export function BackupRestore({ items, onRestored }: { items: StoredAssessment[]; onRestored: () => void }) {
+export function BackupRestore({ items }: { items: StoredAssessment[] }) {
   const ids = useId();
+  const [settings, setSettings] = useSettings();
   const [pass, setPass] = useState("");
   const [confirm, setConfirm] = useState("");
   const [images, setImages] = useState(true);
@@ -67,6 +60,7 @@ export function BackupRestore({ items, onRestored }: { items: StoredAssessment[]
       const b = await encryptBackup(chosen, pass);
       const day = b.createdAt.slice(0, 10);
       download(new Blob([JSON.stringify(b)], { type: "application/json" }), `eyeref-backup-${day}.json`);
+      setSettings({ lastBackupAt: b.createdAt });
       setPass("");
       setConfirm("");
       setBackupStatus({
@@ -101,15 +95,21 @@ export function BackupRestore({ items, onRestored }: { items: StoredAssessment[]
         file.kind === "encrypted" ? await decryptBackup(file.backup, restorePass) : file.export;
       const plan = planRestore(exported, (await listIds()).map(String));
       await addAssessments(plan.add);
+      // Restored eye images follow this device's retention setting like any others.
+      const days = settings.imageRetentionDays;
+      const expired = days !== null && plan.add.length ? await removeExpiredImages(days) : 0;
       const parts = [`Restored ${plural(plan.add.length, "assessment")}.`];
       if (plan.duplicates) parts.push(`${plural(plan.duplicates, "was", "were")} already on this device.`);
       if (plan.rejected)
         parts.push(
           `${plural(plan.rejected, "item")} could not be read and ${plan.rejected === 1 ? "was" : "were"} skipped.`,
         );
+      if (expired)
+        parts.push(
+          `${plural(expired, "eye image")} older than ${days} days ${expired === 1 ? "was" : "were"} removed, following your eye-image setting.`,
+        );
       setRestoreStatus({ tone: plan.add.length || plan.duplicates ? "ok" : "bad", text: parts.join(" ") });
       setRestorePass("");
-      onRestored();
     } catch (e) {
       setRestoreStatus({ tone: "bad", text: message(e) });
     } finally {
@@ -137,9 +137,12 @@ export function BackupRestore({ items, onRestored }: { items: StoredAssessment[]
             if (canBackup) void backup();
           }}
         >
-          <h4 id={`${ids}-b`} className="text-ink flex items-center gap-2 text-sm font-medium">
-            <LockKeyhole className="size-4" /> Back up {plural(items.length, "assessment")}
-          </h4>
+          <div>
+            <h4 id={`${ids}-b`} className="text-ink flex items-center gap-2 text-sm font-medium">
+              <LockKeyhole className="size-4" /> Back up {plural(items.length, "assessment")}
+            </h4>
+            <p className="text-muted mt-1 text-xs">{lastBackupSummary(settings.lastBackupAt, items)}</p>
+          </div>
           <Field
             label="Passphrase"
             hint={passError ?? `At least ${MIN_PASSPHRASE_LENGTH} characters. A few random words work well.`}

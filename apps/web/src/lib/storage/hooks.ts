@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { StoredAssessment } from "../types";
 import { isValidAssessment } from "./backup";
-import { getAssessment, listAssessments } from "./db";
+import { getAssessment, listAssessments, onAssessmentsChanged } from "./db";
 
 export type LoadedAssessment =
   | { status: "loading" }
@@ -38,6 +38,7 @@ export function useAssessment(id: string | null): LoadedAssessment {
   return state;
 }
 
+/** Every readable assessment, loaded again whenever this tab changes what is stored. */
 export function useAssessments() {
   const [state, setState] = useState<{ items: StoredAssessment[]; unreadable: number } | null>(null);
   const reload = useCallback(() => {
@@ -46,5 +47,6 @@ export function useAssessments() {
       .catch(() => setState({ items: [], unreadable: 0 }));
   }, []);
   useEffect(reload, [reload]);
+  useEffect(() => onAssessmentsChanged(reload), [reload]);
   return { items: state?.items ?? null, unreadable: state?.unreadable ?? 0, reload };
 }

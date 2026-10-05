@@ -4,6 +4,7 @@
  */
 import type { StoredAssessment } from "../types";
 import { isValidAssessment, plainExport, withoutImages } from "./backup";
+import { imagesIn, isExpired, withoutCrops } from "./retention";
 
 const DB_NAME = "eyeref";
 const STORE = "assessments";
@@ -34,10 +35,24 @@ async function tx<T>(mode: IDBTransactionMode, fn: (s: IDBObjectStore) => IDBReq
   });
 }
 
-export const saveAssessment = (a: StoredAssessment) => tx("readwrite", (s) => s.put(a));
+const listeners = new Set<() => void>();
+
+/** Calls `listener` whenever this tab changes the stored assessments. Returns the unsubscribe. */
+export function onAssessmentsChanged(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+async function write<T>(fn: (s: IDBObjectStore) => IDBRequest<T>): Promise<T> {
+  const result = await tx("readwrite", fn);
+  listeners.forEach((l) => l());
+  return result;
+}
+
+export const saveAssessment = (a: StoredAssessment) => write((s) => s.put(a));
 export const getAssessment = (id: string) => tx<StoredAssessment | undefined>("readonly", (s) => s.get(id));
-export const deleteAssessment = (id: string) => tx("readwrite", (s) => s.delete(id));
-export const clearAssessments = () => tx("readwrite", (s) => s.clear());
+export const deleteAssessment = (id: string) => write((s) => s.delete(id));
+export const clearAssessments = () => write((s) => s.clear());
 
 /**
  * Every readable assessment, newest first, with a count of the records that could not be read
@@ -56,11 +71,50 @@ export async function addAssessments(items: StoredAssessment[]): Promise<void> {
     const t = db.transaction(STORE, "readwrite");
     const s = t.objectStore(STORE);
     for (const a of items) s.add(a);
-    t.oncomplete = () => resolve();
+    t.oncomplete = () => {
+      resolve();
+      listeners.forEach((l) => l());
+    };
     t.onerror = () => reject(t.error);
     t.onabort = () => reject(t.error);
   });
 }
+
+/**
+ * Removes the eye images of every stored record `select` picks, keeping results, in one
+ * transaction. Records this version cannot read are included, so a privacy limit covers all
+ * that is stored. Resolves to the number of images removed.
+ */
+async function removeImages(select: (record: unknown) => boolean): Promise<number> {
+  const db = await open();
+  const removed = await new Promise<number>((resolve, reject) => {
+    let n = 0;
+    const t = db.transaction(STORE, "readwrite");
+    const cursor = t.objectStore(STORE).openCursor();
+    cursor.onsuccess = () => {
+      const c = cursor.result;
+      if (!c) return;
+      const stripped = select(c.value) ? withoutCrops(c.value) : null;
+      if (stripped) {
+        n += imagesIn(c.value);
+        c.update(stripped);
+      }
+      c.continue();
+    };
+    t.oncomplete = () => resolve(n);
+    t.onerror = () => reject(t.error);
+    t.onabort = () => reject(t.error);
+  });
+  if (removed) listeners.forEach((l) => l());
+  return removed;
+}
+
+/** Deletes every stored eye image. Results stay. */
+export const removeAllImages = () => removeImages(() => true);
+
+/** Deletes eye images from assessments made more than `days` days ago. Results stay. */
+export const removeExpiredImages = (days: number, now = Date.now()) =>
+  removeImages((r) => isExpired(r, days, now));
 
 export const listIds = () => tx<IDBValidKey[]>("readonly", (s) => s.getAllKeys());
 

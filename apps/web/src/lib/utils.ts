@@ -20,3 +20,6 @@ export const AGE_LABEL: Record<string, string> = {
   adult_60_plus: "Adult 60+",
   unknown: "Not provided",
 };
+
+/** "1 image", "3 images"; pass the plural form when it is not just an added "s". */
+export const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;

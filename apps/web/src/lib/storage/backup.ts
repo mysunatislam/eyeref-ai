@@ -51,6 +51,22 @@ export function withoutImages(items: StoredAssessment[]): StoredAssessment[] {
 export const countImages = (items: StoredAssessment[]) =>
   items.reduce((n, a) => n + a.frames.filter((f) => !!f.cropDataUrl).length, 0);
 
+/**
+ * When this device last made a backup, and how many assessments were saved after it, in words:
+ * "Last backup yesterday. 2 assessments saved since."
+ */
+export function lastBackupSummary(lastBackupAt: string | null, items: StoredAssessment[], now = new Date()) {
+  const last = lastBackupAt ? new Date(lastBackupAt) : null;
+  if (!last || Number.isNaN(last.getTime())) return "Not backed up from this device yet.";
+  // calendar days, so a backup late last night reads "yesterday"
+  const day = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const days = Math.round((day(now) - day(last)) / 86_400_000);
+  const when = new Intl.RelativeTimeFormat("en", { numeric: "auto" }).format(-Math.max(0, days), "day");
+  const since = items.filter((a) => Date.parse(a.createdAt) > last.getTime()).length;
+  const n = (k: number) => `${k} ${k === 1 ? "assessment" : "assessments"}`;
+  return `Last backup ${when}.${since ? ` ${n(since)} saved since.` : ""}`;
+}
+
 export function plainExport(items: StoredAssessment[], exportedAt = new Date()): PlainExport {
   return { format: EXPORT_FORMAT, exportedAt: exportedAt.toISOString(), items };
 }
