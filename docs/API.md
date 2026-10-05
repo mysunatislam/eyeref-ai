@@ -23,7 +23,7 @@ export EYEREF_ENV=production   # refuse to start without tokens or an image-encr
 - Several comma-separated tokens can be active at once, so a token can be rotated without downtime.
   Tokens shorter than 24 characters are refused at startup.
 - Tokens are compared in constant time and never appear in logs or in the config's repr.
-- In the web app, paste the token under Calibration → Settings. It is stored on that device only.
+- In the web app, paste the token under Calibration → App settings. It is stored on that device only.
 - With no tokens in development (the default), auth is off and `/health` reports `"auth": "disabled"`.
 
 ## Meta

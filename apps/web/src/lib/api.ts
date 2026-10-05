@@ -55,15 +55,15 @@ async function call<T>(conn: ApiConn, path: string, init: RequestInit = {}): Pro
   } catch {
     throw new ApiError(
       0,
-      `Backend not reachable at ${conn.url}. Start it with \`make backend\` or check Settings.`,
+      `Backend not reachable at ${conn.url}. Start it with \`make backend\` or check Calibration → App settings.`,
     );
   }
   if (res.status === 401) {
     throw new ApiError(
       401,
       conn.token
-        ? "The research backend rejected the access token. Check it in Calibration → Settings."
-        : "The research backend needs an access token. Add it in Calibration → Settings.",
+        ? "The research backend rejected the access token. Check it in Calibration → App settings."
+        : "The research backend needs an access token. Add it in Calibration → App settings.",
     );
   }
   if (!res.ok) {
