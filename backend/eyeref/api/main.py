@@ -15,6 +15,8 @@ import csv
 import io
 import json
 import os
+import statistics
+from collections.abc import Iterable
 from datetime import UTC, datetime
 from typing import Any, Literal, Optional, TypeVar
 
@@ -181,6 +183,11 @@ def visit_references(ses: m.CaptureSession) -> dict[tuple[str, str], m.GroundTru
         if gt.session_id == ses.id or (gt.session_id is None and only_visit):
             picked[(gt.eye, gt.method)] = gt
     return picked
+
+
+def median_of(values: Iterable[Optional[float]]) -> Optional[float]:
+    known = [v for v in values if v is not None]
+    return statistics.median(known) if known else None
 
 
 def reference_columns(refs: dict[tuple[str, str], m.GroundTruth], eye: str) -> dict[str, Any]:
@@ -662,13 +669,17 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
             if ses.simulated and not include_simulated:
                 continue
             refs = visit_references(ses)
+            subj = ses.subject
             for eye in sorted({c.eye for c in ses.captures} | {p.eye for p in ses.predictions}):
+                captures = [c for c in ses.captures if c.eye == eye]
                 row: dict[str, Any] = {
-                    "subject_code": ses.subject.code, "subject_id": ses.subject_id, "age_group": ses.subject.age_group,
-                    "site": ses.subject.site, "session_id": ses.id, "session_started_at": utc(ses.started_at).isoformat(),
+                    "subject_code": subj.code, "subject_id": subj.id, "age_group": subj.age_group, "sex": subj.sex,
+                    "iris_color": subj.iris_color, "pigmentation": subj.fitzpatrick_or_pigmentation, "site": subj.site,
+                    "session_id": ses.id, "session_started_at": utc(ses.started_at).isoformat(),
                     "device_id": ses.device_id, "protocol_version": ses.protocol_version, "cycloplegia": ses.cycloplegia,
                     "condition_label": ses.condition_label, "simulated": ses.simulated, "eye": eye,
-                    "n_captures": sum(c.eye == eye for c in ses.captures), **reference_columns(refs, eye),
+                    "n_captures": len(captures), "pupil_mm": median_of(c.pupil_diameter_mm for c in captures),
+                    "distance_m": median_of(c.working_distance_m for c in captures), **reference_columns(refs, eye),
                 }
                 results = sorted((p for p in ses.predictions if p.eye == eye), key=lambda p: (utc(p.created_at), p.id))
                 # an eye photographed without a result still gets a row: the protocol reports every eye that entered it

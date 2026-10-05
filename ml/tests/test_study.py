@@ -11,14 +11,16 @@ from eyeref.optics.power_vector import SphCylAxis, to_corneal_plane
 from eyeref_ml.evaluation.study import (
     StudyError,
     _auc,
+    calibration,
     main,
     prepare,
     repeatability,
+    roc_curve,
     study_metrics,
     study_report,
     subject_bootstrap,
 )
-from sklearn.metrics import roc_auc_score
+from sklearn import metrics
 
 
 def _eye(subject, eye="OD", visit=None, day="2026-09-01", outcome="quantitative", pred=-1.0, ref=-1.0, **extra):
@@ -85,6 +87,8 @@ def test_every_eye_that_entered_the_protocol_is_counted_by_outcome():
     m = _metrics(rows)
     assert [m[f"outcomes/{o}"] for o in ("quantitative", "screening", "repeat", "protocol_failure")] == [
         0.2, 0.2, 0.2, 0.4]
+    n = study_report(pd.DataFrame(rows), n_boot=0)["n"]
+    assert [n[o] for o in ("quantitative", "screening", "repeat", "protocol_failure")] == [1, 1, 1, 2]
 
 
 def test_agreement_is_over_eyes_given_a_number_against_the_chosen_reference():
@@ -121,11 +125,17 @@ def test_sphere_cylinder_and_axis_are_compared_only_where_the_gate_released_them
 
 
 def test_subgroups_report_release_and_agreement_separately():
-    rows = [_eye(f"s{i}", pred=-8.5, ref=-8.0, device_id="phone-a") for i in range(4)]
-    rows += [_eye(f"t{i}", pred=-1.0, ref=-1.0, device_id="phone-b") for i in range(4)]
-    rows += [_eye(f"u{i}", outcome="repeat", ref=-1.0, device_id="phone-b") for i in range(4)]
+    rows = [_eye(f"s{i}", pred=-8.5, ref=-8.0, device_id="phone-a", pupil_mm=3.5, distance_m=1.0, iris_color="blue")
+            for i in range(4)]
+    rows += [_eye(f"t{i}", pred=-1.0, ref=-1.0, device_id="phone-b", distance_m=1.5) for i in range(4)]
+    rows += [_eye(f"u{i}", outcome="repeat", ref=-1.0, device_id="phone-b", distance_m=1.5) for i in range(4)]
     m = _metrics(rows)
     assert (m["subgroups/device_id/phone-a/released"], m["subgroups/device_id/phone-b/released"]) == (1.0, 0.5)
+    assert m["subgroups/pupil_band/4 mm or less/released"] == 1.0
+    assert (m["subgroups/distance_band/0.9 to 1.1 m/released"], m["subgroups/distance_band/1.4 to 1.6 m/released"]) == (
+        1.0, 0.5)
+    assert m["subgroups/iris_color/blue/released"] == 1.0
+    assert not any(k.startswith("subgroups/sex/") for k in m)  # not collected, so no subgroup
     assert m["subgroups/refractive_range/-6 or less/bias"] == pytest.approx(-8.5 / 1.102 + 8 / 1.096)  # at the cornea
     assert m["subgroups/refractive_range/-3 to -0.5/bias"] == pytest.approx(0.0)
 
@@ -148,13 +158,49 @@ def test_screening_counts_every_eye_and_refers_those_that_could_not_be_screened(
     m = _metrics(rows)
     assert (m["screening/myopia_0_50/sensitivity"], m["screening/myopia_0_50/specificity"]) == (1.0, 0.5)
     assert m["screening/myopia_0_50/prevalence"] == 0.5
+    assert study_report(pd.DataFrame(rows), n_boot=0)["n"]["screening_tables"]["myopia_0_50"] == {
+        "true_positive": 2, "false_positive": 1, "false_negative": 0, "true_negative": 1, "not_screened": 2}
 
 
-def test_the_roc_area_matches_scikit_learn_with_ties():
+def test_astigmatism_is_screened_at_the_products_own_referral_probability():
+    def astigmat(i, cyl, p):
+        return _eye(f"s{i}", pred=-1.0, ref=-1.0, gt_autorefractor_cyl=cyl, gt_autorefractor_axis=180.0,
+                    gt_autorefractor_sph=-1.0 - cyl / 2, p_astigmatism=p)
+
+    rows = [astigmat(0, -0.75, 0.8),  # found: 0.75 D is the adult threshold, and counts
+            astigmat(1, -1.5, 0.6),  # missed: 0.6 is below the 0.7 referral
+            astigmat(2, 0.0, 0.1), astigmat(3, 0.0, None)]  # passed; not assessed, so referred
+    m = _metrics(rows)
+    assert (m["screening/astigmatism/sensitivity"], m["screening/astigmatism/specificity"]) == (0.5, 0.5)
+    assert study_report(pd.DataFrame(rows), n_boot=0)["n"]["screening_tables"]["astigmatism"]["not_screened"] == 1
+    # its probability is calibrated over the eyes given one: |0.8 - 1|, |0.6 - 1| and |0.1 - 0|
+    assert m["calibration/astigmatism/ece"] == pytest.approx(0.7 / 3)
+
+
+def test_calibration_compares_predicted_and_observed_frequency():
+    rng = np.random.default_rng(4)
+    p = rng.random(4000)
+    table = calibration(rng.random(4000) < p, p)  # outcomes drawn at exactly the predicted rate
+    assert [b["from"] for b in table] == pytest.approx([b / 10 for b in range(10)])
+    assert all(abs(b["observed"] - b["predicted"]) < 0.05 for b in table)
+    assert calibration(np.array([True, True, False, False]), np.array([0.05, 0.05, 0.95, 0.95])) == [
+        {"from": 0.0, "to": 0.1, "eyes": 2, "predicted": 0.05, "observed": 1.0},
+        {"from": 0.9, "to": 1.0, "eyes": 2, "predicted": 0.95, "observed": 0.0}]
+    rows = [_eye(f"s{i}", pred=-2.0, ref=-2.0 if i % 2 else 0.0, p_myopia=0.9) for i in range(8)]
+    assert _metrics(rows)["calibration/myopia/ece"] == pytest.approx(0.4)  # says 90%, half are myopes
+
+
+def test_the_roc_curve_and_its_area_match_scikit_learn_with_ties():
     rng = np.random.default_rng(2)
     truth = rng.random(300) < 0.3
     score = np.round(rng.random(300) + 0.3 * truth, 1)  # rounded, so many scores tie
-    assert _auc(truth, score) == pytest.approx(roc_auc_score(truth, score))
+    assert _auc(truth, score) == pytest.approx(metrics.roc_auc_score(truth, score))
+    fpr, tpr, thresholds = metrics.roc_curve(truth, score, drop_intermediate=False)
+    curve = roc_curve(truth, score)
+    assert [c["refer_from"] for c in curve] == pytest.approx(thresholds[1:])  # sklearn starts above every score
+    assert [c["sensitivity"] for c in curve] == pytest.approx(tpr[1:])
+    assert [1 - c["specificity"] for c in curve] == pytest.approx(fpr[1:])
+    assert roc_curve(np.ones(3, bool), np.array([0.1, 0.5, 0.9])) == []  # no curve without both classes
 
 
 def test_anisometropia_is_screened_per_visit():
@@ -215,8 +261,15 @@ def test_the_command_line_writes_the_report_and_a_summary(tmp_path, capsys):
     assert report["n"]["subjects"] == 30 and report["n"]["eyes_compared"] == 60
     bias = report["metrics"]["agreement"]["se"]["bias"]
     assert bias["ci95"][0] <= bias["value"] <= bias["ci95"][1]
+    myopes = sum(r["gt_autorefractor_se"] <= -0.5 for r in rows)
+    table = report["n"]["screening_tables"]["myopia_0_50"]
+    assert table["true_positive"] + table["false_negative"] == myopes
+    assert report["roc_curves"]["myopia_0_50"][-1]["sensitivity"] == 1.0  # referring everyone finds every myope
+    assert sum(b["eyes"] for b in report["calibration_tables"]["myopia"]) == 60
     text = capsys.readouterr().out
     assert "60 eyes" in text and "limits of agreement" in text and "Repeatability" not in text
+    assert "Outcomes: quantitative 60 (100% [100% to 100%]), screening 0 (0% [0% to 0%])" in text
+    assert f"Myopia (SE -0.50 D or less): {myopes} of 60 eyes with it, 0 referred unscreened" in text
 
     assert main([str(path), "--reference", "lensmeter"]) == 2
     assert "reference must be" in capsys.readouterr().err

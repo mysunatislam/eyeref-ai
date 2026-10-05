@@ -6,8 +6,12 @@ confidence interval from a bootstrap over subjects:
 
 * intention to screen: every eye that entered the protocol, by outcome;
 * agreement with one reference method, for the eyes given a number;
-* screening accuracy, with every eye counted;
-* repeatability, from the same eye measured more than once on the same day.
+* screening accuracy for myopia, hyperopia, astigmatism and anisometropia, with every eye counted, its
+  2x2 table and its ROC curve;
+* calibration of the class probabilities: a reliability table and the expected calibration error;
+* repeatability, from the same eye measured more than once on the same day;
+* release and agreement by device, age, refractive range, pupil size, distance, iris colour, pigmentation
+  and sex.
 
     python -m eyeref_ml.evaluation.study eyeref_eyes.csv --reference autorefractor --out study.json
 """
@@ -38,10 +42,20 @@ REFERENCE_PRIORITY = ("cycloplegic", "subjective", "autorefractor", "retinoscopy
 OUTCOMES = ("quantitative", "screening", "repeat", "protocol_failure")
 SCREENED = ("quantitative", "screening")
 NUMERIC = ("pred_se", "pred_se_ci_low", "pred_se_ci_high", "pred_j0", "pred_j45", "pred_sph", "pred_cyl", "pred_axis",
-           "p_myopia", "p_hyperopia", "p_anisometropia", "n_usable_frames")
-#: Subgroups the protocol reports, and the refractive-range bands (of the reference SE, D).
-SUBGROUPS = ("device_id", "age_group", "refractive_range")
-RANGES = ([-99, -6, -3, -0.5, 0.5, 3, 99], ["-6 or less", "-6 to -3", "-3 to -0.5", "-0.5 to +0.5", "+0.5 to +3", "over +3"])
+           "p_myopia", "p_hyperopia", "p_astigmatism", "p_anisometropia", "n_usable_frames", "pupil_mm", "distance_m")
+#: The product refers for astigmatism at this probability ("astigmatism likely"); for the rest at 0.5.
+ASTIGMATISM_REFERRAL = 0.7
+#: Subgroups the protocol reports, and the bands some of them are cut into.
+SUBGROUPS = ("device_id", "age_group", "refractive_range", "pupil_band", "distance_band", "iris_color", "pigmentation",
+             "sex")
+BANDS = {
+    "refractive_range": ("ref_se", [-99, -6, -3, -0.5, 0.5, 3, 99],
+                         ["-6 or less", "-6 to -3", "-3 to -0.5", "-0.5 to +0.5", "+0.5 to +3", "over +3"]),
+    "pupil_band": ("pupil_mm", [0, 4, 5, 6, 7, 99], ["4 mm or less", "4 to 5 mm", "5 to 6 mm", "6 to 7 mm", "over 7 mm"]),
+    # the protocol captures at 1.0 m and 1.5 m
+    "distance_band": ("distance_m", [0, 0.9, 1.1, 1.4, 1.6, 99],
+                      ["0.9 m or less", "0.9 to 1.1 m", "1.1 to 1.4 m", "1.4 to 1.6 m", "over 1.6 m"]),
+}
 #: Above this |M| of the reference, both sides are compared at the cornea (the protocol's representation rule).
 CORNEAL_PLANE_ABOVE_D = 4.0
 DEFAULT_VERTEX_MM = 12.0
@@ -126,7 +140,7 @@ def prepare(export: pd.DataFrame, reference: str = "autorefractor", model_versio
     if export.empty:
         raise StudyError("the export has no eyes")
     df = export.copy()
-    for col in ("output_level", "model_version", "predicted_at", "device_id", *NUMERIC):
+    for col in ("output_level", "model_version", "predicted_at", *(g for g in SUBGROUPS if g not in BANDS), *NUMERIC):
         if col not in df:
             df[col] = None  # a column no row had
     for col in NUMERIC:
@@ -163,10 +177,14 @@ def prepare(export: pd.DataFrame, reference: str = "autorefractor", model_versio
     df = df.join(refs)
     df["outcome"] = [_outcome(r) for _, r in df.iterrows()]
     df["screened"] = df["outcome"].isin(SCREENED)
-    df["hyperopia_from"] = [thresholds_for_age(a).hyperopia_se for a in df["age_group"].fillna("unknown")]
+    limits = [thresholds_for_age(a) for a in df["age_group"].fillna("unknown")]
+    df["myopia_from"] = [t.myopia_se for t in limits]
+    df["hyperopia_from"] = [t.hyperopia_se for t in limits]
+    df["astigmatism_from"] = [t.astigmatism_cyl for t in limits]
     df["visit_day"] = pd.to_datetime(df["session_started_at"], utc=True, format="ISO8601").dt.strftime("%Y-%m-%d")
     df["ref_se"] = df["ref_sph"] + df["ref_cyl"] / 2
-    df["refractive_range"] = pd.cut(df["ref_se"], RANGES[0], labels=RANGES[1]).astype(object)
+    for band, (col, edges, labels) in BANDS.items():
+        df[band] = pd.cut(df[col], edges, labels=labels).astype(object)
     compare = df["ref_method"].notna() & (df["outcome"] == "quantitative") & df["pred_se"].notna()
     cmp = pd.DataFrame([_compared(r) for _, r in df[compare].iterrows()], index=df.index[compare])
     for col in ("m", "j0", "j45", "sph", "cyl", "axis"):
@@ -212,24 +230,72 @@ def _auc(truth: np.ndarray, score: np.ndarray) -> float:
     return float((ranks[truth].sum() - n1 * (n1 + 1) / 2) / (n1 * n0))
 
 
-def _screening(truth: np.ndarray, score: np.ndarray, screened: np.ndarray, threshold: float = 0.5) -> dict[str, float]:
-    """Every eye counts: one that could not be screened is referred, and scores 1 for the ROC."""
+def _scores(p: np.ndarray, screened: np.ndarray) -> np.ndarray:
+    """Every eye counts: one that could not be screened, or was given no probability, is referred and scores
+    1 for the ROC."""
+    return np.where(screened & np.isfinite(p), p, 1.0)
+
+
+def _screens(eyes: pd.DataFrame) -> dict[str, tuple[np.ndarray, np.ndarray, np.ndarray, float]]:
+    """Each screening question: the reference's answer, the product's probability, whether the eye was
+    screened, and the probability the product refers at. Per eye with a reference; for anisometropia, per
+    visit with a reference for both eyes."""
+    ref = eyes[eyes["ref_se"].notna()]
+    se, screened = ref["ref_se"].to_numpy(float), ref["screened"].to_numpy(bool)
+    cyl = ref["ref_cyl"].abs().to_numpy(float)
+
+    def p(col: str) -> np.ndarray:
+        return ref[col].to_numpy(float)
+
+    out = {"myopia_0_50": (se <= -0.5, p("p_myopia"), screened, 0.5),
+           "myopia_1_00": (se <= -1.0, p("p_myopia"), screened, 0.5),
+           "hyperopia": (se >= p("hyperopia_from"), p("p_hyperopia"), screened, 0.5),
+           "astigmatism": (cyl >= p("astigmatism_from"), p("p_astigmatism"), screened, ASTIGMATISM_REFERRAL)}
+    od = ref[ref["eye"] == "OD"].set_index("session_id")
+    os_ = ref[ref["eye"] == "OS"].set_index("session_id")
+    both = od.index.intersection(os_.index)
+    if len(both):
+        a, b = od.loc[both], os_.loc[both]
+        out["anisometropia"] = (((a["ref_se"] - b["ref_se"]).abs() >= 1.0).to_numpy(),
+                                np.fmax(a["p_anisometropia"].to_numpy(float), b["p_anisometropia"].to_numpy(float)),
+                                (a["screened"] & b["screened"]).to_numpy(bool), 0.5)
+    return out
+
+
+def cross_table(truth: np.ndarray, p: np.ndarray, screened: np.ndarray, threshold: float) -> dict[str, int]:
+    """The 2x2 table of referral against the reference (STARD 2015), and how many of the referred were
+    referred because the product could not screen them."""
+    refer, y = _scores(p, screened) >= threshold, truth.astype(bool)
+    return {"true_positive": int((refer & y).sum()), "false_positive": int((refer & ~y).sum()),
+            "false_negative": int((~refer & y).sum()), "true_negative": int((~refer & ~y).sum()),
+            "not_screened": int((~(screened & np.isfinite(p))).sum())}
+
+
+def roc_curve(truth: np.ndarray, score: np.ndarray) -> list[dict[str, float]]:
+    """Sensitivity and specificity when referring at each score an eye was given, highest first."""
+    y = truth.astype(bool)
+    if y.all() or not y.any():
+        return []
+    return [{"refer_from": float(t), "sensitivity": float((score[y] >= t).mean()),
+             "specificity": float((score[~y] < t).mean())} for t in np.unique(score)[::-1]]
+
+
+def _screening(truth: np.ndarray, p: np.ndarray, screened: np.ndarray, threshold: float = 0.5) -> dict[str, float]:
     if truth.size == 0:
         return {}
-    s = np.where(screened & np.isfinite(score), score, 1.0)
-    refer, y = s >= threshold, truth.astype(bool)
-    tp, fn = int((refer & y).sum()), int((~refer & y).sum())
-    tn, fp = int((~refer & ~y).sum()), int((refer & ~y).sum())
+    t = cross_table(truth, p, screened, threshold)
+    tp, fp, fn, tn = t["true_positive"], t["false_positive"], t["false_negative"], t["true_negative"]
 
     def div(a: int, b: int) -> float:
         return a / b if b else math.nan
 
+    y = truth.astype(bool)
     return {"prevalence": float(y.mean()), "sensitivity": div(tp, tp + fn), "specificity": div(tn, tn + fp),
-            "ppv": div(tp, tp + fp), "npv": div(tn, tn + fn), "auc": _auc(y, s)}
+            "ppv": div(tp, tp + fp), "npv": div(tn, tn + fn), "auc": _auc(y, _scores(p, screened))}
 
 
-def _agreement(pred: pd.Series, ref: pd.Series) -> dict[str, float]:
-    p, t = pred.to_numpy(float), ref.to_numpy(float)
+def _agreement(pred: pd.Series | np.ndarray, ref: pd.Series | np.ndarray) -> dict[str, float]:
+    p, t = np.asarray(pred, float), np.asarray(ref, float)
     ok = np.isfinite(p) & np.isfinite(t)
     p, t = p[ok], t[ok]
     if p.size < 3:
@@ -268,28 +334,24 @@ def study_metrics(eyes: pd.DataFrame) -> dict[str, float]:
         out["agreement/se_ci95/coverage"] = float(inside.mean())
         out["agreement/se_ci95/mean_width"] = float((ci["pred_se_ci_high"] - ci["pred_se_ci_low"]).mean())
 
-    ref = eyes[eyes["ref_se"].notna()]
-    se, screened = ref["ref_se"].to_numpy(float), ref["screened"].to_numpy(bool)
-    for name, truth, score in (("myopia_0_50", se <= -0.5, ref["p_myopia"]), ("myopia_1_00", se <= -1.0, ref["p_myopia"]),
-                               ("hyperopia", se >= ref["hyperopia_from"].to_numpy(float), ref["p_hyperopia"])):
-        out.update({f"screening/{name}/{k}": v for k, v in _screening(truth, score.to_numpy(float), screened).items()})
-
-    od = ref[ref["eye"] == "OD"].set_index("session_id")
-    os_ = ref[ref["eye"] == "OS"].set_index("session_id")
-    both = od.index.intersection(os_.index)  # visits with a reference for each eye
-    if len(both):
-        a, b = od.loc[both], os_.loc[both]
-        out.update({f"screening/anisometropia/{k}": v for k, v in _screening(
-            ((a["ref_se"] - b["ref_se"]).abs() >= 1.0).to_numpy(),
-            np.fmax(a["p_anisometropia"].to_numpy(float), b["p_anisometropia"].to_numpy(float)),
-            (a["screened"] & b["screened"]).to_numpy(bool)).items()})
+    for name, (truth, p, screened, refer_at) in _screens(eyes).items():
+        out.update({f"screening/{name}/{k}": v for k, v in _screening(truth, p, screened, refer_at).items()})
+    for name, (truth, p) in _probabilities(eyes).items():
+        table = calibration(truth, p)
+        if table:
+            out[f"calibration/{name}/ece"] = sum(b["eyes"] * abs(b["predicted"] - b["observed"]) for b in table) / sum(
+                b["eyes"] for b in table)
 
     out.update({f"repeatability/{k}": v for k, v in _repeats(eyes).items() if not k.startswith("n_")})
 
+    released = (eyes["outcome"] == "quantitative").to_numpy()
+    pred_m, ref_m = eyes["cmp_pred_m"].to_numpy(float), eyes["cmp_ref_m"].to_numpy(float)
     for col in SUBGROUPS:
-        for value, g in eyes.groupby(col, dropna=True):
-            stats = _agreement(g["cmp_pred_m"], g["cmp_ref_m"])
-            out[f"subgroups/{col}/{value}/released"] = float((g["outcome"] == "quantitative").mean())
+        values = eyes[col].to_numpy(object)
+        for value in eyes[col].dropna().unique():
+            g = values == value
+            stats = _agreement(pred_m[g], ref_m[g])
+            out[f"subgroups/{col}/{value}/released"] = float(released[g].mean())
             out.update({f"subgroups/{col}/{value}/{k}": stats[k] for k in ("bias", "loa_low", "loa_high", "mae")
                         if k in stats})
     return {k: float(v) for k, v in out.items()}
@@ -303,8 +365,30 @@ def study_counts(eyes: pd.DataFrame) -> dict[str, Any]:
         "eyes_with_reference": int(eyes["ref_se"].notna().sum()), "eyes_compared": int(eyes["cmp_pred_m"].notna().sum()),
         "eyes_compared_at_cornea": int(eyes["corneal_plane"].astype(bool).sum()),
         "repeatability_eyes": int(rep["n_eyes"]), "repeatability_measurements": int(rep["n_measurements"]),
+        "screening_tables": {name: cross_table(*screen) for name, screen in _screens(eyes).items()},
         "subgroups": {col: {str(k): int(v) for k, v in eyes[col].value_counts().items()} for col in SUBGROUPS},
     }
+
+
+def _probabilities(eyes: pd.DataFrame) -> dict[str, tuple[np.ndarray, np.ndarray]]:
+    """Each class probability the product gave, against the reference's class at the product's own age
+    thresholds, over the screened eyes with a reference: what calibration is judged on."""
+    s = eyes[eyes["screened"] & eyes["ref_se"].notna()]
+    se, cyl = s["ref_se"].to_numpy(float), s["ref_cyl"].abs().to_numpy(float)
+    return {"myopia": (se <= s["myopia_from"].to_numpy(float), s["p_myopia"].to_numpy(float)),
+            "hyperopia": (se >= s["hyperopia_from"].to_numpy(float), s["p_hyperopia"].to_numpy(float)),
+            "astigmatism": (cyl >= s["astigmatism_from"].to_numpy(float), s["p_astigmatism"].to_numpy(float))}
+
+
+def calibration(truth: np.ndarray, p: np.ndarray, bins: int = 10) -> list[dict[str, float]]:
+    """Reliability table: in each tenth of predicted probability, the mean prediction against the observed
+    frequency. A well calibrated model sits on the diagonal."""
+    ok = np.isfinite(p)
+    truth, p = truth[ok].astype(bool), p[ok]
+    which = np.minimum((p * bins).astype(int), bins - 1)
+    return [{"from": b / bins, "to": (b + 1) / bins, "eyes": int((which == b).sum()),
+             "predicted": float(p[which == b].mean()), "observed": float(truth[which == b].mean())}
+            for b in range(bins) if (which == b).any()]
 
 
 def subject_bootstrap(eyes: pd.DataFrame, statistic: Callable[[pd.DataFrame], dict[str, float]],
@@ -362,6 +446,9 @@ def study_report(export: pd.DataFrame, reference: str = "autorefractor", model_v
         "n": study_counts(eyes),
         "bootstrap": {"replicates": n_boot, "seed": seed, "resampled": "subjects", "interval": "95% percentile"},
         "metrics": _nest(point, ci),
+        "roc_curves": {name: roc_curve(truth, _scores(p, screened))
+                       for name, (truth, p, screened, _) in _screens(eyes).items()},
+        "calibration_tables": {name: calibration(truth, p) for name, (truth, p) in _probabilities(eyes).items()},
     }
 
 
@@ -375,6 +462,10 @@ def _fmt(m: dict[str, Any] | None, unit: str = "", pct: bool = False, signed: bo
 
     ci = f" [{f(m['ci95'][0])} to {f(m['ci95'][1])}]" if m.get("ci95") else ""
     return f"{f(m['value'])}{unit}{ci}"
+
+
+def _count(k: int, noun: str) -> str:
+    return f"{k} {noun}{'' if k == 1 else 's'}"
 
 
 def summary(report: dict[str, Any]) -> str:
@@ -395,20 +486,30 @@ def summary(report: dict[str, Any]) -> str:
         f"MAE {_fmt(se.get('mae'), ' D')}",
     ]
     for name, title in (("myopia_0_50", "Myopia (SE -0.50 D or less)"), ("myopia_1_00", "Myopia (SE -1.00 D or less)"),
-                        ("hyperopia", "Hyperopia"), ("anisometropia", "Anisometropia (1.00 D or more)")):
-        s = m.get("screening", {}).get(name)
-        if s:
-            lines.append(f"{title}: sensitivity {_fmt(s.get('sensitivity'), pct=True)}, "
+                        ("hyperopia", "Hyperopia"), ("astigmatism", "Astigmatism"),
+                        ("anisometropia", "Anisometropia (1.00 D or more)")):
+        s, t = m.get("screening", {}).get(name), n["screening_tables"].get(name)
+        if s and t:
+            cases = t["true_positive"] + t["false_negative"]
+            total = cases + t["false_positive"] + t["true_negative"]
+            lines.append(f"{title}: {cases} of {_count(total, 'visit' if name == 'anisometropia' else 'eye')} with it, "
+                         f"{t['not_screened']} referred unscreened; sensitivity {_fmt(s.get('sensitivity'), pct=True)}, "
                          f"specificity {_fmt(s.get('specificity'), pct=True)}, AUC {_fmt(s.get('auc'))}")
     r = m.get("repeatability", {})
     if r:
-        lines.append(f"Repeatability over {n['repeatability_eyes']} eyes: ICC {_fmt(r.get('icc'))}, "
+        lines.append(f"Repeatability over {_count(n['repeatability_eyes'], 'eye')}: ICC {_fmt(r.get('icc'))}, "
                      f"Sw {_fmt(r.get('sw'), ' D')}, coefficient of repeatability {_fmt(r.get('cor'), ' D')}")
-    for col, title in (("device_id", "device"), ("age_group", "age group"), ("refractive_range", "refractive range (D)")):
+    cal = m.get("calibration", {})
+    if cal:
+        lines.append("Calibration of the class probabilities, expected calibration error: " + ", ".join(
+            f"{name} {_fmt(c.get('ece'))}" for name, c in cal.items()))
+    for col, title in (("device_id", "device"), ("age_group", "age group"), ("refractive_range", "refractive range (D)"),
+                       ("pupil_band", "pupil"), ("distance_band", "distance"), ("iris_color", "iris colour"),
+                       ("pigmentation", "pigmentation"), ("sex", "sex")):
         groups = m.get("subgroups", {}).get(col, {})
-        order = RANGES[1] if col == "refractive_range" else sorted(groups)
+        order = BANDS[col][2] if col in BANDS else sorted(groups)
         for value, s in ((v, groups[v]) for v in order if v in groups):
-            lines.append(f"By {title}, {value}: {n['subgroups'][col].get(value, 0)} eyes, released "
+            lines.append(f"By {title}, {value}: {_count(n['subgroups'][col].get(value, 0), 'eye')}, released "
                          f"{_fmt(s.get('released'), pct=True)}, SE bias {_fmt(s.get('bias'), ' D', signed=True)}")
     return "\n".join(lines)
 

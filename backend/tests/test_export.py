@@ -1,6 +1,7 @@
 """GET /api/dataset/export?level=eye: each eye of each visit, with what the product released, for validation."""
 
 import json
+import statistics
 
 import pytest
 from databases import fresh_database
@@ -30,7 +31,7 @@ def _upload(client, assessment, ref, references=()):
     frames, report = assessment
     record = {
         "client_ref": ref,
-        "subject": {"code": "SITE1-0100", "age_group": "adult_18_39", "consent_research": True},
+        "subject": {"code": "SITE1-0100", "age_group": "adult_18_39", "consent_research": True, "iris_color": "brown"},
         "ground_truth": list(references),
         "session": {"device_id": "simulated-phone", "simulated": True},
         "captures": [{"metadata": f["metadata"], "features": f["features"], "quality": f["quality"]} for f in frames],
@@ -66,6 +67,10 @@ def test_each_eye_of_each_visit_comes_with_what_was_released_and_that_visits_ref
     assert [od["n_captures"], od["n_frames"], od["n_usable_frames"]] == [
         sum(f["metadata"]["eye"] == "OD" for f in frames), shown["n_frames"], shown["n_usable_frames"]]
     assert [od["model_name"], od["model_version"]] == [report["provenance"][k] for k in ("model_name", "model_version")]
+    right = [f for f in frames if f["metadata"]["eye"] == "OD"]
+    assert od["pupil_mm"] == pytest.approx(statistics.median(f["features"]["pupil_diameter_mm"] for f in right))
+    assert od["distance_m"] == pytest.approx(statistics.median(f["metadata"]["working_distance_m"] for f in right))
+    assert [od["iris_color"], od["sex"], od["pigmentation"]] == ["brown", None, None]  # what was collected
     assert od["simulated"] is True and od["session_started_at"]
     assert [od["gt_autorefractor_se"], od["gt_autorefractor_vertex_mm"]] == [-3.25, 12.0]
     assert [od["gt_subjective_se"], od["gt_subjective_vertex_mm"]] == [-2.75, 13.5]
