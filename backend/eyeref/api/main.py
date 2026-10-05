@@ -16,22 +16,24 @@ import io
 import json
 import os
 from datetime import UTC, datetime
-from typing import Any, Literal, Optional
+from typing import Any, Literal, Optional, TypeVar
 
 import cv2
 import httpx
 import numpy as np
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, Request, UploadFile
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .. import __version__
 from ..assistant.core import AssistantAuthError, AssistantConfigError, AssistantUnavailable, explain_report
 from ..assistant.provider import config_from_env, make_client
-from ..calibration.device_profiles import load_profiles
+from ..calibration.device_profiles import load_profiles, save_profile
 from ..cv.features import EXTRACTOR_VERSION
 from ..db import models as m
 from ..db.session import Database
@@ -106,8 +108,7 @@ class GroundTruthIn(BaseModel):
     raw: Optional[dict[str, Any]] = None
 
 
-class SessionIn(BaseModel):
-    subject_id: str
+class SessionFields(BaseModel):
     device_id: str
     protocol_version: str = "guided-1"
     operator: Optional[str] = None
@@ -116,6 +117,31 @@ class SessionIn(BaseModel):
     cycloplegia: bool = False
     condition_label: Optional[str] = None
     simulated: bool = False
+
+
+class SessionIn(SessionFields):
+    subject_id: str
+
+
+class CaptureIn(BaseModel):
+    metadata: CaptureMetadata
+    features: Optional[PhotorefractionFeatures] = None
+    quality: Optional[QualityAssessment] = None
+    image: Optional[int] = Field(None, ge=0, description="Index of this capture's eye crop among the uploaded images")
+
+
+class AssessmentUpload(BaseModel):
+    """One assessment from the web app, stored all or nothing by POST /api/assessments."""
+
+    client_ref: str = Field(min_length=1, max_length=64,
+                            description="The record's id on the device. Sending the same record again stores nothing twice")
+    subject: SubjectIn
+    ground_truth: list[GroundTruthIn] = Field(default_factory=list, max_length=50)
+    session: SessionFields
+    device: Optional[DeviceProfile] = Field(
+        None, description="The profile the record was measured with, registered if the server does not know its id")
+    captures: list[CaptureIn] = Field(min_length=1, max_length=1000)
+    report: AssessmentReport
 
 
 DATA_DIR = os.environ.get("EYEREF_DATA_DIR", "./data")
@@ -137,6 +163,18 @@ def audit(s: Session, actor: str, action: str, subject_id: Optional[str] = None,
 
 def utc(at: datetime) -> datetime:
     return at.replace(tzinfo=UTC) if at.tzinfo is None else at.astimezone(UTC)  # SQLite drops the zone
+
+
+T = TypeVar("T", bound=BaseModel)
+
+
+def parse_form(model: type[T], raw: str, field: str) -> T:
+    """A form field holding JSON, as `model`. Invalid JSON is a 422 naming the problem, not a 500."""
+    try:
+        return model.model_validate_json(raw)
+    except ValidationError as e:
+        errors = e.errors(include_url=False, include_context=False)
+        raise RequestValidationError([{**err, "loc": ("body", field, *err["loc"])} for err in errors]) from e
 
 
 def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
@@ -176,6 +214,52 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
             raise HTTPException(404, f"unknown device profile '{device_id}'")
         return profiles[device_id]
 
+    def ensure_device_row(s: Session, dev: DeviceProfile) -> None:
+        if not s.get(m.Device, dev.id):
+            s.add(m.Device(id=dev.id, manufacturer=dev.manufacturer, model=dev.model, camera=dev.camera,
+                           profile=dev.model_dump(), calibration_version=dev.calibration_version))
+            s.flush()  # no ORM relationship to Device, so insert it explicitly first
+
+    def new_ground_truth(subject_id: str, body: GroundTruthIn) -> m.GroundTruth:
+        rx = SphCylAxis(body.sphere, body.cylinder, body.axis).in_convention("minus")
+        return m.GroundTruth(subject_id=subject_id, eye=body.eye, method=body.method, sphere=rx.sph, cylinder=rx.cyl,
+                             axis=rx.axis, spherical_equivalent=rx.spherical_equivalent,
+                             vertex_distance_mm=body.vertex_distance_mm, instrument=body.instrument,
+                             examiner=body.examiner, raw=body.raw)
+
+    def new_capture(session_id: str, meta: CaptureMetadata, features: Optional[PhotorefractionFeatures],
+                    quality: Optional[QualityAssessment], dev: Optional[DeviceProfile]) -> m.Capture:
+        row = m.Capture(
+            session_id=session_id, eye=meta.eye, frame_index=meta.frame_index, timestamp=meta.timestamp,
+            working_distance_m=meta.working_distance_m, illumination=meta.illumination,
+            meridian_deg=meta.meridian_eye_deg(dev) if dev else None, metadata_json=json.loads(meta.model_dump_json()),
+        )
+        if features:
+            row.features_json, row.pupil_diameter_mm = json.loads(features.model_dump_json()), features.pupil_diameter_mm
+        if quality:
+            row.quality_json, row.quality_score, row.quality_grade = (json.loads(quality.model_dump_json()),
+                                                                       quality.score, quality.grade)
+        return row
+
+    def add_predictions(s: Session, session_id: str, report: AssessmentReport) -> list[str]:
+        """One row per eye, with the model, extractor and calibration versions that produced it."""
+        rows = []
+        for eye, r in report.eyes.items():
+            pv = r.power_vector or {}
+            rows.append(m.Prediction(
+                session_id=session_id, eye=eye, output_level=r.output_level, se=r.se_d, sphere=r.sph_d,
+                cylinder=r.cyl_d, axis=r.axis_deg, m=pv.get("M"), j0=pv.get("J0"), j45=pv.get("J45"),
+                confidence=r.confidence, se_ci_low=r.se_ci95[0] if r.se_ci95 else None,
+                se_ci_high=r.se_ci95[1] if r.se_ci95 else None, refractive_class=r.refractive_class,
+                model_name=report.provenance.model_name, model_version=report.provenance.model_version,
+                calibration_version=report.provenance.calibration_version,
+                device_profile=report.provenance.device_profile, extractor_version=report.provenance.extractor_version,
+                report_json=json.loads(report.model_dump_json()),
+            ))
+        s.add_all(rows)
+        s.flush()  # assigns the ids
+        return [row.id for row in rows]
+
     def pick_estimator(name: str):
         if name == "physics":
             return physics
@@ -204,8 +288,6 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
 
     @app.post("/api/devices", response_model=DeviceProfile)
     def upsert_device(p: DeviceProfile, s: Session = Depends(get_db), who: str = Depends(caller)) -> DeviceProfile:
-        from ..calibration.device_profiles import save_profile
-
         row = s.get(m.Device, p.id) or m.Device(id=p.id, manufacturer=p.manufacturer, model=p.model, camera=p.camera, profile={})
         row.profile, row.calibration_version = p.model_dump(), p.calibration_version
         s.add(row)
@@ -228,8 +310,8 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
         bgr = cv2.imdecode(raw, cv2.IMREAD_COLOR)
         if bgr is None:
             raise HTTPException(422, "could not decode image")
-        meta = CaptureMetadata.model_validate_json(metadata)
-        hint = Circle.model_validate_json(iris) if iris else None
+        meta = parse_form(CaptureMetadata, metadata, "metadata")
+        hint = parse_form(Circle, iris, "iris") if iris else None
         return process_frame(cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB), meta, device_or_404(device_id), pick_estimator(estimator), hint)
 
 
@@ -324,16 +406,13 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
                          who: str = Depends(caller)) -> dict[str, Any]:
         if not s.get(m.Subject, subject_id):
             raise HTTPException(404)
-        rx = SphCylAxis(body.sphere, body.cylinder, body.axis).in_convention("minus")
-        row = m.GroundTruth(subject_id=subject_id, eye=body.eye, method=body.method, sphere=rx.sph, cylinder=rx.cyl,
-                            axis=rx.axis, spherical_equivalent=rx.spherical_equivalent,
-                            vertex_distance_mm=body.vertex_distance_mm, instrument=body.instrument,
-                            examiner=body.examiner, raw=body.raw)
+        row = new_ground_truth(subject_id, body)
         s.add(row)
         s.flush()  # assigns row.id
         audit(s, who, "ground_truth.add", subject_id, ground_truth_id=row.id, eye=body.eye, method=body.method)
         s.commit()
-        return {"id": row.id, "sphere": rx.sph, "cylinder": rx.cyl, "axis": rx.axis, "se": rx.spherical_equivalent}
+        return {"id": row.id, "sphere": row.sphere, "cylinder": row.cylinder, "axis": row.axis,
+                "se": row.spherical_equivalent}
 
 
     @app.post("/api/sessions")
@@ -341,10 +420,7 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
         if not s.get(m.Subject, body.subject_id):
             raise HTTPException(404, "subject not found")
         dev = device_or_404(body.device_id)
-        if not s.get(m.Device, dev.id):
-            s.add(m.Device(id=dev.id, manufacturer=dev.manufacturer, model=dev.model, camera=dev.camera,
-                           profile=dev.model_dump(), calibration_version=dev.calibration_version))
-            s.flush()  # no ORM relationship to Device, so insert it explicitly first
+        ensure_device_row(s, dev)
         row = m.CaptureSession(**body.model_dump())
         s.add(row)
         s.flush()  # assigns row.id
@@ -366,19 +442,10 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
         ses = s.get(m.CaptureSession, session_id)
         if not ses:
             raise HTTPException(404)
-        meta = CaptureMetadata.model_validate_json(metadata)
-        dev = profiles.get(ses.device_id)
-        row = m.Capture(
-            session_id=session_id, eye=meta.eye, frame_index=meta.frame_index, timestamp=meta.timestamp,
-            working_distance_m=meta.working_distance_m, illumination=meta.illumination,
-            meridian_deg=meta.meridian_eye_deg(dev) if dev else None, metadata_json=json.loads(meta.model_dump_json()),
-        )
-        if features:
-            f = PhotorefractionFeatures.model_validate_json(features)
-            row.features_json, row.pupil_diameter_mm = json.loads(f.model_dump_json()), f.pupil_diameter_mm
-        if quality:
-            q = QualityAssessment.model_validate_json(quality)
-            row.quality_json, row.quality_score, row.quality_grade = json.loads(q.model_dump_json()), q.score, q.grade
+        row = new_capture(session_id, parse_form(CaptureMetadata, metadata, "metadata"),
+                          parse_form(PhotorefractionFeatures, features, "features") if features else None,
+                          parse_form(QualityAssessment, quality, "quality") if quality else None,
+                          profiles.get(ses.device_id))
         s.add(row)
         key = None
         if image is not None:
@@ -406,26 +473,112 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
         ses = s.get(m.CaptureSession, session_id)
         if not ses:
             raise HTTPException(404)
-        rows = []
-        for eye, r in report.eyes.items():
-            pv = r.power_vector or {}
-            row = m.Prediction(
-                session_id=session_id, eye=eye, output_level=r.output_level, se=r.se_d, sphere=r.sph_d,
-                cylinder=r.cyl_d, axis=r.axis_deg, m=pv.get("M"), j0=pv.get("J0"), j45=pv.get("J45"),
-                confidence=r.confidence, se_ci_low=r.se_ci95[0] if r.se_ci95 else None,
-                se_ci_high=r.se_ci95[1] if r.se_ci95 else None, refractive_class=r.refractive_class,
-                model_name=report.provenance.model_name, model_version=report.provenance.model_version,
-                calibration_version=report.provenance.calibration_version,
-                device_profile=report.provenance.device_profile, extractor_version=report.provenance.extractor_version,
-                report_json=json.loads(report.model_dump_json()),
-            )
-            s.add(row)
-            rows.append(row)
-        s.flush()  # assigns the ids
-        ids = [row.id for row in rows]
+        ids = add_predictions(s, session_id, report)
         audit(s, who, "prediction.add", ses.subject_id, session_id=session_id, prediction_ids=ids)
         s.commit()
         return {"ids": ids}
+
+    def uploaded(ses: m.CaptureSession, subject_created: bool, already: bool) -> dict[str, Any]:
+        images = [c for c in ses.captures if c.image_key]
+        return {"already_uploaded": already, "subject_id": ses.subject_id, "subject_created": subject_created,
+                "session_id": ses.id, "captures": len(ses.captures), "images_stored": len(images),
+                "images_encrypted": all(c.image_encrypted for c in images) if images else None,
+                "prediction_ids": [p.id for p in sorted(ses.predictions, key=lambda p: p.eye)]}
+
+    def stored_upload(s: Session, client_ref: str) -> Optional[m.CaptureSession]:
+        return s.scalar(select(m.CaptureSession).where(m.CaptureSession.client_ref == client_ref))
+
+    @app.post("/api/assessments", status_code=201)
+    async def upload_assessment(
+        response: Response,
+        record: str = Form(..., description="AssessmentUpload JSON"),
+        images: Optional[list[UploadFile]] = File(None, description="PNG eye crops, each named by one capture's image index"),
+        s: Session = Depends(get_db),
+        who: str = Depends(caller),
+    ) -> dict[str, Any]:
+        """Stores one assessment, with its subject, reference refractions, captures, eye crops and report, all
+        or nothing. A returning subject (same code) gets another session. Sending the same record again
+        (same client_ref) stores nothing twice and answers 200 with what is already stored."""
+        body = parse_form(AssessmentUpload, record, "record")
+        files = images or []
+        if not body.subject.consent_research:
+            raise HTTPException(403, "research consent is required before any data is stored")
+        if files and not body.subject.consent_image_storage:
+            raise HTTPException(403, "eye images were sent without consent to store them")
+        if sorted(c.image for c in body.captures if c.image is not None) != list(range(len(files))):
+            raise HTTPException(422, "every uploaded image must belong to exactly one capture")
+        sim = body.session.simulated
+        if body.report.simulated != sim or any(c.metadata.simulated != sim for c in body.captures):
+            raise HTTPException(422, "simulated and real data cannot be mixed: the session, every capture and the "
+                                     "report must agree")
+        if body.report.provenance.device_profile != body.session.device_id:
+            raise HTTPException(422, "the report must come from the session's device profile")
+        if body.device and body.device.id != body.session.device_id:
+            raise HTTPException(422, "device.id must match session.device_id")
+
+        if done := stored_upload(s, body.client_ref):
+            response.status_code = 200
+            return uploaded(done, subject_created=False, already=True)
+        dev = profiles.get(body.session.device_id)
+        new_device = dev is None
+        if dev is None:
+            if body.device is None:
+                raise HTTPException(404, f"unknown device profile '{body.session.device_id}': include it as device")
+            dev = body.device
+        data = [await read_image(f, formats=("png",)) for f in files]  # every image is checked before any is stored
+
+        keys: list[str] = []
+        try:
+            subj = s.scalar(select(m.Subject).where(m.Subject.code == body.subject.code))
+            created = subj is None
+            if subj is None:
+                subj = m.Subject(**body.subject.model_dump())
+                s.add(subj)
+                s.flush()  # assigns subj.id
+                audit(s, who, "subject.create", subj.id, consent_research=subj.consent_research,
+                      consent_image_storage=subj.consent_image_storage, consent_version=subj.consent_version)
+            elif body.subject.consent_image_storage and not subj.consent_image_storage:
+                subj.consent_image_storage, subj.consent_version = True, body.subject.consent_version
+                audit(s, who, "subject.consent", subj.id, consent_image_storage=True,
+                      consent_version=subj.consent_version)
+            ensure_device_row(s, dev)
+            if new_device:
+                audit(s, who, "device.save", device_id=dev.id, calibration_version=dev.calibration_version)
+            s.add_all([new_ground_truth(subj.id, g) for g in body.ground_truth])
+            ses = m.CaptureSession(subject_id=subj.id, client_ref=body.client_ref, **body.session.model_dump())
+            s.add(ses)
+            s.flush()  # assigns ses.id
+            rows = [new_capture(ses.id, c.metadata, c.features, c.quality, dev) for c in body.captures]
+            s.add_all(rows)
+            s.flush()  # assigns the capture ids, which name the stored images: one object per capture
+            for c, row in zip(body.captures, rows, strict=True):
+                if c.image is not None:
+                    key = f"{subj.id}/{ses.id}/{row.id}.png"
+                    storage.put(key, data[c.image])
+                    keys.append(key)
+                    row.image_key, row.image_encrypted = key, storage.encrypted
+            ids = add_predictions(s, ses.id, body.report)
+            audit(s, who, "assessment.upload", subj.id, session_id=ses.id, ground_truths=len(body.ground_truth),
+                  captures=len(rows), images_stored=len(keys), prediction_ids=ids)
+            s.commit()
+        except IntegrityError:
+            s.rollback()
+            for k in keys:
+                storage.delete(k)
+            # the same record, or the same new subject, was stored by another request at the same moment
+            if done := stored_upload(s, body.client_ref):
+                response.status_code = 200
+                return uploaded(done, subject_created=False, already=True)
+            raise HTTPException(409, "another upload for this subject was being stored at the same moment; "
+                                     "send this one again") from None
+        except BaseException:
+            for k in keys:
+                storage.delete(k)
+            raise
+        if new_device:
+            save_profile(dev, os.path.join(data_dir, "device_profiles"))
+            profiles[dev.id] = dev
+        return uploaded(ses, subject_created=created, already=False)
 
     @app.get("/api/dataset/export")
     def export_dataset(fmt: Literal["csv", "json"] = Query("csv"), include_simulated: bool = False,

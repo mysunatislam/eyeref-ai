@@ -47,7 +47,10 @@ format used by `ml/`.
    - cycloplegic refraction for anyone under 18.
 4. In the **Dataset** page, enter the code and the reference refraction. Plus-cylinder printouts are
    converted to minus cylinder automatically.
-5. Export pairs as CSV, or upload the record to the research server with consent.
+5. Export pairs as CSV, or upload the record to the research server with consent. Consent is
+   confirmed for each record at each visit. The upload stores the whole record or nothing, so a
+   failed upload can simply be sent again, and a second visit for the same code becomes another
+   session of the same subject.
 6. Once a week, check the agreement panel (MAE, bias, limits of agreement) and the rejection rate.
 
 ## Labels

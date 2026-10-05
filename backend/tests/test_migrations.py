@@ -75,11 +75,8 @@ def test_every_migration_can_be_undone_and_applied_again(tmp_path):
     assert current_revision(engine) == HEAD
 
 
-@pytest.mark.skipif((SERVER_URL or "sqlite").split(":")[0] != "sqlite", reason="others alter tables in place")
-def test_rebuilding_a_table_while_migrating_keeps_the_rows_that_refer_to_it(tmp_path):
-    # SQLite alters a table by copying it and dropping the original. With foreign keys enforced, the
-    # drop would cascade to every session and capture of every subject.
-    engine = make_engine(fresh_database(tmp_path))
+def _seed_research_data(engine, **session):
+    """One subject with a session and a capture, written with plain inserts."""
     now = datetime.now(UTC)
     with engine.begin() as conn:
         conn.execute(m.Subject.__table__.insert().values(
@@ -90,19 +87,41 @@ def test_rebuilding_a_table_while_migrating_keeps_the_rows_that_refer_to_it(tmp_
             created_at=now))
         conn.execute(m.CaptureSession.__table__.insert().values(
             id="ses1", subject_id="s1", device_id="d1", protocol_version="guided-1", cycloplegia=False,
-            simulated=False, started_at=now))
+            simulated=False, started_at=now, **session))
         conn.execute(m.Capture.__table__.insert().values(
             id="c1", session_id="ses1", eye="OD", frame_index=0, timestamp=now, illumination="flash",
             metadata_json={}, image_encrypted=False))
+
+
+def _research_rows(engine) -> list[int]:
+    with engine.connect() as conn:
+        return [conn.execute(text(f"select count(*) from {t}")).scalar_one()
+                for t in ("subjects", "capture_sessions", "captures")]
+
+
+@pytest.mark.skipif((SERVER_URL or "sqlite").split(":")[0] != "sqlite", reason="others alter tables in place")
+def test_rebuilding_a_table_while_migrating_keeps_the_rows_that_refer_to_it(tmp_path):
+    # SQLite alters a table by copying it and dropping the original. With foreign keys enforced, the
+    # drop would cascade to every session and capture of every subject.
+    engine = make_engine(fresh_database(tmp_path))
+    _seed_research_data(engine)
     with migrating(engine) as conn:
         ops = Operations(MigrationContext.configure(conn))
         with ops.batch_alter_table("subjects", recreate="always") as batch:
             batch.alter_column("site", type_=String(128))
+    assert _research_rows(engine) == [1, 1, 1]
     with engine.connect() as conn:
-        counts = [conn.execute(text(f"select count(*) from {t}")).scalar_one()
-                  for t in ("subjects", "capture_sessions", "captures")]
-        assert counts == [1, 1, 1]
         assert conn.exec_driver_sql("PRAGMA foreign_keys").scalar_one() == 1  # enforced again afterwards
+
+
+def test_stepping_back_to_the_baseline_keeps_the_research_data(tmp_path):
+    engine = make_engine(fresh_database(tmp_path))
+    _seed_research_data(engine, client_ref="rec-1")
+    downgrade(engine, BASELINE_REVISION)
+    assert current_revision(engine) == BASELINE_REVISION
+    assert _research_rows(engine) == [1, 1, 1]
+    upgrade(engine)
+    assert current_revision(engine) == HEAD
 
 
 def test_an_older_version_refuses_a_database_a_newer_one_migrated(tmp_path):

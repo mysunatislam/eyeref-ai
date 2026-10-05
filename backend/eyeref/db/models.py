@@ -92,6 +92,8 @@ class CaptureSession(Base):
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     simulated: Mapped[bool] = mapped_column(Boolean, default=False)
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    # the record's id on the device it came from, so uploading the same record again stores nothing twice
+    client_ref: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, unique=True, index=True)
 
     subject: Mapped[Subject] = relationship(back_populates="sessions")
     captures: Mapped[list[Capture]] = relationship(back_populates="session", cascade="all, delete-orphan")
