@@ -152,3 +152,17 @@ scripts/         export_schemas.py, run-all.sh
   the interactive docs are hidden. See [API](docs/API.md#authentication).
 - **Checks on every push.** Unit tests, browser tests including camera mode with a fake camera, and a
   WCAG 2.1 AA accessibility scan in light and dark mode.
+
+## Releasing
+
+```bash
+git tag v0.2.0 && git push origin v0.2.0
+```
+
+The tag runs the full CI suite. It then publishes `ghcr.io/mysunatislam/eyeref-ai-api` and
+`ghcr.io/mysunatislam/eyeref-ai-web`, and creates a GitHub release with generated notes.
+
+- The web image is built for a backend at `http://localhost:8000`. For a hosted deployment, build it
+  with your own `NEXT_PUBLIC_API_URL`, because the security policy is fixed at build time.
+- Dependabot opens grouped update PRs every week for npm and pip, and every month for Actions and base
+  images.
