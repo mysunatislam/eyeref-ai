@@ -43,7 +43,7 @@ export function BlandAltman({ ba }: { ba: EyeMetrics["bland_altman_se"] }) {
               value: `bias ${ba.mean_diff.toFixed(2)}`,
               fontSize: 10,
               fill: "var(--accent)",
-              position: "right",
+              position: "insideTopRight",
             }}
           />
           <ReferenceLine y={ba.loa_low} stroke="var(--warn)" strokeDasharray="5 4" />

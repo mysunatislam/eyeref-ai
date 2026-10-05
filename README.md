@@ -49,7 +49,7 @@ first, then astigmatism later.
 | SE accuracy, myopia/hyperopia screening on real people | **REQUIRES CLINICAL VALIDATION** | Protocol in docs/VALIDATION_PROTOCOL.md |
 | CYL / AXIS output | **REQUIRES CLINICAL VALIDATION** | Gated off; research flag only |
 | Research API, encrypted image storage, dataset export, consent enforcement | **WORKING** | SQLite + Fernet; not hardened for production |
-| Optional AI explanation (Gigalogy Maira) | **PARTIALLY WORKING** | Env-only credentials, per-request consent, numeric guard. Verified against a mock; the live endpoint was unreachable from the build sandbox |
+| Optional AI explanation (Gigalogy Maira) | **PARTIALLY WORKING** | Env-only credentials (optionally Fernet-decrypted), per-request consent, numeric guard, retries and clean errors. Verified against a mock; the live endpoint was unreachable from the build sandbox, so run `scripts/check_maira.py` once on your machine |
 | Vision test (tumbling E logMAR, astigmatic dial) | **WORKING** | Separate from refraction; needs screen calibration |
 | Native mobile app (RAW stills, manual focus, flash sync) | **FUTURE WORK** | apps/mobile/README.md |
 | NIR (850 nm) illumination module | **FUTURE WORK** | docs/ARCHITECTURE.md § NIR |

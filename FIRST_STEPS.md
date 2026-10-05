@@ -2,7 +2,7 @@
 
 ## 1. What works today
 
-Verified checks: 88 backend tests, 9 ML tests and 52 web tests pass. Lint, typecheck and the production
+Verified checks: 98 backend tests, 9 ML tests and 52 web tests pass. Lint, typecheck and the production
 build pass. Every page was smoke-tested in Chromium.
 
 - **Optics.** Power vectors, circular axis maths (179° vs 1° = 2°), Bobier–Braddick crescent inversion
@@ -143,6 +143,7 @@ make backend               # optional API on :8000 (OpenAPI at /docs)
 make data && make ml-train # regenerate SIMULATED dataset, models, validation report
 make schemas               # shared/schemas JSON Schemas
 cp .env.example .env       # optional; add MAIRA_API_KEY / MAIRA_PROJECT_KEY here, never commit
+set -a; . ./.env; set +a; .venv/bin/python scripts/check_maira.py   # one live test call, prints no keys
 docker compose up --build  # web :3000 + api :8000
 ```
 

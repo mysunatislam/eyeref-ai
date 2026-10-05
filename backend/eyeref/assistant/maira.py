@@ -11,14 +11,22 @@ What it is NOT allowed to do
 
 Configuration (environment only; never commit keys):
   MAIRA_API_KEY, MAIRA_PROJECT_KEY, MAIRA_BASE_URL (default production URL),
-  MAIRA_GPT_PROFILE_ID (optional), MAIRA_TIMEOUT_S (default 30).
+  MAIRA_GPT_PROFILE_ID (optional), MAIRA_TIMEOUT_S (default 30),
+  MAIRA_MAX_RETRIES (default 2), MAIRA_KEY_DECRYPTION_KEY (optional, see below).
+
+Encrypted keys: if MAIRA_API_KEY is itself a Fernet token (it starts with
+"gAAAAA") and MAIRA_KEY_DECRYPTION_KEY is set, the key is decrypted in memory
+before use. Without the decryption key the value is sent as issued, because
+some providers hand out keys in that form. Keys are never logged or returned.
 """
 
 from __future__ import annotations
 
+import logging
 import os
+import time
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Optional
 
 import httpx
@@ -26,7 +34,11 @@ import httpx
 from ..inference.fusion import AssessmentReport
 from .guard import allowed_values, guard_text
 
+log = logging.getLogger(__name__)
+
 DEFAULT_BASE_URL = "https://api.recommender.gigalogy.com"
+MAX_QUESTION_CHARS = 500
+RETRY_STATUSES = {429, 500, 502, 503, 504}
 PROVIDER_LABEL = "AI-generated explanation (third-party service: Gigalogy Maira). Not a medical opinion."
 
 SYSTEM_RULES = (
@@ -40,21 +52,52 @@ SYSTEM_RULES = (
 )
 
 
+class AssistantConfigError(ValueError):
+    """Configuration present but unusable (bad decryption key, bad number)."""
+
+
+class AssistantAuthError(RuntimeError):
+    """The provider rejected the credentials (401/403)."""
+
+
+def _decrypt_key(token: str, fernet_key: str) -> str:
+    from cryptography.fernet import Fernet, InvalidToken
+
+    try:
+        return Fernet(fernet_key.encode()).decrypt(token.encode()).decode()
+    except (InvalidToken, ValueError) as e:
+        raise AssistantConfigError("MAIRA_API_KEY could not be decrypted with MAIRA_KEY_DECRYPTION_KEY") from e
+
+
 @dataclass
 class MairaConfig:
-    api_key: str
-    project_key: str
+    # repr=False keeps keys out of tracebacks, logs and debug output
+    api_key: str = field(repr=False)
+    project_key: str = field(repr=False)
     base_url: str = DEFAULT_BASE_URL
     gpt_profile_id: Optional[str] = None
     timeout_s: float = 30.0
+    max_retries: int = 2
 
     @classmethod
     def from_env(cls) -> Optional[MairaConfig]:
-        key, proj = os.environ.get("MAIRA_API_KEY"), os.environ.get("MAIRA_PROJECT_KEY")
+        key = (os.environ.get("MAIRA_API_KEY") or "").strip()
+        proj = (os.environ.get("MAIRA_PROJECT_KEY") or "").strip()
         if not key or not proj:
             return None
-        return cls(key, proj, os.environ.get("MAIRA_BASE_URL", DEFAULT_BASE_URL),
-                   os.environ.get("MAIRA_GPT_PROFILE_ID") or None, float(os.environ.get("MAIRA_TIMEOUT_S", "30")))
+        dec = (os.environ.get("MAIRA_KEY_DECRYPTION_KEY") or "").strip()
+        if dec:
+            key = _decrypt_key(key, dec)
+        try:
+            timeout = float(os.environ.get("MAIRA_TIMEOUT_S") or 30)
+            retries = int(os.environ.get("MAIRA_MAX_RETRIES") or 2)
+        except ValueError as e:
+            raise AssistantConfigError("MAIRA_TIMEOUT_S / MAIRA_MAX_RETRIES must be numbers") from e
+        base = (os.environ.get("MAIRA_BASE_URL") or DEFAULT_BASE_URL).rstrip("/")
+        if not base.startswith("https://"):
+            raise AssistantConfigError("MAIRA_BASE_URL must use https")
+        return cls(key, proj, base, os.environ.get("MAIRA_GPT_PROFILE_ID") or None,
+                   min(max(timeout, 1.0), 120.0), min(max(retries, 0), 5))
 
 
 def report_summary(rep: AssessmentReport) -> tuple[str, set[float]]:
@@ -102,8 +145,10 @@ class AssistantAnswer:
 
 
 class MairaClient:
-    def __init__(self, cfg: MairaConfig, transport: Optional[httpx.BaseTransport] = None):
+    def __init__(self, cfg: MairaConfig, transport: Optional[httpx.BaseTransport] = None,
+                 sleep=time.sleep):
         self.cfg = cfg
+        self._sleep = sleep
         self._client = httpx.Client(base_url=cfg.base_url, timeout=cfg.timeout_s, transport=transport)
 
     def ask(self, query: str, session_id: Optional[str] = None) -> dict[str, Any]:
@@ -118,10 +163,27 @@ class MairaClient:
             body["gpt_profile_id"] = self.cfg.gpt_profile_id
         if session_id:
             body["session_id"] = session_id
-        r = self._client.post("/v1/maira/ask", json=body,
-                              headers={"api-key": self.cfg.api_key, "project-key": self.cfg.project_key})
-        r.raise_for_status()
-        return r.json()
+        headers = {"api-key": self.cfg.api_key, "project-key": self.cfg.project_key}
+        for attempt in range(self.cfg.max_retries + 1):
+            last = attempt == self.cfg.max_retries
+            try:
+                r = self._client.post("/v1/maira/ask", json=body, headers=headers)
+            except (httpx.TimeoutException, httpx.TransportError) as e:
+                log.warning("maira request failed (%s), attempt %d", type(e).__name__, attempt + 1)
+                if last:
+                    raise
+            else:
+                if r.status_code in (401, 403):
+                    raise AssistantAuthError(f"provider rejected the credentials (HTTP {r.status_code})")
+                if r.status_code not in RETRY_STATUSES or last:
+                    r.raise_for_status()
+                    try:
+                        return r.json()
+                    except ValueError as e:
+                        raise ValueError("assistant returned a non-JSON response") from e
+                log.warning("maira returned HTTP %d, attempt %d", r.status_code, attempt + 1)
+            self._sleep(min(0.5 * 2**attempt, 4.0))
+        raise RuntimeError("unreachable")
 
 
 def extract_answer(payload: dict[str, Any]) -> str:
@@ -143,7 +205,7 @@ def extract_answer(payload: dict[str, Any]) -> str:
 
 def explain_report(rep: AssessmentReport, question: Optional[str], client: MairaClient) -> AssistantAnswer:
     summary, allowed = report_summary(rep)
-    q = question.strip() if question else "Explain this screening result and what I should do next."
+    q = " ".join(question.split())[:MAX_QUESTION_CHARS] if question and question.strip() else "Explain this screening result and what I should do next."
     prompt = f"{SYSTEM_RULES}\n\nREPORT:\n{summary}\n\nQUESTION: {q}"
     payload = client.ask(prompt, session_id=uuid.uuid5(uuid.NAMESPACE_URL, rep.id).hex)
     text, n = guard_text(extract_answer(payload), allowed)

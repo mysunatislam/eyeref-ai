@@ -49,11 +49,12 @@ export default function ValidationPage() {
         <div className="sim-stripes border-sim/40 mb-5 flex items-start gap-3 rounded-2xl border p-4 text-sm">
           <FlaskConical className="text-sim mt-0.5 size-5 shrink-0" />
           <div>
-            <div className="text-sim font-bold tracking-wider">SIMULATED DATA</div>
-            <p className="text-ink-2 mt-1">
-              {r.warning} {r.dataset.n_subjects} virtual subjects, {r.dataset.n_frames.toLocaleString()}{" "}
-              rendered frames, {r.dataset.devices.length} simulated devices. Real performance is unknown until
-              the clinical protocol in docs/VALIDATION_PROTOCOL.md is run.
+            <div className="text-sim font-bold tracking-wider">SIMULATED VALIDATION RESULTS</div>
+            <p className="text-ink-2 mt-1 first-letter:uppercase">
+              {r.warning.replace(/^SIMULATED DATA\s*[-–]\s*/, "")} {r.dataset.n_subjects} virtual subjects,{" "}
+              {r.dataset.n_frames.toLocaleString()} rendered frames, {r.dataset.devices.length} simulated
+              devices. Real performance is unknown until the clinical protocol in docs/VALIDATION_PROTOCOL.md
+              is run.
             </p>
           </div>
         </div>

@@ -50,7 +50,23 @@ The API is optional. The web app runs fully on the device without it.
 
 **Provider.** The assistant uses Gigalogy Maira (`POST {MAIRA_BASE_URL}/v1/maira/ask`, headers
 `api-key` and `project-key`). Credentials come **only** from the environment variables
-`MAIRA_API_KEY`, `MAIRA_PROJECT_KEY`, `MAIRA_BASE_URL`, `MAIRA_GPT_PROFILE_ID` and `MAIRA_TIMEOUT_S`.
+`MAIRA_API_KEY`, `MAIRA_PROJECT_KEY`, `MAIRA_BASE_URL` (https only), `MAIRA_GPT_PROFILE_ID`,
+`MAIRA_TIMEOUT_S` and `MAIRA_MAX_RETRIES`.
+
+**Encrypted keys.** If the issued `MAIRA_API_KEY` is a Fernet token (it starts with `gAAAAA`), set
+`MAIRA_KEY_DECRYPTION_KEY` and the key is decrypted in memory. Without it, the value is sent exactly as
+issued. A wrong decryption key makes the assistant report "misconfigured" (503); it never crashes the API.
+
+**Failure handling.**
+
+- Timeouts, connection errors, 429 and 5xx are retried with backoff (0.5 s, 1 s, 2 s...).
+- 401/403 are not retried and return 502 "refused the credentials".
+- A non-JSON reply returns 502.
+- Keys never appear in logs, error messages or the config's repr.
+- Questions are collapsed to one line and capped at 500 characters.
+
+**Connectivity check.** `set -a; . ./.env; set +a; .venv/bin/python scripts/check_maira.py` sends one
+SIMULATED test question and prints only the outcome.
 
 **What is sent.** A de-identified text summary of the existing report: output levels, classes, SE
 values and intervals that are already shown, and notes. No images, no profile label, and an anonymous

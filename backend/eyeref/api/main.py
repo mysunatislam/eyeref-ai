@@ -28,7 +28,14 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .. import __version__
-from ..assistant.maira import PROVIDER_LABEL, MairaClient, MairaConfig, explain_report
+from ..assistant.maira import (
+    PROVIDER_LABEL,
+    AssistantAuthError,
+    AssistantConfigError,
+    MairaClient,
+    MairaConfig,
+    explain_report,
+)
 from ..calibration.device_profiles import load_profiles
 from ..cv.features import EXTRACTOR_VERSION
 from ..db import models as m
@@ -399,7 +406,11 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
     # ------------------------------------------------- optional AI assistant
     @app.get("/api/assistant/status")
     def assistant_status() -> dict[str, Any]:
-        cfg = MairaConfig.from_env()
+        try:
+            cfg = MairaConfig.from_env()
+        except AssistantConfigError:
+            return {"configured": False, "provider": None, "label": PROVIDER_LABEL,
+                    "error": "assistant configuration is invalid"}
         return {"configured": cfg is not None, "provider": "gigalogy-maira" if cfg else None, "label": PROVIDER_LABEL}
 
     @app.post("/api/assistant/explain")
@@ -407,13 +418,18 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
         """Plain-language explanation of an existing report by a third-party LLM.
 
         Never a source of refraction values (see eyeref/assistant/guard.py)."""
-        cfg = MairaConfig.from_env()
+        try:
+            cfg = MairaConfig.from_env()
+        except AssistantConfigError as e:
+            raise HTTPException(503, f"AI assistant misconfigured: {e}") from e
         if cfg is None:
             raise HTTPException(503, "AI assistant not configured (set MAIRA_API_KEY and MAIRA_PROJECT_KEY)")
         if not req.consent_third_party:
             raise HTTPException(403, "explicit consent to send a de-identified summary to the third-party service is required")
         try:
             ans = explain_report(req.report, req.question, assistant_client_factory(cfg))
+        except AssistantAuthError as e:
+            raise HTTPException(502, f"assistant service refused the credentials: {e}") from e
         except httpx.HTTPError as e:
             raise HTTPException(502, f"assistant service unavailable: {type(e).__name__}") from e
         except ValueError as e:
