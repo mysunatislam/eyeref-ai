@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Field, Input, Select } from "@/components/ui/field";
 import { Stat } from "@/components/ui/stat";
 import { Switch } from "@/components/ui/switch";
-import { api, ApiError } from "@/lib/api";
+import { api, ApiError, connOf } from "@/lib/api";
 import { agreement, normalizeGt, pairRows, toCsv } from "@/lib/dataset";
 import { formatAxis, formatDiopters, sphericalEquivalent } from "@/lib/optics/powerVector";
 import { PROTOCOL_VERSION } from "@/lib/protocol/protocol";
@@ -125,13 +125,14 @@ export default function DatasetPage() {
   };
 
   const upload = async (a: StoredAssessment) => {
+    const conn = connOf(s);
     setBusy(true);
     const out: string[] = [];
     const say = (m: string) => (out.push(m), setLog([...out]));
     try {
       const code = a.profile.datasetCode;
       if (!code) throw new Error("Assign a pseudonymous subject code first.");
-      const subj = await api.createSubject(s.apiUrl, {
+      const subj = await api.createSubject(conn, {
         code,
         ageGroup: a.profile.ageGroup,
         consentResearch,
@@ -140,9 +141,9 @@ export default function DatasetPage() {
         wearsCorrection: a.profile.wearsCorrection,
       });
       say(`Subject ${code} created.`);
-      for (const g of a.groundTruth ?? []) await api.addGroundTruth(s.apiUrl, subj.id, g);
+      for (const g of a.groundTruth ?? []) await api.addGroundTruth(conn, subj.id, g);
       say(`${a.groundTruth?.length ?? 0} ground-truth entries uploaded.`);
-      const ses = await api.createSession(s.apiUrl, {
+      const ses = await api.createSession(conn, {
         subjectId: subj.id,
         deviceId: a.report.provenance.deviceProfile,
         protocolVersion: PROTOCOL_VERSION,
@@ -152,7 +153,7 @@ export default function DatasetPage() {
       let imgs = 0;
       for (const f of a.frames) {
         const image = consentImages && f.cropDataUrl ? await (await fetch(f.cropDataUrl)).blob() : undefined;
-        const r = await api.addCapture(s.apiUrl, ses.id, {
+        const r = await api.addCapture(conn, ses.id, {
           metadata: f.metadata,
           features: f.features,
           quality: f.quality,
@@ -164,7 +165,7 @@ export default function DatasetPage() {
       say(
         `${n} captures uploaded (${imgs} with images${imgs ? ", encrypted at rest if the server key is set" : ""}).`,
       );
-      await api.addPrediction(s.apiUrl, ses.id, a.report);
+      await api.addPrediction(conn, ses.id, a.report);
       say("Prediction with model version uploaded. Done.");
     } catch (e) {
       say(`Failed: ${e instanceof ApiError ? `${e.status} ${e.message}` : (e as Error).message}`);

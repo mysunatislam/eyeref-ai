@@ -35,14 +35,35 @@ export class ApiError extends Error {
   }
 }
 
-async function call<T>(base: string, path: string, init: RequestInit = {}): Promise<T> {
+/** Where the research backend is, and the access token it expects (if any). */
+export interface ApiConn {
+  url: string;
+  token?: string | null;
+}
+
+export const connOf = (s: { apiUrl: string; apiToken?: string }): ApiConn => ({
+  url: s.apiUrl,
+  token: s.apiToken?.trim() || null,
+});
+
+async function call<T>(conn: ApiConn, path: string, init: RequestInit = {}): Promise<T> {
+  const headers = new Headers(init.headers);
+  if (conn.token) headers.set("authorization", `Bearer ${conn.token}`);
   let res: Response;
   try {
-    res = await fetch(`${base.replace(/\/$/, "")}${path}`, init);
+    res = await fetch(`${conn.url.replace(/\/$/, "")}${path}`, { ...init, headers });
   } catch {
     throw new ApiError(
       0,
-      `Backend not reachable at ${base}. Start it with \`make backend\` or check Settings.`,
+      `Backend not reachable at ${conn.url}. Start it with \`make backend\` or check Settings.`,
+    );
+  }
+  if (res.status === 401) {
+    throw new ApiError(
+      401,
+      conn.token
+        ? "The research backend rejected the access token. Check it in Calibration → Settings."
+        : "The research backend needs an access token. Add it in Calibration → Settings.",
     );
   }
   if (!res.ok) {
@@ -87,16 +108,16 @@ export interface AssistantStatus {
 }
 
 export const api = {
-  health: (base: string) => call<{ status: string; version: string }>(base, "/health"),
-  assistantStatus: (base: string) => call<AssistantStatus>(base, "/api/assistant/status"),
-  explain: (base: string, report: AssessmentReport, question: string | null, consentThirdParty: boolean) =>
+  health: (conn: ApiConn) => call<{ status: string; version: string; auth?: string }>(conn, "/health"),
+  assistantStatus: (conn: ApiConn) => call<AssistantStatus>(conn, "/api/assistant/status"),
+  explain: (conn: ApiConn, report: AssessmentReport, question: string | null, consentThirdParty: boolean) =>
     call<{ text: string; redactions: number; provider: string; label: string }>(
-      base,
+      conn,
       "/api/assistant/explain",
       json({ report: slimReport(report), question, consentThirdParty }),
     ),
   createSubject: (
-    base: string,
+    conn: ApiConn,
     body: {
       code: string;
       ageGroup: string;
@@ -106,15 +127,15 @@ export const api = {
       wearsCorrection?: string;
       site?: string;
     },
-  ) => call<{ id: string; code: string }>(base, "/api/subjects", json(body)),
-  addGroundTruth: (base: string, subjectId: string, gt: GroundTruthEntry) =>
+  ) => call<{ id: string; code: string }>(conn, "/api/subjects", json(body)),
+  addGroundTruth: (conn: ApiConn, subjectId: string, gt: GroundTruthEntry) =>
     call<{ id: string; sphere: number; cylinder: number; axis: number | null; se: number }>(
-      base,
+      conn,
       `/api/subjects/${subjectId}/ground-truth`,
       json(gt),
     ),
   createSession: (
-    base: string,
+    conn: ApiConn,
     body: {
       subjectId: string;
       deviceId: string;
@@ -122,9 +143,9 @@ export const api = {
       simulated: boolean;
       conditionLabel?: string;
     },
-  ) => call<{ id: string }>(base, "/api/sessions", json(body)),
+  ) => call<{ id: string }>(conn, "/api/sessions", json(body)),
   addCapture: async (
-    base: string,
+    conn: ApiConn,
     sessionId: string,
     frame: {
       metadata: CaptureMetadata;
@@ -139,15 +160,13 @@ export const api = {
     fd.set("quality", JSON.stringify(snake(frame.quality)));
     if (frame.image) fd.set("image", frame.image, "crop.png");
     return call<{ id: string; imageStored: boolean; encrypted: boolean }>(
-      base,
+      conn,
       `/api/sessions/${sessionId}/captures`,
       { method: "POST", body: fd },
     );
   },
-  addPrediction: (base: string, sessionId: string, report: AssessmentReport) =>
-    call<{ ids: string[] }>(base, `/api/sessions/${sessionId}/predictions`, json(slimReport(report))),
-  exportUrl: (base: string, fmt: "csv" | "json", includeSimulated: boolean) =>
-    `${base.replace(/\/$/, "")}/api/dataset/export?fmt=${fmt}&include_simulated=${includeSimulated}`,
+  addPrediction: (conn: ApiConn, sessionId: string, report: AssessmentReport) =>
+    call<{ ids: string[] }>(conn, `/api/sessions/${sessionId}/predictions`, json(slimReport(report))),
 };
 
 export type EyeSideKey = EyeSide;

@@ -48,7 +48,7 @@ first, then astigmatism later.
 | Dead-zone gradient gain per device | **REQUIRES TRAINING DATA** | Needs a bench calibration with trial lenses (docs/DEVICE_CALIBRATION.md) |
 | SE accuracy, myopia/hyperopia screening on real people | **REQUIRES CLINICAL VALIDATION** | Protocol in docs/VALIDATION_PROTOCOL.md |
 | CYL / AXIS output | **REQUIRES CLINICAL VALIDATION** | Gated off; research flag only |
-| Research API, encrypted image storage, dataset export, consent enforcement | **WORKING** | SQLite + Fernet; not hardened for production |
+| Research API, encrypted image storage, dataset export, consent enforcement | **WORKING** | Bearer-token access control (required when `EYEREF_ENV=production`), Fernet at rest. SQLite by default; the SQLAlchemy URL is configurable, but other databases are untested |
 | Optional AI explanation (local Gemma via Ollama by default; Gigalogy Maira optional) | **PARTIALLY WORKING** | Text-only summary, numeric guard tested against prescription-leaking replies, consent required for any remote provider. Verified against mocks only, because model downloads are blocked in the build sandbox. Run `scripts/check_assistant.py` once on your machine |
 | Installable app (PWA) with offline use | **WORKING** | Manifest, icons and a service worker that caches app code and the MediaPipe model, never results or camera frames. Verified offline in Chromium. Needs HTTPS to install |
 | Continuous integration | **WORKING** | `.github/workflows/ci.yml`: ruff, pytest, eslint, prettier, tsc, vitest, production build, web/backend contract. Runs on the first push |

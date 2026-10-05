@@ -118,6 +118,17 @@ export default function CalibrationPage() {
               <Field label="Research backend URL">
                 <Input defaultValue={s.apiUrl} onBlur={(e) => set({ apiUrl: e.target.value.trim() })} />
               </Field>
+              <Field
+                label="Research backend access token"
+                hint="Only needed when the backend sets EYEREF_API_TOKENS. Stored on this device only."
+              >
+                <Input
+                  type="password"
+                  autoComplete="off"
+                  defaultValue={s.apiToken}
+                  onBlur={(e) => set({ apiToken: e.target.value.trim() })}
+                />
+              </Field>
             </div>
           </CardContent>
         </Card>
