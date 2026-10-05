@@ -95,7 +95,7 @@ def test_every_change_and_read_is_recorded_once_with_who_did_it(client):
     assert details[5] == {"session_id": ses, "capture_id": without["id"], "eye": "OD", "image_stored": False}
     assert details[6] == {"session_id": ses, "prediction_ids": predicted["ids"]}
     assert details[7] == {"subjects": 1}
-    assert details[8] == {"format": "csv", "include_simulated": False, "rows": 2, "subjects": 1}
+    assert details[8] == {"format": "csv", "level": "capture", "include_simulated": False, "rows": 2, "subjects": 1}
     assert details[9] == {"images_deleted": 1}
 
 

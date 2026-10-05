@@ -28,7 +28,8 @@ def dioptric_metrics(pred: Sequence[float], true: Sequence[float]) -> dict[str, 
         "within_0_25": float((a <= 0.25 + 1e-9).mean()),
         "within_0_50": float((a <= 0.50 + 1e-9).mean()),
         "within_1_00": float((a <= 1.00 + 1e-9).mean()),
-        "pearson_r": float(np.corrcoef(p[ok], t[ok])[0, 1]) if e.size > 2 and np.std(p[ok]) > 0 else float("nan"),
+        "pearson_r": (float(np.corrcoef(p[ok], t[ok])[0, 1]) if e.size > 2 and np.std(p[ok]) > 0 and np.std(t[ok]) > 0
+                      else float("nan")),
     }
 
 

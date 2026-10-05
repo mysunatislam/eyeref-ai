@@ -17,6 +17,7 @@ from eyeref.optics.power_vector import (
     normalize_axis,
     rotate_axis,
     rotate_power_vector,
+    to_corneal_plane,
     to_power_vector,
 )
 
@@ -120,6 +121,25 @@ class TestPowerVectors:
         rx = SphCylAxis(-1.0, -1.0, 170)
         r = from_power_vector(rotate_power_vector(to_power_vector(rx), 20))
         assert circular_axis_error(r.axis, 10) < 1e-6
+
+
+class TestVertexDistance:
+    def test_a_high_myope_needs_less_minus_at_the_cornea(self):
+        rx = to_corneal_plane(SphCylAxis(-8.0, 0.0, None), 12)
+        assert (rx.sph, rx.cyl, rx.axis) == (pytest.approx(-8 / 1.096), 0.0, None)
+        assert rx.sph == pytest.approx(-7.30, abs=0.005)
+
+    def test_each_principal_meridian_is_converted_and_the_axis_kept(self):
+        rx = to_corneal_plane(SphCylAxis(-6.0, -2.0, 180.0), 12)
+        assert rx.sph == pytest.approx(-6 / 1.072)
+        assert rx.sph + rx.cyl == pytest.approx(-8 / 1.096)
+        assert rx.axis == 180.0
+
+    def test_a_hyperope_needs_more_plus_at_the_cornea(self):
+        assert to_corneal_plane(SphCylAxis(5.0, 0.0, None), 12).sph == pytest.approx(5 / 0.94)
+
+    def test_no_distance_changes_nothing(self):
+        assert to_corneal_plane(SphCylAxis(-3.0, -1.0, 90.0), 0) == SphCylAxis(-3.0, -1.0, 90.0)
 
 
 class TestMeridionalFit:

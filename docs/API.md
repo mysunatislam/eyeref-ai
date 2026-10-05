@@ -100,7 +100,7 @@ The step-by-step endpoints below remain for scripts and other clients.
 | POST | `/api/sessions` | `{subject_id, device_id, protocol_version, cycloplegia, condition_label, simulated, ...}` |
 | POST | `/api/sessions/{id}/captures` | multipart: `metadata`, `features`, `quality`, optional `image` (PNG). The image is refused with 403 without image consent, is stored once per capture, and is encrypted at rest when `EYEREF_STORAGE_KEY` is set |
 | POST | `/api/sessions/{id}/predictions` | `AssessmentReport`. Stores one row per eye with model, extractor and calibration versions |
-| GET | `/api/dataset/export?fmt=csv\|json&include_simulated=false` | One row per capture, with flattened features, the visit's start, and the reference refractions of the same visit per method ([pairing](DATASET.md#schema-backendeyerefdbmodelspy)) |
+| GET | `/api/dataset/export?fmt=csv\|json&include_simulated=false&level=capture\|eye` | `level=capture` (the default): one row per capture, with flattened features, the visit's start, and the reference refractions of the same visit per method ([pairing](DATASET.md#schema-backendeyerefdbmodelspy)), for training. `level=eye`: one row per eye per visit, with what the product released and the same references, for [validation](VALIDATION_PROTOCOL.md#analysing-a-study) |
 
 ## Audit log
 
@@ -120,7 +120,7 @@ nothing and records nothing.
 | `prediction.add` | A report's results are stored | The session, the new prediction ids |
 | `assessment.upload` | A whole record is uploaded | The session; how many reference refractions, captures and images; the prediction ids |
 | `subject.consent` | A returning subject gives image consent | The consent version |
-| `dataset.export` | The dataset is exported | Format, rows, subjects, whether simulated data was included |
+| `dataset.export` | The dataset is exported | Format, level, rows, subjects, whether simulated data was included |
 | `device.save` | A device profile is added or replaced | Its id and calibration version |
 
 - **Who.** `actor` is the fingerprint of the API token that was used: `tok_` and the first 12 hex

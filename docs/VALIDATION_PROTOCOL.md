@@ -27,7 +27,10 @@ Accuracy is reported **within** the released set, **and** coverage (the fraction
 reported. A method that releases 30% of eyes with excellent accuracy is a different product from one
 that releases 90%.
 
-## Metrics (all implemented in `ml/eyeref_ml/evaluation`)
+## Metrics
+
+`ml/eyeref_ml/evaluation/study.py` computes these from the research server's data (see
+[Analysing a study](#analysing-a-study)), and `eye_level.py` computes them for the simulated benchmark.
 
 | Quantity | Metrics |
 | --- | --- |
@@ -43,6 +46,46 @@ that releases 90%.
 
 Report 95% confidence intervals for every metric. Use bootstrap resampling over **subjects**, not over
 eyes or frames.
+
+Not yet computed from real data: astigmatism screening, the calibration plot, the frame-level quality
+and gating analysis, and subgroups by pupil size, distance, iris colour or sex. The simulated
+benchmark covers the quality and gating analysis.
+
+## Analysing a study
+
+1. Export every eye from the research server: `GET /api/dataset/export?level=eye` (CSV). There is one
+   row per eye per visit, with what the product released and the reference refractions measured at
+   that visit.
+2. Run the analysis:
+
+   ```
+   cd ml && python -m eyeref_ml.evaluation.study eyeref_eyes.csv --one-eye --out study.json
+   ```
+
+   Or run `make study EXPORT=eyeref_eyes.csv`. Leave out `--one-eye` for the secondary analysis with
+   both eyes. The script prints a summary and writes every metric, with its interval, to the JSON file.
+
+How the script applies this protocol:
+
+- **One study.** It refuses an export that mixes simulated and real data. It also refuses results from
+  more than one model version unless `--model-version` names the frozen one. A result stored twice for
+  the same eye and visit counts once (the later one).
+- **Outcomes.** Every eye photographed at a visit is counted. An eye with no result, or with no usable
+  frame, is a protocol failure.
+- **Reference.** By default this is the autorefractor. `--reference best` takes cycloplegic, then
+  subjective, then autorefractor, then retinoscopy, then trial lens. A lensmeter reading is never a
+  reference: it measures the spectacles.
+- **Agreement** is computed over the eyes given a number. When the reference's |M| exceeds 4 D, both
+  sides are compared at the cornea, using the vertex distance recorded with the reference (12 mm if
+  none was recorded). Sphere, cylinder and axis are compared only where the gate released them.
+- **Screening** counts every eye with a reference. An eye that could not be screened (repeat or
+  protocol failure) counts as referred, and scores 1 on the ROC curve. A probability of 0.5 or more
+  is a referral. Hyperopia uses the product's age thresholds: +0.50 D for adults, +1.50 D at 8 to 12
+  years and +2.00 D at 3 to 7 years. Anisometropia is judged per visit, for visits with a reference
+  for both eyes.
+- **Repeatability** uses the released SE of the same eye from separate visits on the same day (UTC).
+- **Intervals** are 95% percentile intervals from 2000 resamples of subjects (`--boot`, `--seed`). A
+  subject drawn twice counts as two subjects.
 
 ## Generalisation tests
 

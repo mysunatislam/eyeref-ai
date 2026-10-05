@@ -179,6 +179,20 @@ def from_power_vector(pv: PowerVector, convention: CylConvention = "minus") -> S
     return rx.in_convention(convention)
 
 
+def to_corneal_plane(rx: SphCylAxis, vertex_mm: float) -> SphCylAxis:
+    """The refraction at the cornea of a correction worn ``vertex_mm`` in front of it.
+
+    Each principal meridian F becomes F / (1 - d F), with d in metres; the axis is unchanged. A -8.00 D
+    spectacle refraction at 12 mm is -7.30 D at the cornea.
+    """
+    d = vertex_mm / 1000.0
+    first = rx.sph / (1.0 - d * rx.sph)
+    if rx.axis is None or abs(rx.cyl) < AXIS_UNDEFINED_CYL:
+        return SphCylAxis(first, 0.0, None)
+    second = (rx.sph + rx.cyl) / (1.0 - d * (rx.sph + rx.cyl))
+    return SphCylAxis(first, second - first, rx.axis)
+
+
 def rotate_power_vector(pv: PowerVector, rotation_deg: float) -> PowerVector:
     """Rotate the astigmatic component by ``rotation_deg`` (CCW)."""
     r = math.radians(2.0 * rotation_deg)
