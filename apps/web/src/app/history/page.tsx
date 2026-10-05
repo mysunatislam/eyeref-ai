@@ -3,6 +3,7 @@ import { Download, FlaskConical, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { TrendChart } from "@/components/charts/TrendChart";
+import { BackupRestore } from "@/components/history/BackupRestore";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { LEVEL } from "@/components/results/EyeResultCard";
 import { download } from "@/components/results/ReportView";
@@ -148,6 +149,11 @@ export default function HistoryPage() {
               Dataset mode
             </Link>
           </p>
+        </div>
+      )}
+      {items !== null && (
+        <div className="mt-6">
+          <BackupRestore items={items} onRestored={reload} />
         </div>
       )}
     </>
