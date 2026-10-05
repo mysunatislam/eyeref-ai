@@ -2,7 +2,7 @@
 import { Fragment } from "react";
 import { formatDiopters } from "@/lib/optics/powerVector";
 import type { EyeResult, StoredAssessment } from "@/lib/types";
-import { AGE_LABEL, cn, pct } from "@/lib/utils";
+import { AGE_LABEL, cn, formatDateTime, probability as prob } from "@/lib/utils";
 import { Logo } from "@/components/layout/Logo";
 import { CLASS_LABEL, LEVEL } from "./EyeResultCard";
 
@@ -14,7 +14,6 @@ const CORRECTION: Record<string, string> = {
 };
 
 /** A probability never reads as certainty on paper. */
-const prob = (p: number | null) => (p === null ? "—" : p > 0.99 ? "> 99%" : p < 0.01 ? "< 1%" : pct(p));
 
 function resultCell(e: EyeResult) {
   if (e.outputLevel === "quantitative" && e.seD !== null) {
@@ -92,7 +91,6 @@ const cells = (e: EyeResult) => [resultCell(e), categoryCell(e), astigmatismCell
 export function ReferralReport({ a }: { a: StoredAssessment }) {
   const r = a.report;
   const refer = r.referralReasons.length > 0;
-  const created = new Date(a.createdAt);
   return (
     <article
       className="bg-surface border-line text-ink relative mx-auto max-w-[210mm] overflow-hidden rounded-2xl border p-5 text-[13px] leading-snug [-webkit-print-color-adjust:exact] [print-color-adjust:exact] sm:p-8 print:max-w-none print:overflow-visible print:rounded-none print:border-0 print:p-0"
@@ -133,7 +131,7 @@ export function ReferralReport({ a }: { a: StoredAssessment }) {
           {[
             ["Name or code", a.profile.datasetCode || a.profile.label],
             ["Age band", AGE_LABEL[a.profile.ageGroup] ?? a.profile.ageGroup],
-            ["Date", created.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })],
+            ["Date", formatDateTime(a.createdAt)],
             ["Usual correction", CORRECTION[a.profile.wearsCorrection] ?? a.profile.wearsCorrection],
             ["Symptoms reported", a.profile.symptoms ? "Yes" : "No"],
           ].map(([k, v]) => (

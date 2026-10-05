@@ -115,5 +115,7 @@ export function roundToStep(v: number, step = 0.25): number {
 export function formatDiopters(v: number | null | undefined, digits = 2): string {
   if (v === null || v === undefined || !Number.isFinite(v)) return "—";
   const s = Math.abs(v).toFixed(digits);
+  // a value that rounds to zero carries no sign: "0.00 D", never "−0.00 D"
+  if (Number(s) === 0) return `${s} D`;
   return `${v < 0 ? "−" : "+"}${s} D`;
 }

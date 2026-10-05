@@ -6,12 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Stat } from "@/components/ui/stat";
-import { formatAxis, formatDiopters } from "@/lib/optics/powerVector";
+import { formatDiopters } from "@/lib/optics/powerVector";
 import { deleteAssessment, exportJson } from "@/lib/storage/db";
 import type { StoredAssessment } from "@/lib/types";
-import { AGE_LABEL, cn, pct } from "@/lib/utils";
+import { AGE_LABEL, cn, formatDateTime, probability } from "@/lib/utils";
 import { AiExplainPanel } from "./AiExplainPanel";
 import { EyeResultCard } from "./EyeResultCard";
+import { SimTruthCard } from "./SimTruthCard";
 
 export function download(blob: Blob, name: string) {
   const url = URL.createObjectURL(blob);
@@ -37,7 +38,7 @@ export function ReportView({ a }: { a: StoredAssessment }) {
               </Badge>
             )}
             <Badge>{AGE_LABEL[a.profile.ageGroup]}</Badge>
-            <Badge>{new Date(a.createdAt).toLocaleString()}</Badge>
+            <Badge>{formatDateTime(a.createdAt)}</Badge>
           </div>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
             Screening report · {a.profile.label}
@@ -114,7 +115,7 @@ export function ReportView({ a }: { a: StoredAssessment }) {
           />
           <Stat
             label="Anisometropia ≥ 1 D"
-            value={pct(r.anisometropiaProbability)}
+            value={probability(r.anisometropiaProbability)}
             tone={(r.anisometropiaProbability ?? 0) > 0.5 ? "warn" : undefined}
             sub="probability"
           />
@@ -131,72 +132,7 @@ export function ReportView({ a }: { a: StoredAssessment }) {
         </CardContent>
       </Card>
 
-      {r.simulated && a.simTruth && (
-        <Card className="border-sim/40">
-          <CardHeader>
-            <CardTitle className="text-sim flex items-center gap-2">
-              <FlaskConical className="size-4" /> Simulator ground truth (SIMULATED DATA)
-            </CardTitle>
-          </CardHeader>
-          <CardContent
-            className="overflow-x-auto"
-            tabIndex={0}
-            role="region"
-            aria-label="Simulator ground truth table"
-          >
-            <table className="num w-full text-sm">
-              <thead className="text-muted text-left text-[11px] tracking-wider uppercase">
-                <tr>
-                  <th className="py-1 pr-4">Eye</th>
-                  <th className="pr-4">True Rx</th>
-                  <th className="pr-4">True SE</th>
-                  <th className="pr-4">Estimated SE</th>
-                  <th className="pr-4">Error</th>
-                  <th>Output</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(["OD", "OS"] as const).map((e) => {
-                  const t = a.simTruth![e];
-                  const est = r.eyes[e];
-                  const err = est.seD !== null && est.outputLevel === "quantitative" ? est.seD - t.se : null;
-                  return (
-                    <tr key={e} className="border-line border-t">
-                      <td className="py-1.5 pr-4 font-semibold">{e}</td>
-                      <td className="pr-4">
-                        {formatDiopters(t.sph)} / {formatDiopters(t.cyl)} × {formatAxis(t.axis)}
-                      </td>
-                      <td className="pr-4">{formatDiopters(t.se)}</td>
-                      <td className="pr-4">
-                        {est.outputLevel === "quantitative" ? formatDiopters(est.seD) : est.outputLevel}
-                      </td>
-                      <td className="pr-4">{err === null ? "—" : formatDiopters(err)}</td>
-                      <td>
-                        <Badge
-                          tone={
-                            est.outputLevel === "quantitative"
-                              ? "ok"
-                              : est.outputLevel === "screening"
-                                ? "warn"
-                                : "bad"
-                          }
-                        >
-                          {est.outputLevel}
-                        </Badge>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            <p className="text-muted mt-2 text-xs">
-              The simulator models accommodation, so hyperopes are often under-read, as with real undilated
-              eyes. This comparison only shows the algorithm is self-consistent; it is not evidence of
-              clinical accuracy.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+      <SimTruthCard a={a} />
 
       <AiExplainPanel report={r} />
 

@@ -15,7 +15,7 @@ import { Tabs } from "@/components/ui/tabs";
 import { formatDiopters } from "@/lib/optics/powerVector";
 import { clearAssessments, exportJson } from "@/lib/storage/db";
 import { useAssessments } from "@/lib/storage/hooks";
-import { AGE_LABEL } from "@/lib/utils";
+import { AGE_LABEL, formatDateTime } from "@/lib/utils";
 
 export default function HistoryPage() {
   const { items, unreadable } = useAssessments();
@@ -130,7 +130,7 @@ export default function HistoryPage() {
                     {a.profile.label}
                     <span className="text-muted text-xs font-normal">· {AGE_LABEL[a.profile.ageGroup]}</span>
                   </div>
-                  <div className="text-muted text-xs">{new Date(a.createdAt).toLocaleString()}</div>
+                  <div className="text-muted text-xs">{formatDateTime(a.createdAt)}</div>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {(["OD", "OS"] as const).map((e) => {

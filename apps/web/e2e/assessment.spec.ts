@@ -28,6 +28,21 @@ test("simulated assessment runs end to end and shows only gated, labelled output
   expect(body).not.toMatch(RX_VALUE);
   expect(body).toMatch(/not an eyeglass prescription/i);
 
+  // a probability about this person never reads as certainty
+  expect(body).not.toMatch(/(?<![\d.])(100|0)%/);
+  await expect(page.getByText("> 99%").first()).toBeVisible();
+
+  // the simulator's truth is readable without sideways scrolling: a table on wide screens, a
+  // card per eye on phones
+  const phone = (page.viewportSize()?.width ?? 0) < 640;
+  const truth = phone
+    ? page.getByRole("region", { name: "Simulator ground truth, OD" })
+    : page.getByRole("region", { name: "Simulator ground truth table" });
+  await expect(truth).toBeVisible();
+  await expect(truth).toContainText("True refraction");
+  await expect(truth).toContainText("−3.00 D sphere");
+  expect(await truth.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+
   for (const scheme of ["light", "dark"] as const) {
     await page.emulateMedia({ colorScheme: scheme });
     const serious = await seriousViolations(page);

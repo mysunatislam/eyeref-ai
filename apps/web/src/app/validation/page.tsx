@@ -8,7 +8,7 @@ import { Select } from "@/components/ui/field";
 import { Stat } from "@/components/ui/stat";
 import { Tabs } from "@/components/ui/tabs";
 import { BlandAltman, DegradationChart, RocChart } from "@/components/validation/Charts";
-import { cn, fmt, pct } from "@/lib/utils";
+import { cn, fmt, formatDateTime, pct, UI_LOCALE } from "@/lib/utils";
 import { MODEL_LABEL, type Reg, type ValidationReport } from "@/lib/validationReport";
 
 const d = (v: number | null | undefined) => (v === null || v === undefined ? "—" : `${v.toFixed(2)} D`);
@@ -52,9 +52,9 @@ export default function ValidationPage() {
             <div className="text-sim font-bold tracking-wider">SIMULATED VALIDATION RESULTS</div>
             <p className="text-ink-2 mt-1 first-letter:uppercase">
               {r.warning.replace(/^SIMULATED DATA\s*[-–]\s*/, "")} {r.dataset.n_subjects} virtual subjects,{" "}
-              {r.dataset.n_frames.toLocaleString()} rendered frames, {r.dataset.devices.length} simulated
-              devices. Real performance is unknown until the clinical protocol in docs/VALIDATION_PROTOCOL.md
-              is run.
+              {r.dataset.n_frames.toLocaleString(UI_LOCALE)} rendered frames, {r.dataset.devices.length}{" "}
+              simulated devices. Real performance is unknown until the clinical protocol in
+              docs/VALIDATION_PROTOCOL.md is run.
             </p>
           </div>
         </div>
@@ -348,7 +348,7 @@ export default function ValidationPage() {
         </Card>
       )}
       <p className="text-muted mt-4 text-xs">
-        Report generated {new Date(r.generated_at).toLocaleString()} by eyeref-ml v{r.eyeref_ml_version}.
+        Report generated {formatDateTime(r.generated_at)} by eyeref-ml v{r.eyeref_ml_version}.
       </p>
     </>
   );

@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Field, Select } from "@/components/ui/field";
 import { useSettings } from "@/lib/settings";
 import type { VisionTestResult } from "@/lib/types";
+import { formatDate } from "@/lib/utils";
 import {
   DIRS,
   LETTERS_PER_LINE,
@@ -280,7 +281,7 @@ export default function VisionTestPage() {
                   className="border-line flex items-center justify-between border-b py-1"
                 >
                   <span>
-                    {h.eye} · {new Date(h.timestamp).toLocaleDateString()}
+                    {h.eye} · {formatDate(h.timestamp)}
                   </span>
                   <span className="num">{h.logMar === null ? "<0.7" : h.logMar.toFixed(2)}</span>
                   {h.astigmaticDialReport === "lines_unequal" && <Badge tone="warn">dial</Badge>}

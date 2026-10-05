@@ -20,6 +20,11 @@ for (const scheme of ["light", "dark"] as const) {
     }) => {
       const errors: string[] = [];
       page.on("pageerror", (e) => errors.push(e.message));
+      // console errors include failed requests, such as a missing tab icon
+      page.on(
+        "console",
+        (m) => void (m.type() === "error" && errors.push(`${m.text()} ${m.location().url}`)),
+      );
       await page.emulateMedia({ colorScheme: scheme });
       await page.goto(route);
       await expect(page.locator("main")).toBeVisible();

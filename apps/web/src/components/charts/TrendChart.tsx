@@ -11,6 +11,7 @@ import {
   YAxis,
 } from "recharts";
 import type { StoredAssessment } from "@/lib/types";
+import { UI_LOCALE } from "@/lib/utils";
 
 /** Longitudinal SE per eye. Only quantitative outputs are plotted; screening-only points are omitted. */
 export function TrendChart({ items }: { items: StoredAssessment[] }) {
@@ -23,7 +24,7 @@ export function TrendChart({ items }: { items: StoredAssessment[] }) {
         return { [e]: r.seD, [`${e}err`]: [r.seD - r.seCi95[0], r.seCi95[1] - r.seD] };
       };
       return {
-        t: new Date(a.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+        t: new Date(a.createdAt).toLocaleDateString(UI_LOCALE, { month: "short", day: "numeric" }),
         ...pt("OD"),
         ...pt("OS"),
       };
