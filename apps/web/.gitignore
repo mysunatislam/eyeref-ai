@@ -6,3 +6,7 @@ next-env.d.ts
 .env
 .env.local
 public/mediapipe
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/

@@ -133,7 +133,11 @@ export default function CalibrationPage() {
             </Badge>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Select value={s.deviceId} onChange={(e) => set({ deviceId: e.target.value })}>
+            <Select
+              aria-label="Device profile"
+              value={s.deviceId}
+              onChange={(e) => set({ deviceId: e.target.value })}
+            >
               {[...DEVICE_PROFILES.filter((d) => !d.simulated), ...s.customDevices].map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.model}

@@ -80,7 +80,7 @@ export default function HistoryPage() {
         <Card>
           <CardContent className="text-ink-2 pt-5 text-sm">
             No {kind === "sim" ? "simulated" : "camera"} assessments yet.{" "}
-            <Link className="text-accent underline-offset-2 hover:underline" href="/assess">
+            <Link className="text-accent underline underline-offset-2" href="/assess">
               Start one
             </Link>
             .

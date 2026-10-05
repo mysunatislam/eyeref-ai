@@ -57,7 +57,7 @@ export function WhyPanel({ eye, gating = DEFAULT_GATING }: { eye: EyeResult; gat
             <span
               className={cn(
                 "grid size-4 shrink-0 place-items-center rounded-full",
-                g.pass === null ? "bg-line" : g.pass ? "bg-ok text-white" : "bg-bad text-white",
+                g.pass === null ? "bg-line" : g.pass ? "bg-ok text-on-ok" : "bg-bad text-on-bad",
               )}
             >
               {g.pass === true && <Check className="size-3" />}

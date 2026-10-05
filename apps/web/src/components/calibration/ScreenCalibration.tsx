@@ -15,7 +15,7 @@ export function ScreenCalibration({
   const [px, setPx] = useState(() => Math.round((value ?? 3.78) * CARD_MM));
   return (
     <div className="space-y-3">
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Card size preview">
         <div
           className="border-accent bg-accent-soft text-accent grid place-items-center rounded-xl border-2 text-xs"
           style={{ width: px, height: px * (53.98 / CARD_MM) }}
