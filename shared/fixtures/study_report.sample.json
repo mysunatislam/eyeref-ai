@@ -1,0 +1,1798 @@
+{
+  "kind": "eyeref-study-report",
+  "format_version": 1,
+  "label": "SIMULATED DATA: not evidence about real eyes",
+  "generated_at": "2026-01-01T00:00:00+00:00",
+  "eyeref_ml_version": "0.1.0",
+  "simulated": true,
+  "reference": "autorefractor",
+  "model_versions": [
+    "1.0.0"
+  ],
+  "eyes_per_subject": "both",
+  "eyes_left_out_other_model_versions": 0,
+  "n": {
+    "subjects": 16,
+    "visits": 22,
+    "eyes": 44,
+    "quantitative": 34,
+    "screening": 6,
+    "repeat": 2,
+    "protocol_failure": 2,
+    "eyes_with_reference": 44,
+    "eyes_compared": 34,
+    "eyes_compared_at_cornea": 4,
+    "repeatability_eyes": 10,
+    "repeatability_measurements": 20,
+    "screening_tables": {
+      "myopia_0_50": {
+        "true_positive": 26,
+        "false_positive": 1,
+        "false_negative": 0,
+        "true_negative": 17,
+        "not_screened": 4
+      },
+      "myopia_1_00": {
+        "true_positive": 22,
+        "false_positive": 5,
+        "false_negative": 0,
+        "true_negative": 17,
+        "not_screened": 4
+      },
+      "hyperopia": {
+        "true_positive": 10,
+        "false_positive": 4,
+        "false_negative": 0,
+        "true_negative": 30,
+        "not_screened": 4
+      },
+      "astigmatism": {
+        "true_positive": 17,
+        "false_positive": 1,
+        "false_negative": 12,
+        "true_negative": 14,
+        "not_screened": 4
+      },
+      "anisometropia": {
+        "true_positive": 6,
+        "false_positive": 2,
+        "false_negative": 0,
+        "true_negative": 14,
+        "not_screened": 2
+      }
+    },
+    "subgroups": {
+      "device_id": {
+        "phone-a": 22,
+        "phone-b": 22
+      },
+      "age_group": {
+        "adult_18_39": 44
+      },
+      "refractive_range": {
+        "-3 to -0.5": 15,
+        "-6 to -3": 11,
+        "-0.5 to +0.5": 10,
+        "+0.5 to +3": 8
+      },
+      "pupil_band": {
+        "4 to 5 mm": 13,
+        "5 to 6 mm": 12,
+        "6 to 7 mm": 10,
+        "over 7 mm": 5,
+        "4 mm or less": 4
+      },
+      "distance_band": {
+        "0.9 to 1.1 m": 28,
+        "1.4 to 1.6 m": 16
+      },
+      "iris_color": {
+        "brown": 16,
+        "blue": 14,
+        "green": 14
+      },
+      "pigmentation": {},
+      "sex": {}
+    }
+  },
+  "bootstrap": {
+    "replicates": 200,
+    "seed": 1,
+    "resampled": "subjects",
+    "interval": "95% percentile"
+  },
+  "metrics": {
+    "outcomes": {
+      "quantitative": {
+        "value": 0.772727,
+        "ci95": [
+          0.52381,
+          0.947548
+        ]
+      },
+      "screening": {
+        "value": 0.136364,
+        "ci95": [
+          0.0,
+          0.333333
+        ]
+      },
+      "repeat": {
+        "value": 0.045455,
+        "ci95": [
+          0.0,
+          0.143452
+        ]
+      },
+      "protocol_failure": {
+        "value": 0.045455,
+        "ci95": [
+          0.0,
+          0.158493
+        ]
+      }
+    },
+    "agreement": {
+      "se": {
+        "mae": {
+          "value": 0.283262,
+          "ci95": [
+            0.217837,
+            0.375233
+          ]
+        },
+        "rmse": {
+          "value": 0.358179,
+          "ci95": [
+            0.275327,
+            0.452007
+          ]
+        },
+        "bias": {
+          "value": -0.049943,
+          "ci95": [
+            -0.209732,
+            0.107323
+          ]
+        },
+        "within_0_25": {
+          "value": 0.558824,
+          "ci95": [
+            0.388258,
+            0.694792
+          ]
+        },
+        "within_0_50": {
+          "value": 0.823529,
+          "ci95": [
+            0.65625,
+            0.941511
+          ]
+        },
+        "within_1_00": {
+          "value": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "pearson_r": {
+          "value": 0.98752,
+          "ci95": [
+            0.960933,
+            0.993936
+          ]
+        },
+        "sd_diff": {
+          "value": 0.360014,
+          "ci95": [
+            0.271344,
+            0.438452
+          ]
+        },
+        "loa_low": {
+          "value": -0.755571,
+          "ci95": [
+            -0.996042,
+            -0.492103
+          ]
+        },
+        "loa_high": {
+          "value": 0.655685,
+          "ci95": [
+            0.441517,
+            0.82886
+          ]
+        },
+        "proportional_bias_slope": {
+          "value": 0.063696,
+          "ci95": [
+            -0.009172,
+            0.181925
+          ]
+        }
+      },
+      "j0": {
+        "mae": {
+          "value": 0.43978,
+          "ci95": [
+            0.367573,
+            0.534158
+          ]
+        },
+        "rmse": {
+          "value": 0.50686,
+          "ci95": [
+            0.440939,
+            0.583562
+          ]
+        },
+        "bias": {
+          "value": 0.43978,
+          "ci95": [
+            0.367573,
+            0.534158
+          ]
+        },
+        "within_0_25": {
+          "value": 0.323529,
+          "ci95": [
+            0.181684,
+            0.466719
+          ]
+        },
+        "within_0_50": {
+          "value": 0.647059,
+          "ci95": [
+            0.5,
+            0.78959
+          ]
+        },
+        "within_1_00": {
+          "value": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "pearson_r": {
+          "value": null,
+          "ci95": null
+        },
+        "sd_diff": {
+          "value": 0.255783,
+          "ci95": [
+            0.216246,
+            0.286894
+          ]
+        },
+        "loa_low": {
+          "value": -0.061555,
+          "ci95": [
+            -0.158817,
+            0.091164
+          ]
+        },
+        "loa_high": {
+          "value": 0.941114,
+          "ci95": [
+            0.823659,
+            1.023859
+          ]
+        },
+        "proportional_bias_slope": {
+          "value": -2.0,
+          "ci95": [
+            -2.0,
+            -2.0
+          ]
+        }
+      },
+      "j45": {
+        "mae": {
+          "value": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "rmse": {
+          "value": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "bias": {
+          "value": -0.0,
+          "ci95": [
+            -0.0,
+            -0.0
+          ]
+        },
+        "within_0_25": {
+          "value": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "within_0_50": {
+          "value": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "within_1_00": {
+          "value": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "pearson_r": {
+          "value": null,
+          "ci95": null
+        },
+        "sd_diff": {
+          "value": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "loa_low": {
+          "value": -0.0,
+          "ci95": [
+            -0.0,
+            -0.0
+          ]
+        },
+        "loa_high": {
+          "value": 0.0,
+          "ci95": [
+            -0.0,
+            0.0
+          ]
+        },
+        "proportional_bias_slope": {
+          "value": -2.0,
+          "ci95": [
+            -2.0,
+            -2.0
+          ]
+        }
+      },
+      "se_ci95": {
+        "coverage": {
+          "value": 0.823529,
+          "ci95": [
+            0.65625,
+            0.941511
+          ]
+        },
+        "mean_width": {
+          "value": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        }
+      }
+    },
+    "screening": {
+      "myopia_0_50": {
+        "prevalence": {
+          "value": 0.590909,
+          "ci95": [
+            0.384375,
+            0.842303
+          ]
+        },
+        "sensitivity": {
+          "value": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "specificity": {
+          "value": 0.944444,
+          "ci95": [
+            0.81183,
+            1.0
+          ]
+        },
+        "ppv": {
+          "value": 0.962963,
+          "ci95": [
+            0.888889,
+            1.0
+          ]
+        },
+        "npv": {
+          "value": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "auc": {
+          "value": 0.976496,
+          "ci95": [
+            0.915489,
+            1.0
+          ]
+        }
+      },
+      "myopia_1_00": {
+        "prevalence": {
+          "value": 0.5,
+          "ci95": [
+            0.28539,
+            0.750298
+          ]
+        },
+        "sensitivity": {
+          "value": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "specificity": {
+          "value": 0.772727,
+          "ci95": [
+            0.45,
+            1.0
+          ]
+        },
+        "ppv": {
+          "value": 0.814815,
+          "ci95": [
+            0.583036,
+            1.0
+          ]
+        },
+        "npv": {
+          "value": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "auc": {
+          "value": 0.795455,
+          "ci95": [
+            0.475,
+            1.0
+          ]
+        }
+      },
+      "hyperopia": {
+        "prevalence": {
+          "value": 0.227273,
+          "ci95": [
+            0.0,
+            0.450114
+          ]
+        },
+        "sensitivity": {
+          "value": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "specificity": {
+          "value": 0.882353,
+          "ci95": [
+            0.666667,
+            1.0
+          ]
+        },
+        "ppv": {
+          "value": 0.714286,
+          "ci95": [
+            0.0,
+            1.0
+          ]
+        },
+        "npv": {
+          "value": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "auc": {
+          "value": 0.882353,
+          "ci95": [
+            0.666667,
+            1.0
+          ]
+        }
+      },
+      "astigmatism": {
+        "prevalence": {
+          "value": 0.659091,
+          "ci95": [
+            0.54528,
+            0.77519
+          ]
+        },
+        "sensitivity": {
+          "value": 0.586207,
+          "ci95": [
+            0.384259,
+            0.793588
+          ]
+        },
+        "specificity": {
+          "value": 0.933333,
+          "ci95": [
+            0.769231,
+            1.0
+          ]
+        },
+        "ppv": {
+          "value": 0.944444,
+          "ci95": [
+            0.833333,
+            1.0
+          ]
+        },
+        "npv": {
+          "value": 0.538462,
+          "ci95": [
+            0.416667,
+            0.680188
+          ]
+        },
+        "auc": {
+          "value": 0.929885,
+          "ci95": [
+            0.788859,
+            1.0
+          ]
+        }
+      },
+      "anisometropia": {
+        "prevalence": {
+          "value": 0.272727,
+          "ci95": [
+            0.047619,
+            0.5
+          ]
+        },
+        "sensitivity": {
+          "value": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "specificity": {
+          "value": 0.875,
+          "ci95": [
+            0.686979,
+            1.0
+          ]
+        },
+        "ppv": {
+          "value": 0.75,
+          "ci95": [
+            0.333333,
+            1.0
+          ]
+        },
+        "npv": {
+          "value": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "auc": {
+          "value": 0.875,
+          "ci95": [
+            0.686458,
+            1.0
+          ]
+        }
+      }
+    },
+    "calibration": {
+      "myopia": {
+        "ece": {
+          "value": 0.075,
+          "ci95": [
+            0.041176,
+            0.1
+          ]
+        }
+      },
+      "hyperopia": {
+        "ece": {
+          "value": 0.1,
+          "ci95": [
+            0.1,
+            0.1
+          ]
+        }
+      },
+      "astigmatism": {
+        "ece": {
+          "value": 0.175622,
+          "ci95": [
+            0.140829,
+            0.232663
+          ]
+        }
+      }
+    },
+    "repeatability": {
+      "icc": {
+        "value": 0.990159,
+        "ci95": [
+          0.920299,
+          0.994147
+        ]
+      },
+      "sw": {
+        "value": 0.271285,
+        "ci95": [
+          0.210364,
+          0.33173
+        ]
+      },
+      "cor": {
+        "value": 0.751459,
+        "ci95": [
+          0.582708,
+          0.918892
+        ]
+      }
+    },
+    "subgroups": {
+      "device_id": {
+        "phone-a": {
+          "released": {
+            "value": 1.0,
+            "ci95": [
+              1.0,
+              1.0
+            ]
+          },
+          "bias": {
+            "value": -0.119095,
+            "ci95": [
+              -0.29775,
+              0.037994
+            ]
+          },
+          "loa_low": {
+            "value": -0.78593,
+            "ci95": [
+              -1.085183,
+              -0.425115
+            ]
+          },
+          "loa_high": {
+            "value": 0.547739,
+            "ci95": [
+              0.344101,
+              0.754127
+            ]
+          },
+          "mae": {
+            "value": 0.269889,
+            "ci95": [
+              0.176394,
+              0.418807
+            ]
+          }
+        },
+        "phone-b": {
+          "released": {
+            "value": 0.545455,
+            "ci95": [
+              0.153846,
+              0.833929
+            ]
+          },
+          "bias": {
+            "value": 0.076837,
+            "ci95": [
+              -0.193092,
+              0.316892
+            ]
+          },
+          "loa_low": {
+            "value": -0.658499,
+            "ci95": [
+              -0.817064,
+              -0.126998
+            ]
+          },
+          "loa_high": {
+            "value": 0.812172,
+            "ci95": [
+              0.402999,
+              0.887383
+            ]
+          },
+          "mae": {
+            "value": 0.307781,
+            "ci95": [
+              0.273162,
+              0.354785
+            ]
+          }
+        }
+      },
+      "age_group": {
+        "adult_18_39": {
+          "released": {
+            "value": 0.772727,
+            "ci95": [
+              0.52381,
+              0.947548
+            ]
+          },
+          "bias": {
+            "value": -0.049943,
+            "ci95": [
+              -0.209732,
+              0.107323
+            ]
+          },
+          "loa_low": {
+            "value": -0.755571,
+            "ci95": [
+              -0.996042,
+              -0.492103
+            ]
+          },
+          "loa_high": {
+            "value": 0.655685,
+            "ci95": [
+              0.441517,
+              0.82886
+            ]
+          },
+          "mae": {
+            "value": 0.283262,
+            "ci95": [
+              0.217837,
+              0.375233
+            ]
+          }
+        }
+      },
+      "refractive_range": {
+        "-6 to -3": {
+          "released": {
+            "value": 0.818182,
+            "ci95": [
+              0.427857,
+              1.0
+            ]
+          },
+          "bias": {
+            "value": -0.187704,
+            "ci95": [
+              -0.568332,
+              0.065661
+            ]
+          },
+          "loa_low": {
+            "value": -0.928226,
+            "ci95": [
+              -1.36239,
+              -0.301426
+            ]
+          },
+          "loa_high": {
+            "value": 0.552818,
+            "ci95": [
+              0.005385,
+              0.682536
+            ]
+          },
+          "mae": {
+            "value": 0.31284,
+            "ci95": [
+              0.144924,
+              0.602054
+            ]
+          }
+        },
+        "-3 to -0.5": {
+          "released": {
+            "value": 0.733333,
+            "ci95": [
+              0.333333,
+              1.0
+            ]
+          },
+          "bias": {
+            "value": -0.080134,
+            "ci95": [
+              -0.288837,
+              0.10639
+            ]
+          },
+          "loa_low": {
+            "value": -0.783696,
+            "ci95": [
+              -0.982334,
+              -0.470915
+            ]
+          },
+          "loa_high": {
+            "value": 0.623428,
+            "ci95": [
+              0.226195,
+              0.841432
+            ]
+          },
+          "mae": {
+            "value": 0.291953,
+            "ci95": [
+              0.183639,
+              0.377282
+            ]
+          }
+        },
+        "-0.5 to +0.5": {
+          "released": {
+            "value": 1.0,
+            "ci95": [
+              1.0,
+              1.0
+            ]
+          },
+          "bias": {
+            "value": -0.030674,
+            "ci95": [
+              -0.234613,
+              0.2514
+            ]
+          },
+          "loa_low": {
+            "value": -0.65472,
+            "ci95": [
+              -0.777155,
+              -0.088498
+            ]
+          },
+          "loa_high": {
+            "value": 0.593372,
+            "ci95": [
+              0.275625,
+              0.766866
+            ]
+          },
+          "mae": {
+            "value": 0.237782,
+            "ci95": [
+              0.142603,
+              0.293005
+            ]
+          }
+        },
+        "+0.5 to +3": {
+          "released": {
+            "value": 0.5,
+            "ci95": [
+              0.0,
+              1.0
+            ]
+          },
+          "bias": {
+            "value": 0.294873,
+            "ci95": [
+              0.294873,
+              0.294873
+            ]
+          },
+          "loa_low": {
+            "value": -0.297638,
+            "ci95": [
+              -0.297638,
+              -0.241073
+            ]
+          },
+          "loa_high": {
+            "value": 0.887383,
+            "ci95": [
+              0.830818,
+              0.887383
+            ]
+          },
+          "mae": {
+            "value": 0.306513,
+            "ci95": [
+              0.306513,
+              0.306513
+            ]
+          }
+        }
+      },
+      "pupil_band": {
+        "4 mm or less": {
+          "released": {
+            "value": 1.0,
+            "ci95": [
+              1.0,
+              1.0
+            ]
+          },
+          "bias": {
+            "value": 0.180563,
+            "ci95": [
+              -0.152642,
+              0.576708
+            ]
+          },
+          "loa_low": {
+            "value": -0.636008,
+            "ci95": [
+              -0.840337,
+              0.15766
+            ]
+          },
+          "loa_high": {
+            "value": 0.997134,
+            "ci95": [
+              -0.059509,
+              1.286573
+            ]
+          },
+          "mae": {
+            "value": 0.334427,
+            "ci95": [
+              0.130029,
+              0.576708
+            ]
+          }
+        },
+        "4 to 5 mm": {
+          "released": {
+            "value": 0.615385,
+            "ci95": [
+              0.25,
+              0.889394
+            ]
+          },
+          "bias": {
+            "value": -0.335733,
+            "ci95": [
+              -0.674833,
+              -0.044553
+            ]
+          },
+          "loa_low": {
+            "value": -1.059365,
+            "ci95": [
+              -1.270754,
+              -0.327665
+            ]
+          },
+          "loa_high": {
+            "value": 0.3879,
+            "ci95": [
+              -0.466823,
+              0.679756
+            ]
+          },
+          "mae": {
+            "value": 0.394216,
+            "ci95": [
+              0.142226,
+              0.674833
+            ]
+          }
+        },
+        "5 to 6 mm": {
+          "released": {
+            "value": 0.75,
+            "ci95": [
+              0.332692,
+              1.0
+            ]
+          },
+          "bias": {
+            "value": -0.133333,
+            "ci95": [
+              -0.274396,
+              0.083051
+            ]
+          },
+          "loa_low": {
+            "value": -0.739874,
+            "ci95": [
+              -0.846163,
+              -0.376515
+            ]
+          },
+          "loa_high": {
+            "value": 0.473207,
+            "ci95": [
+              0.087518,
+              0.792485
+            ]
+          },
+          "mae": {
+            "value": 0.25088,
+            "ci95": [
+              0.120002,
+              0.347686
+            ]
+          }
+        },
+        "6 to 7 mm": {
+          "released": {
+            "value": 0.8,
+            "ci95": [
+              0.5,
+              1.0
+            ]
+          },
+          "bias": {
+            "value": 0.163497,
+            "ci95": [
+              -0.00765,
+              0.419789
+            ]
+          },
+          "loa_low": {
+            "value": -0.371101,
+            "ci95": [
+              -0.737058,
+              0.149678
+            ]
+          },
+          "loa_high": {
+            "value": 0.698095,
+            "ci95": [
+              0.373276,
+              0.958682
+            ]
+          },
+          "mae": {
+            "value": 0.250266,
+            "ci95": [
+              0.137757,
+              0.426981
+            ]
+          }
+        },
+        "over 7 mm": {
+          "released": {
+            "value": 1.0,
+            "ci95": [
+              1.0,
+              1.0
+            ]
+          },
+          "bias": {
+            "value": 0.031516,
+            "ci95": [
+              -0.153312,
+              0.181203
+            ]
+          },
+          "loa_low": {
+            "value": -0.394785,
+            "ci95": [
+              -0.516111,
+              -0.112179
+            ]
+          },
+          "loa_high": {
+            "value": 0.457816,
+            "ci95": [
+              -0.081753,
+              0.589251
+            ]
+          },
+          "mae": {
+            "value": 0.175888,
+            "ci95": [
+              0.097547,
+              0.23804
+            ]
+          }
+        }
+      },
+      "distance_band": {
+        "0.9 to 1.1 m": {
+          "released": {
+            "value": 0.714286,
+            "ci95": [
+              0.352451,
+              0.948684
+            ]
+          },
+          "bias": {
+            "value": -0.104912,
+            "ci95": [
+              -0.315571,
+              0.123839
+            ]
+          },
+          "loa_low": {
+            "value": -0.873041,
+            "ci95": [
+              -1.159093,
+              -0.459252
+            ]
+          },
+          "loa_high": {
+            "value": 0.663217,
+            "ci95": [
+              0.356225,
+              1.000908
+            ]
+          },
+          "mae": {
+            "value": 0.320172,
+            "ci95": [
+              0.218137,
+              0.462085
+            ]
+          }
+        },
+        "1.4 to 1.6 m": {
+          "released": {
+            "value": 0.875,
+            "ci95": [
+              0.599286,
+              1.0
+            ]
+          },
+          "bias": {
+            "value": 0.028584,
+            "ci95": [
+              -0.135624,
+              0.207239
+            ]
+          },
+          "loa_low": {
+            "value": -0.569929,
+            "ci95": [
+              -0.657568,
+              -0.341765
+            ]
+          },
+          "loa_high": {
+            "value": 0.627097,
+            "ci95": [
+              0.244362,
+              0.835707
+            ]
+          },
+          "mae": {
+            "value": 0.230534,
+            "ci95": [
+              0.153426,
+              0.308552
+            ]
+          }
+        }
+      },
+      "iris_color": {
+        "blue": {
+          "released": {
+            "value": 0.714286,
+            "ci95": [
+              0.0,
+              1.0
+            ]
+          },
+          "bias": {
+            "value": -0.390816,
+            "ci95": [
+              -0.722105,
+              -0.234613
+            ]
+          },
+          "loa_low": {
+            "value": -0.962086,
+            "ci95": [
+              -1.114313,
+              -0.768363
+            ]
+          },
+          "loa_high": {
+            "value": 0.180455,
+            "ci95": [
+              -0.670292,
+              0.299137
+            ]
+          },
+          "mae": {
+            "value": 0.401788,
+            "ci95": [
+              0.262045,
+              0.722105
+            ]
+          }
+        },
+        "brown": {
+          "released": {
+            "value": 0.875,
+            "ci95": [
+              0.599286,
+              1.0
+            ]
+          },
+          "bias": {
+            "value": 0.028584,
+            "ci95": [
+              -0.135624,
+              0.207239
+            ]
+          },
+          "loa_low": {
+            "value": -0.569929,
+            "ci95": [
+              -0.657568,
+              -0.341765
+            ]
+          },
+          "loa_high": {
+            "value": 0.627097,
+            "ci95": [
+              0.244362,
+              0.835707
+            ]
+          },
+          "mae": {
+            "value": 0.230534,
+            "ci95": [
+              0.153426,
+              0.308552
+            ]
+          }
+        },
+        "green": {
+          "released": {
+            "value": 0.714286,
+            "ci95": [
+              0.332143,
+              1.0
+            ]
+          },
+          "bias": {
+            "value": 0.180992,
+            "ci95": [
+              0.051928,
+              0.318495
+            ]
+          },
+          "loa_low": {
+            "value": -0.289579,
+            "ci95": [
+              -0.462883,
+              0.126253
+            ]
+          },
+          "loa_high": {
+            "value": 0.651564,
+            "ci95": [
+              0.428147,
+              0.910743
+            ]
+          },
+          "mae": {
+            "value": 0.238557,
+            "ci95": [
+              0.143352,
+              0.350598
+            ]
+          }
+        }
+      }
+    }
+  },
+  "roc_curves": {
+    "myopia_0_50": [
+      {
+        "refer_from": 1.0,
+        "sensitivity": 0.153846,
+        "specificity": 1.0
+      },
+      {
+        "refer_from": 0.9,
+        "sensitivity": 1.0,
+        "specificity": 0.944444
+      },
+      {
+        "refer_from": 0.1,
+        "sensitivity": 1.0,
+        "specificity": 0.0
+      }
+    ],
+    "myopia_1_00": [
+      {
+        "refer_from": 1.0,
+        "sensitivity": 0.0,
+        "specificity": 0.818182
+      },
+      {
+        "refer_from": 0.9,
+        "sensitivity": 1.0,
+        "specificity": 0.772727
+      },
+      {
+        "refer_from": 0.1,
+        "sensitivity": 1.0,
+        "specificity": 0.0
+      }
+    ],
+    "hyperopia": [
+      {
+        "refer_from": 1.0,
+        "sensitivity": 0.0,
+        "specificity": 0.882353
+      },
+      {
+        "refer_from": 0.9,
+        "sensitivity": 1.0,
+        "specificity": 0.882353
+      },
+      {
+        "refer_from": 0.1,
+        "sensitivity": 1.0,
+        "specificity": 0.0
+      }
+    ],
+    "astigmatism": [
+      {
+        "refer_from": 1.0,
+        "sensitivity": 0.103448,
+        "specificity": 0.933333
+      },
+      {
+        "refer_from": 0.99,
+        "sensitivity": 0.241379,
+        "specificity": 0.933333
+      },
+      {
+        "refer_from": 0.964736,
+        "sensitivity": 0.275862,
+        "specificity": 0.933333
+      },
+      {
+        "refer_from": 0.94902,
+        "sensitivity": 0.310345,
+        "specificity": 0.933333
+      },
+      {
+        "refer_from": 0.935796,
+        "sensitivity": 0.344828,
+        "specificity": 0.933333
+      },
+      {
+        "refer_from": 0.930525,
+        "sensitivity": 0.37931,
+        "specificity": 0.933333
+      },
+      {
+        "refer_from": 0.882923,
+        "sensitivity": 0.413793,
+        "specificity": 0.933333
+      },
+      {
+        "refer_from": 0.881006,
+        "sensitivity": 0.448276,
+        "specificity": 0.933333
+      },
+      {
+        "refer_from": 0.862245,
+        "sensitivity": 0.482759,
+        "specificity": 0.933333
+      },
+      {
+        "refer_from": 0.830289,
+        "sensitivity": 0.517241,
+        "specificity": 0.933333
+      },
+      {
+        "refer_from": 0.744653,
+        "sensitivity": 0.551724,
+        "specificity": 0.933333
+      },
+      {
+        "refer_from": 0.705643,
+        "sensitivity": 0.586207,
+        "specificity": 0.933333
+      },
+      {
+        "refer_from": 0.693763,
+        "sensitivity": 0.62069,
+        "specificity": 0.933333
+      },
+      {
+        "refer_from": 0.649911,
+        "sensitivity": 0.655172,
+        "specificity": 0.933333
+      },
+      {
+        "refer_from": 0.649575,
+        "sensitivity": 0.689655,
+        "specificity": 0.933333
+      },
+      {
+        "refer_from": 0.638349,
+        "sensitivity": 0.724138,
+        "specificity": 0.933333
+      },
+      {
+        "refer_from": 0.637237,
+        "sensitivity": 0.758621,
+        "specificity": 0.933333
+      },
+      {
+        "refer_from": 0.626991,
+        "sensitivity": 0.793103,
+        "specificity": 0.933333
+      },
+      {
+        "refer_from": 0.533078,
+        "sensitivity": 0.827586,
+        "specificity": 0.933333
+      },
+      {
+        "refer_from": 0.51909,
+        "sensitivity": 0.862069,
+        "specificity": 0.933333
+      },
+      {
+        "refer_from": 0.517903,
+        "sensitivity": 0.896552,
+        "specificity": 0.933333
+      },
+      {
+        "refer_from": 0.450997,
+        "sensitivity": 0.931034,
+        "specificity": 0.933333
+      },
+      {
+        "refer_from": 0.444714,
+        "sensitivity": 0.965517,
+        "specificity": 0.933333
+      },
+      {
+        "refer_from": 0.43342,
+        "sensitivity": 0.965517,
+        "specificity": 0.866667
+      },
+      {
+        "refer_from": 0.311555,
+        "sensitivity": 0.965517,
+        "specificity": 0.8
+      },
+      {
+        "refer_from": 0.232648,
+        "sensitivity": 0.965517,
+        "specificity": 0.733333
+      },
+      {
+        "refer_from": 0.214817,
+        "sensitivity": 1.0,
+        "specificity": 0.733333
+      },
+      {
+        "refer_from": 0.214137,
+        "sensitivity": 1.0,
+        "specificity": 0.666667
+      },
+      {
+        "refer_from": 0.186555,
+        "sensitivity": 1.0,
+        "specificity": 0.6
+      },
+      {
+        "refer_from": 0.140206,
+        "sensitivity": 1.0,
+        "specificity": 0.533333
+      },
+      {
+        "refer_from": 0.126547,
+        "sensitivity": 1.0,
+        "specificity": 0.466667
+      },
+      {
+        "refer_from": 0.114339,
+        "sensitivity": 1.0,
+        "specificity": 0.4
+      },
+      {
+        "refer_from": 0.100129,
+        "sensitivity": 1.0,
+        "specificity": 0.333333
+      },
+      {
+        "refer_from": 0.073476,
+        "sensitivity": 1.0,
+        "specificity": 0.266667
+      },
+      {
+        "refer_from": 0.045536,
+        "sensitivity": 1.0,
+        "specificity": 0.2
+      },
+      {
+        "refer_from": 0.01,
+        "sensitivity": 1.0,
+        "specificity": 0.0
+      }
+    ],
+    "anisometropia": [
+      {
+        "refer_from": 1.0,
+        "sensitivity": 0.0,
+        "specificity": 0.875
+      },
+      {
+        "refer_from": 0.8,
+        "sensitivity": 1.0,
+        "specificity": 0.875
+      },
+      {
+        "refer_from": 0.1,
+        "sensitivity": 1.0,
+        "specificity": 0.0
+      }
+    ]
+  },
+  "calibration_tables": {
+    "myopia": [
+      {
+        "from": 0.1,
+        "to": 0.2,
+        "eyes": 17,
+        "predicted": 0.1,
+        "observed": 0.0
+      },
+      {
+        "from": 0.9,
+        "to": 1.0,
+        "eyes": 23,
+        "predicted": 0.9,
+        "observed": 0.956522
+      }
+    ],
+    "hyperopia": [
+      {
+        "from": 0.1,
+        "to": 0.2,
+        "eyes": 30,
+        "predicted": 0.1,
+        "observed": 0.0
+      },
+      {
+        "from": 0.9,
+        "to": 1.0,
+        "eyes": 10,
+        "predicted": 0.9,
+        "observed": 1.0
+      }
+    ],
+    "astigmatism": [
+      {
+        "from": 0.0,
+        "to": 0.1,
+        "eyes": 5,
+        "predicted": 0.029803,
+        "observed": 0.0
+      },
+      {
+        "from": 0.1,
+        "to": 0.2,
+        "eyes": 5,
+        "predicted": 0.133555,
+        "observed": 0.0
+      },
+      {
+        "from": 0.2,
+        "to": 0.3,
+        "eyes": 3,
+        "predicted": 0.220534,
+        "observed": 0.333333
+      },
+      {
+        "from": 0.3,
+        "to": 0.4,
+        "eyes": 1,
+        "predicted": 0.311555,
+        "observed": 0.0
+      },
+      {
+        "from": 0.4,
+        "to": 0.5,
+        "eyes": 3,
+        "predicted": 0.443044,
+        "observed": 0.666667
+      },
+      {
+        "from": 0.5,
+        "to": 0.6,
+        "eyes": 3,
+        "predicted": 0.523357,
+        "observed": 1.0
+      },
+      {
+        "from": 0.6,
+        "to": 0.7,
+        "eyes": 6,
+        "predicted": 0.649305,
+        "observed": 1.0
+      },
+      {
+        "from": 0.7,
+        "to": 0.8,
+        "eyes": 2,
+        "predicted": 0.725148,
+        "observed": 1.0
+      },
+      {
+        "from": 0.8,
+        "to": 0.9,
+        "eyes": 4,
+        "predicted": 0.864116,
+        "observed": 1.0
+      },
+      {
+        "from": 0.9,
+        "to": 1.0,
+        "eyes": 8,
+        "predicted": 0.96751,
+        "observed": 1.0
+      }
+    ]
+  },
+  "bland_altman_se": [
+    {
+      "mean": -5.028,
+      "diff": -0.183
+    },
+    {
+      "mean": -4.927,
+      "diff": 0.016
+    },
+    {
+      "mean": -4.916,
+      "diff": 0.045
+    },
+    {
+      "mean": -4.774,
+      "diff": 0.33
+    },
+    {
+      "mean": -3.482,
+      "diff": -0.463
+    },
+    {
+      "mean": -3.372,
+      "diff": -0.745
+    },
+    {
+      "mean": -3.35,
+      "diff": -0.699
+    },
+    {
+      "mean": -3.331,
+      "diff": -0.162
+    },
+    {
+      "mean": -2.914,
+      "diff": 0.173
+    },
+    {
+      "mean": -2.421,
+      "diff": -0.341
+    },
+    {
+      "mean": -2.349,
+      "diff": -0.697
+    },
+    {
+      "mean": -2.101,
+      "diff": -0.203
+    },
+    {
+      "mean": -1.935,
+      "diff": -0.369
+    },
+    {
+      "mean": -1.627,
+      "diff": 0.246
+    },
+    {
+      "mean": -1.609,
+      "diff": -0.217
+    },
+    {
+      "mean": -1.58,
+      "diff": 0.34
+    },
+    {
+      "mean": -1.552,
+      "diff": -0.105
+    },
+    {
+      "mean": -1.548,
+      "diff": -0.096
+    },
+    {
+      "mean": -1.211,
+      "diff": 0.579
+    },
+    {
+      "mean": -1.009,
+      "diff": -0.018
+    },
+    {
+      "mean": -0.424,
+      "diff": -0.347
+    },
+    {
+      "mean": -0.232,
+      "diff": 0.037
+    },
+    {
+      "mean": -0.072,
+      "diff": -0.645
+    },
+    {
+      "mean": 0.156,
+      "diff": -0.189
+    },
+    {
+      "mean": 0.17,
+      "diff": -0.16
+    },
+    {
+      "mean": 0.249,
+      "diff": -0.002
+    },
+    {
+      "mean": 0.277,
+      "diff": 0.055
+    },
+    {
+      "mean": 0.367,
+      "diff": 0.234
+    },
+    {
+      "mean": 0.636,
+      "diff": 0.273
+    },
+    {
+      "mean": 0.719,
+      "diff": 0.437
+    },
+    {
+      "mean": 1.988,
+      "diff": -0.023
+    },
+    {
+      "mean": 2.101,
+      "diff": 0.202
+    },
+    {
+      "mean": 2.15,
+      "diff": 0.301
+    },
+    {
+      "mean": 2.35,
+      "diff": 0.7
+    }
+  ]
+}

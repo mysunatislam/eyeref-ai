@@ -1,8 +1,10 @@
 "use client";
 import { FlaskConical } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select } from "@/components/ui/field";
 import { Stat } from "@/components/ui/stat";
@@ -44,6 +46,11 @@ export default function ValidationPage() {
         eyebrow="Validation"
         title="Model comparison and validation"
         description="Subject-level splits (no person in both train and test), leave-one-device-out, conformal uncertainty, gating and rejection analysis."
+        actions={
+          <Link href="/validation/study" className={buttonVariants({ variant: "secondary", size: "sm" })}>
+            Open a study report
+          </Link>
+        }
       />
       {r.simulated && (
         <div className="sim-stripes border-sim/40 mb-5 flex items-start gap-3 rounded-2xl border p-4 text-sm">

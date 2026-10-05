@@ -24,6 +24,7 @@ import math
 import sys
 from collections import defaultdict
 from collections.abc import Callable, Hashable, Sequence
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Optional
 
@@ -33,7 +34,7 @@ from eyeref.optics.classification import thresholds_for_age
 from eyeref.optics.power_vector import PowerVector, SphCylAxis, from_power_vector, to_corneal_plane, to_power_vector
 from scipy.stats import rankdata
 
-from .. import __version__  # noqa: F401
+from .. import __version__
 from .metrics import axis_metrics, dioptric_metrics
 
 #: Best first (docs/DATASET.md). A lensmeter reads spectacles, not eyes, so it is never a reference.
@@ -61,6 +62,8 @@ CORNEAL_PLANE_ABOVE_D = 4.0
 DEFAULT_VERTEX_MM = 12.0
 #: Bland and Altman's coefficient of repeatability, as a multiple of the within-subject SD (1.96 x sqrt 2).
 COR_PER_SW = 2.77
+#: What the web app's study page checks before reading a file (apps/web/src/lib/studyReport.ts).
+REPORT_KIND, REPORT_FORMAT = "eyeref-study-report", 1
 
 
 class StudyError(ValueError):
@@ -348,7 +351,9 @@ def study_metrics(eyes: pd.DataFrame) -> dict[str, float]:
     pred_m, ref_m = eyes["cmp_pred_m"].to_numpy(float), eyes["cmp_ref_m"].to_numpy(float)
     for col in SUBGROUPS:
         values = eyes[col].to_numpy(object)
-        for value in eyes[col].dropna().unique():
+        present = set(eyes[col].dropna().unique())
+        # bands in their own order, other groups alphabetically: the report keeps this order
+        for value in [b for b in BANDS[col][2] if b in present] if col in BANDS else sorted(present, key=str):
             g = values == value
             stats = _agreement(pred_m[g], ref_m[g])
             out[f"subgroups/{col}/{value}/released"] = float(released[g].mean())
@@ -440,8 +445,12 @@ def study_report(export: pd.DataFrame, reference: str = "autorefractor", model_v
     eyes, info = prepare(export, reference, model_version, one_eye, seed)
     point = study_metrics(eyes)
     ci = subject_bootstrap(eyes, study_metrics, n_boot, seed) if n_boot else {}
+    compared = eyes[eyes["cmp_pred_m"].notna()]
+    differences = sorted(((p + r) / 2, p - r) for p, r in zip(compared["cmp_pred_m"], compared["cmp_ref_m"], strict=True))
     return {
+        "kind": REPORT_KIND, "format_version": REPORT_FORMAT,
         **({"label": "SIMULATED DATA: not evidence about real eyes"} if info["simulated"] else {}),
+        "generated_at": datetime.now(UTC).isoformat(timespec="seconds"), "eyeref_ml_version": __version__,
         **info,
         "n": study_counts(eyes),
         "bootstrap": {"replicates": n_boot, "seed": seed, "resampled": "subjects", "interval": "95% percentile"},
@@ -449,6 +458,8 @@ def study_report(export: pd.DataFrame, reference: str = "autorefractor", model_v
         "roc_curves": {name: roc_curve(truth, _scores(p, screened))
                        for name, (truth, p, screened, _) in _screens(eyes).items()},
         "calibration_tables": {name: calibration(truth, p) for name, (truth, p) in _probabilities(eyes).items()},
+        # each eye given a number, as compared (released minus reference), in order of the mean
+        "bland_altman_se": [{"mean": round(m, 3), "diff": round(d, 3)} for m, d in differences],
     }
 
 
@@ -506,9 +517,7 @@ def summary(report: dict[str, Any]) -> str:
     for col, title in (("device_id", "device"), ("age_group", "age group"), ("refractive_range", "refractive range (D)"),
                        ("pupil_band", "pupil"), ("distance_band", "distance"), ("iris_color", "iris colour"),
                        ("pigmentation", "pigmentation"), ("sex", "sex")):
-        groups = m.get("subgroups", {}).get(col, {})
-        order = BANDS[col][2] if col in BANDS else sorted(groups)
-        for value, s in ((v, groups[v]) for v in order if v in groups):
+        for value, s in m.get("subgroups", {}).get(col, {}).items():
             lines.append(f"By {title}, {value}: {_count(n['subgroups'][col].get(value, 0), 'eye')}, released "
                          f"{_fmt(s.get('released'), pct=True)}, SE bias {_fmt(s.get('bias'), ' D', signed=True)}")
     return "\n".join(lines)
@@ -532,7 +541,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         print(f"error: {e}", file=sys.stderr)
         return 2
     if a.out:
-        Path(a.out).write_text(json.dumps(report, indent=2))
+        Path(a.out).write_text(json.dumps(report, indent=2, allow_nan=False))  # strict JSON, for the web app
     print(summary(report))
     return 0
 
