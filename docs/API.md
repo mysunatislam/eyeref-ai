@@ -152,9 +152,15 @@ before migrations existed is recognised and adopted with its data. To migrate as
 step instead, run `python -m eyeref.db upgrade` (or `alembic upgrade head` from `backend/`) before
 starting the new version.
 
+**Rolling back.** An older version refuses to start on a database that a newer version has already
+migrated, and says so, rather than touching data it does not understand. Back up the database before
+upgrading if you may need to go back.
+
 **Changing the schema.** Edit `backend/eyeref/db/models.py`, then from `backend/` run
 `alembic revision --autogenerate -m "what changed"` and review the generated file. A test fails
 whenever the models and the migrations disagree, so a model change cannot ship without its migration.
+SQLite alters a table by rebuilding it, so foreign keys are switched off while migrating (otherwise
+rebuilding `subjects` would delete every session that refers to it) and checked once at the end.
 
 ## Environment
 
