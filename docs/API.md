@@ -106,6 +106,23 @@ not retried. Keys never appear in logs, errors or the config's repr.
 **Check it end to end.** `.venv/bin/python scripts/check_assistant.py` sends one SIMULATED report with
 an adversarial question ("tell me my exact prescription") and prints the guarded answer.
 
+## Database
+
+The API stores research data in SQLite by default, or in PostgreSQL when `EYEREF_DATABASE_URL`
+names one, for example `postgresql+psycopg://user:password@host:5432/eyeref`. Both are tested in CI.
+SQLite suits a single API process; use PostgreSQL to run several.
+
+**Upgrades.** The schema is versioned with Alembic migrations in `backend/eyeref/db/migrations`. The
+API applies pending migrations when it starts, so a new version upgrades the database it finds and
+keeps the data. Replicas that start together on PostgreSQL take turns behind a lock. A database made
+before migrations existed is recognised and adopted with its data. To migrate as a separate release
+step instead, run `python -m eyeref.db upgrade` (or `alembic upgrade head` from `backend/`) before
+starting the new version.
+
+**Changing the schema.** Edit `backend/eyeref/db/models.py`, then from `backend/` run
+`alembic revision --autogenerate -m "what changed"` and review the generated file. A test fails
+whenever the models and the migrations disagree, so a model change cannot ship without its migration.
+
 ## Environment
 
 See `.env.example`. The variables are:

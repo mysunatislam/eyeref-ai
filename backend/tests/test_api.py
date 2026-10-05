@@ -3,6 +3,7 @@ import json
 import cv2
 import numpy as np
 import pytest
+from databases import fresh_database
 from eyeref.api.main import create_app
 from eyeref.simulation.renderer import SyntheticEyeParams, render_eye
 from fastapi.testclient import TestClient
@@ -10,7 +11,7 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture()
 def client(tmp_path):
-    return TestClient(create_app("sqlite://", data_dir=str(tmp_path)))
+    return TestClient(create_app(fresh_database(tmp_path), data_dir=str(tmp_path)))
 
 
 def test_health_and_models(client):

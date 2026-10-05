@@ -4,6 +4,7 @@ import struct
 import cv2
 import numpy as np
 import pytest
+from databases import fresh_database
 from eyeref.api.main import create_app
 from eyeref.api.uploads import MAX_IMAGE_BYTES, image_header
 from eyeref.simulation.renderer import SyntheticEyeParams, render_eye
@@ -22,7 +23,7 @@ def _encode(ext: str, height: int = 8, width: int = 8) -> bytes:
 
 @pytest.fixture()
 def client(tmp_path):
-    return TestClient(create_app("sqlite://", data_dir=str(tmp_path), max_body_bytes=2 * MAX_IMAGE_BYTES))
+    return TestClient(create_app(fresh_database(tmp_path), data_dir=str(tmp_path), max_body_bytes=2 * MAX_IMAGE_BYTES))
 
 
 def _analyze(client, data: bytes, name="eye.png", ctype="image/png"):

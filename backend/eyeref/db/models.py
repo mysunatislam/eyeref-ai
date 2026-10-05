@@ -17,8 +17,17 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any, Optional
 
-from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, MetaData, String, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+# Deterministic constraint names, so a later migration can find and change them on any database.
+NAMING_CONVENTION = {
+    "ix": "ix_%(column_0_label)s",
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s",
+}
 
 
 def _uuid() -> str:
@@ -30,6 +39,7 @@ def _now() -> datetime:
 
 
 class Base(DeclarativeBase):
+    metadata = MetaData(naming_convention=NAMING_CONVENTION)
     type_annotation_map = {dict[str, Any]: JSON, list[Any]: JSON}
 
 

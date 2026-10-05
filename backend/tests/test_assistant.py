@@ -1,4 +1,5 @@
 import httpx
+from databases import fresh_database
 from eyeref.api.main import create_app
 from eyeref.assistant.guard import REDACTED, allowed_values, guard_text
 from eyeref.assistant.maira import MairaClient, MairaConfig, explain_report, report_summary
@@ -57,13 +58,13 @@ def test_explain_report_uses_headers_and_guards():
 def test_api_requires_config_and_consent(tmp_path, monkeypatch):
     monkeypatch.setenv("EYEREF_ASSISTANT", "maira")
     monkeypatch.delenv("MAIRA_API_KEY", raising=False)
-    c = TestClient(create_app("sqlite://", data_dir=str(tmp_path)))
+    c = TestClient(create_app(fresh_database(tmp_path), data_dir=str(tmp_path)))
     body = {"report": _report().model_dump(mode="json"), "consent_third_party": True}
     assert c.post("/api/assistant/explain", json=body).status_code == 503
     monkeypatch.setenv("MAIRA_API_KEY", "k")
     monkeypatch.setenv("MAIRA_PROJECT_KEY", "p")
     seen: list = []
-    c = TestClient(create_app("sqlite://", data_dir=str(tmp_path),
+    c = TestClient(create_app(fresh_database(tmp_path), data_dir=str(tmp_path),
                               assistant_client_factory=lambda cfg: MairaClient(cfg, transport=_mock("Screening only.", seen))))
     assert c.post("/api/assistant/explain", json={**body, "consent_third_party": False}).status_code == 403
     r = c.post("/api/assistant/explain", json=body)
@@ -106,7 +107,7 @@ def test_bad_decryption_key_is_a_config_error_not_a_crash(tmp_path, monkeypatch)
     monkeypatch.setenv("MAIRA_API_KEY", Fernet(Fernet.generate_key()).encrypt(b"x").decode())
     monkeypatch.setenv("MAIRA_PROJECT_KEY", "p")
     monkeypatch.setenv("MAIRA_KEY_DECRYPTION_KEY", Fernet.generate_key().decode())
-    c = TestClient(create_app("sqlite://", data_dir=str(tmp_path)))
+    c = TestClient(create_app(fresh_database(tmp_path), data_dir=str(tmp_path)))
     assert c.get("/api/assistant/status").json()["configured"] is False
     body = {"report": _report().model_dump(mode="json"), "consent_third_party": True}
     r = c.post("/api/assistant/explain", json=body)
@@ -154,7 +155,7 @@ def test_auth_failure_is_not_retried_and_hides_key(tmp_path, monkeypatch):
     monkeypatch.setenv("MAIRA_API_KEY", "super-secret-key")
     monkeypatch.setenv("MAIRA_PROJECT_KEY", "p")
     seen: list = []
-    c = TestClient(create_app("sqlite://", data_dir=str(tmp_path),
+    c = TestClient(create_app(fresh_database(tmp_path), data_dir=str(tmp_path),
                               assistant_client_factory=lambda cfg: MairaClient(
                                   cfg, transport=_seq([httpx.Response(401)] * 3, seen), sleep=lambda s: None)))
     body = {"report": _report().model_dump(mode="json"), "consent_third_party": True}
@@ -167,7 +168,7 @@ def test_non_json_reply_is_a_clean_502(tmp_path, monkeypatch):
     monkeypatch.setenv("EYEREF_ASSISTANT", "maira")
     monkeypatch.setenv("MAIRA_API_KEY", "k")
     monkeypatch.setenv("MAIRA_PROJECT_KEY", "p")
-    c = TestClient(create_app("sqlite://", data_dir=str(tmp_path),
+    c = TestClient(create_app(fresh_database(tmp_path), data_dir=str(tmp_path),
                               assistant_client_factory=lambda cfg: MairaClient(
                                   cfg, transport=_seq([httpx.Response(200, text="<html>")], []))))
     body = {"report": _report().model_dump(mode="json"), "consent_third_party": True}
