@@ -139,3 +139,16 @@ scripts/         export_schemas.py, run-all.sh
 - The server refuses to store data without research consent, and refuses images without separate
   image consent. It encrypts images at rest when `EYEREF_STORAGE_KEY` is set.
 - Credentials come only from environment variables. Never commit `.env` or key files.
+
+## Security
+
+- **No third-party requests at runtime.** The MediaPipe runtime and face model are served by the app
+  itself. The build fetches the model and checks its SHA-256 (`apps/web/scripts/fetch-models.mjs`). A
+  browser test fails if any request leaves the app's own origin.
+- **Content Security Policy.** The web app may connect only to itself and the research backend it was
+  built for (`NEXT_PUBLIC_API_URL`, plus `EYEREF_CSP_CONNECT_SRC`). There are no plugins and no
+  framing.
+- **Research API.** Bearer tokens are required in production, along with encrypted image storage, and
+  the interactive docs are hidden. See [API](docs/API.md#authentication).
+- **Checks on every push.** Unit tests, browser tests including camera mode with a fake camera, and a
+  WCAG 2.1 AA accessibility scan in light and dark mode.

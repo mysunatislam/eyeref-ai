@@ -27,7 +27,8 @@ services:
     build:
       context: ./apps/web
       args:
-        NEXT_PUBLIC_API_URL: http://localhost:8000
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+        EYEREF_CSP_CONNECT_SRC: ${EYEREF_CSP_CONNECT_SRC:-}
     depends_on:
       - api
     ports:

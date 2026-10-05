@@ -103,7 +103,7 @@ export function useLiveTracker(
     } catch (e) {
       setLmStatus("error");
       setLmError(
-        `Face tracker failed to load (${(e as Error).message}). Check network access to the model files or self-host them (npm run fetch-models).`,
+        `Face tracker failed to load (${(e as Error).message}). The model files are served from /mediapipe; rebuild the app if they are missing.`,
       );
     }
   }, []);

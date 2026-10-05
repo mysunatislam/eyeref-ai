@@ -115,7 +115,10 @@ export default function CalibrationPage() {
                   }}
                 />
               </Field>
-              <Field label="Research backend URL">
+              <Field
+                label="Research backend URL"
+                hint="The app's security policy only allows the backend it was built for (NEXT_PUBLIC_API_URL) plus EYEREF_CSP_CONNECT_SRC."
+              >
                 <Input defaultValue={s.apiUrl} onBlur={(e) => set({ apiUrl: e.target.value.trim() })} />
               </Field>
               <Field

@@ -5,8 +5,11 @@ RUN npm ci
 
 FROM node:22-alpine AS build
 WORKDIR /app
+# Baked in at build time: the backend URL and any extra origins the security policy allows.
+# The build also fetches and checksum-verifies the MediaPipe model (scripts/fetch-models.mjs).
 ARG NEXT_PUBLIC_API_URL=http://localhost:8000
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL NEXT_TELEMETRY_DISABLED=1
+ARG EYEREF_CSP_CONNECT_SRC=""
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL EYEREF_CSP_CONNECT_SRC=$EYEREF_CSP_CONNECT_SRC NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build

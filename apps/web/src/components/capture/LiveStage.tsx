@@ -134,7 +134,11 @@ export function LiveStage({
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
       <div className="space-y-3">
-        <div className="border-line relative overflow-hidden rounded-2xl border bg-black">
+        <div
+          className="border-line relative overflow-hidden rounded-2xl border bg-black"
+          data-camera={status}
+          data-landmarker={lmStatus}
+        >
           <div className="relative aspect-video w-full">
             <video
               ref={videoRef}
