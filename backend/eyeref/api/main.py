@@ -50,6 +50,7 @@ from ..types import (
     QualityAssessment,
 )
 from .auth import AuthConfig, TokenAuthMiddleware, UnsafeConfigError
+from .uploads import BodySizeLimitMiddleware, read_image
 
 
 class FrameInput(BaseModel):
@@ -121,7 +122,8 @@ MODEL_PATH = os.environ.get("EYEREF_MODEL_PATH", "../ml/artifacts/meridional_mlp
 
 
 def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
-               assistant_client_factory=make_client, auth: Optional[AuthConfig] = None) -> FastAPI:
+               assistant_client_factory=make_client, auth: Optional[AuthConfig] = None,
+               max_body_bytes: Optional[int] = None) -> FastAPI:
     auth = auth if auth is not None else AuthConfig.from_env()
     auth.validate()
     hide_docs = auth.production
@@ -134,7 +136,8 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
         openapi_url=None if hide_docs else "/openapi.json",
     )
     origins = [o.strip() for o in os.environ.get("EYEREF_CORS_ORIGINS", "http://localhost:3000").split(",") if o.strip()]
-    # added first so it sits inside CORS: 401 responses still carry CORS headers
+    # added before CORS so they sit inside it: 401 and 413 responses still carry CORS headers
+    app.add_middleware(BodySizeLimitMiddleware, max_bytes=max_body_bytes)
     app.add_middleware(TokenAuthMiddleware, config=auth)
     app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["*"],
                        allow_headers=["authorization", "content-type"])
@@ -202,7 +205,7 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
         iris: Optional[str] = Form(None, description='Optional iris circle JSON {"cx","cy","r"} in crop pixels'),
         estimator: Literal["physics", "ml"] = Form("physics"),
     ) -> FrameRecord:
-        raw = np.frombuffer(await image.read(), np.uint8)
+        raw = np.frombuffer(await read_image(image), np.uint8)
         bgr = cv2.imdecode(raw, cv2.IMREAD_COLOR)
         if bgr is None:
             raise HTTPException(422, "could not decode image")
@@ -343,14 +346,22 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
         if quality:
             q = QualityAssessment.model_validate_json(quality)
             row.quality_json, row.quality_score, row.quality_grade = json.loads(q.model_dump_json()), q.score, q.grade
+        s.add(row)
+        key = None
         if image is not None:
             if not ses.subject.consent_image_storage:
                 raise HTTPException(403, "subject has not consented to image storage")
+            data = await read_image(image, formats=("png",))
+            s.flush()  # assigns row.id, which names the stored object: one object per capture
             key = f"{ses.subject_id}/{session_id}/{row.id}.png"
-            storage.put(key, await image.read())
+            storage.put(key, data)
             row.image_key, row.image_encrypted = key, storage.encrypted
-        s.add(row)
-        s.commit()
+        try:
+            s.commit()
+        except Exception:
+            if key:
+                storage.delete(key)
+            raise
         return {"id": row.id, "image_stored": row.image_key is not None, "encrypted": row.image_encrypted}
 
     @app.post("/api/sessions/{session_id}/predictions")

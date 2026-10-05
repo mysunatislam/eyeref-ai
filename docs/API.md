@@ -26,6 +26,15 @@ export EYEREF_ENV=production   # refuse to start without tokens or an image-encr
 - In the web app, paste the token under Calibration → App settings. It is stored on that device only.
 - With no tokens in development (the default), auth is off and `/health` reports `"auth": "disabled"`.
 
+## Limits
+
+- Request bodies over 10 MB are refused with 413, whether the size is declared or streamed. Set
+  `EYEREF_MAX_BODY_BYTES` to change it.
+- Uploaded eye crops must be at most 2 MB and 16 megapixels. The size is read from the file header
+  before anything is decoded, so a small file that claims huge dimensions is refused with 413.
+- `/api/analyze/frame` accepts PNG or JPEG. Stored captures accept PNG only, so the stored image is
+  lossless. Anything else gets 415.
+
 ## Meta
 
 | Method | Path | Description |
@@ -57,7 +66,7 @@ export EYEREF_ENV=production   # refuse to start without tokens or an image-encr
 | DELETE | `/api/subjects/{id}` | Cascading delete, including the stored images |
 | POST | `/api/subjects/{id}/ground-truth` | `{eye, method, sphere, cylinder, axis, vertex_distance_mm, instrument, examiner, raw}`. Stored in minus cylinder |
 | POST | `/api/sessions` | `{subject_id, device_id, protocol_version, cycloplegia, condition_label, simulated, ...}` |
-| POST | `/api/sessions/{id}/captures` | multipart: `metadata`, `features`, `quality`, optional `image`. The image is refused with 403 without image consent, and is encrypted at rest when `EYEREF_STORAGE_KEY` is set |
+| POST | `/api/sessions/{id}/captures` | multipart: `metadata`, `features`, `quality`, optional `image` (PNG). The image is refused with 403 without image consent, is stored once per capture, and is encrypted at rest when `EYEREF_STORAGE_KEY` is set |
 | POST | `/api/sessions/{id}/predictions` | `AssessmentReport`. Stores one row per eye with model, extractor and calibration versions |
 | GET | `/api/dataset/export?fmt=csv\|json&include_simulated=false` | One row per capture, with flattened features and the ground truth per method |
 
@@ -108,4 +117,5 @@ See `.env.example`. The variables are:
 - `EYEREF_CORS_ORIGINS`
 - `EYEREF_ENV` (`development` or `production`)
 - `EYEREF_API_TOKENS` (comma-separated bearer tokens)
+- `EYEREF_MAX_BODY_BYTES` (default 10 MB)
 - `MAIRA_*`

@@ -1,6 +1,7 @@
 import json
 
 import cv2
+import numpy as np
 import pytest
 from eyeref.api.main import create_app
 from eyeref.simulation.renderer import SyntheticEyeParams, render_eye
@@ -65,3 +66,32 @@ def test_estimate_from_features(client):
     r = client.post("/api/estimate", json={"frames": frames, "device_id": "simulated-phone", "age_group": sim["truth"]["age_group"]})
     assert r.status_code == 200, r.text
     assert r.json()["simulated"] is True
+
+
+def _png(value: int, size: int = 8) -> bytes:
+    ok, buf = cv2.imencode(".png", np.full((size, size, 3), value, np.uint8))
+    assert ok
+    return buf.tobytes()
+
+
+def _image_session(client):
+    sub = client.post("/api/subjects", json={"code": "IMG-1", "consent_research": True,
+                                             "consent_image_storage": True}).json()
+    ses = client.post("/api/sessions", json={"subject_id": sub["id"], "device_id": "generic-phone-rear"}).json()
+    return sub, ses
+
+
+def _upload(client, ses, data):
+    return client.post(f"/api/sessions/{ses['id']}/captures",
+                       data={"metadata": json.dumps({"eye": "OD", "working_distance_m": 1.0})},
+                       files={"image": ("e.png", data, "image/png")})
+
+
+def test_each_capture_keeps_its_own_image(client, tmp_path):
+    sub, ses = _image_session(client)
+    images = [_png(v) for v in (10, 120, 240)]
+    ids = [_upload(client, ses, img).json()["id"] for img in images]
+    stored = {p.stem: p.read_bytes() for p in (tmp_path / "objects").rglob("*.png")}
+    assert stored == dict(zip(ids, images, strict=True))
+    assert client.delete(f"/api/subjects/{sub['id']}").status_code == 200
+    assert not list((tmp_path / "objects").rglob("*.png"))
