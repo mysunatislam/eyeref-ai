@@ -3,7 +3,7 @@
  * explicitly uploads them to a research server in Dataset Collection Mode.
  */
 import type { StoredAssessment } from "../types";
-import { plainExport, withoutImages } from "./backup";
+import { isValidAssessment, plainExport, withoutImages } from "./backup";
 
 const DB_NAME = "eyeref";
 const STORE = "assessments";
@@ -39,9 +39,14 @@ export const getAssessment = (id: string) => tx<StoredAssessment | undefined>("r
 export const deleteAssessment = (id: string) => tx("readwrite", (s) => s.delete(id));
 export const clearAssessments = () => tx("readwrite", (s) => s.clear());
 
-export async function listAssessments(): Promise<StoredAssessment[]> {
-  const all = await tx<StoredAssessment[]>("readonly", (s) => s.getAll());
-  return all.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+/**
+ * Every readable assessment, newest first, with a count of the records that could not be read
+ * (written by an older version, or damaged). One bad record must not hide the rest.
+ */
+export async function listAssessments(): Promise<{ items: StoredAssessment[]; unreadable: number }> {
+  const all = await tx<unknown[]>("readonly", (s) => s.getAll());
+  const items = all.filter(isValidAssessment).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  return { items, unreadable: all.length - items.length };
 }
 
 /** Saves several assessments in one transaction. Never overwrites: a duplicate id aborts it all. */

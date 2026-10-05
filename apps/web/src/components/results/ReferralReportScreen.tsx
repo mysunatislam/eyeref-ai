@@ -3,24 +3,13 @@ import { ArrowLeft, Printer } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { AssessmentGate } from "@/components/results/AssessmentGate";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useAssessment } from "@/lib/storage/hooks";
+import type { StoredAssessment } from "@/lib/types";
 import { ReferralReport } from "./ReferralReport";
 
-function Report() {
-  const id = useSearchParams().get("id");
-  const a = useAssessment(id);
-  if (a === undefined) return <p className="text-muted text-sm">Loading…</p>;
-  if (a === null)
-    return (
-      <div className="space-y-3 text-sm">
-        <h1 className="text-lg font-semibold">Report not found</h1>
-        <p>No assessment found on this device{id ? "" : " (no id given)"}.</p>
-        <Link href="/history" className={buttonVariants({ variant: "secondary" })}>
-          Open history
-        </Link>
-      </div>
-    );
+function Toolbar({ a }: { a: StoredAssessment }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2 print:hidden">
@@ -39,6 +28,15 @@ function Report() {
       </div>
       <ReferralReport a={a} />
     </div>
+  );
+}
+
+function Report() {
+  const id = useSearchParams().get("id");
+  return (
+    <AssessmentGate loaded={useAssessment(id)} id={id}>
+      {(a) => <Toolbar a={a} />}
+    </AssessmentGate>
   );
 }
 

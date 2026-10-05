@@ -73,6 +73,6 @@ test("the referral report prints on one light A4 page and keeps every safety lab
 
 test("an unknown report id says so instead of rendering an empty report", async ({ page }) => {
   await page.goto("/report?id=does-not-exist");
-  await expect(page.getByRole("heading", { name: "Report not found" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Assessment not found" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open history" })).toBeVisible();
 });
