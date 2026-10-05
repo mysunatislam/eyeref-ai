@@ -155,3 +155,42 @@ body {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* Paper is always light, whatever the screen theme. */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+  :root,
+  :root:not([data-theme="light"]),
+  :root[data-theme="dark"] {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #f3f5f8;
+    --ink: #000000;
+    --ink-2: #333d4a;
+    --muted: #4a5566;
+    --line: #c9d1dc;
+    --accent: #0e6bd0;
+    --on-accent: #ffffff;
+    --accent-2: #0a7f8e;
+    --accent-soft: #e8f2fd;
+    --ok: #0f7c51;
+    --on-ok: #ffffff;
+    --ok-soft: #e6f6ef;
+    --warn: #8a5100;
+    --warn-soft: #fff4e0;
+    --bad: #b0262e;
+    --on-bad: #ffffff;
+    --bad-soft: #fdecec;
+    --sim: #6a2fc4;
+    --sim-soft: #f2ebfd;
+    --reflex: #c43b2b;
+    --shadow: none;
+  }
+  html,
+  body {
+    background: #fff;
+  }
+}

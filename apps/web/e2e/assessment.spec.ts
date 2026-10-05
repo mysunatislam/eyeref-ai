@@ -1,9 +1,10 @@
 import { expect, test } from "@playwright/test";
 import { seriousViolations } from "./a11y";
+import { runSimulatedAssessment, RX_VALUE } from "./flows";
 
 /**
- * The full guided assessment in Simulation Mode (the default on first launch), through the real
- * on-device pipeline, checking the product's safety rules on what the person actually sees.
+ * The full guided assessment in Simulation Mode, checking the product's safety rules on what the
+ * person actually sees.
  */
 test("simulated assessment runs end to end and shows only gated, labelled output", async ({ page }) => {
   const errors: string[] = [];
@@ -11,15 +12,7 @@ test("simulated assessment runs end to end and shows only gated, labelled output
 
   await page.goto("/assess");
   await expect(page.getByText("SIMULATED DATA").first()).toBeVisible();
-
-  await page.getByLabel(/Virtual subject/).selectOption("myope");
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: /Continue to distance/ }).click();
-  await page.getByRole("button", { name: /Continue to capture/ }).click();
-  await page.getByRole("button", { name: /^Capture$/ }).click();
-  await page.getByRole("button", { name: /All/ }).click();
-  await page.getByRole("button", { name: /^Analyse$/ }).click({ timeout: 90_000 });
-  await page.waitForURL(/\/results\?id=/, { timeout: 90_000 });
+  await runSimulatedAssessment(page, "myope");
 
   // both eyes reported, clearly labelled as simulated
   await expect(page.getByText(/Right eye · OD/)).toBeVisible();
@@ -32,9 +25,7 @@ test("simulated assessment runs end to end and shows only gated, labelled output
 
   // CYL/AXIS are gated off by default: no prescription-style values anywhere on the page
   const body = await page.locator("main").innerText();
-  expect(body).not.toMatch(/\bSPH\s*[+−-]\d/);
-  expect(body).not.toMatch(/\bCYL\s*[+−-]\d/);
-  expect(body).not.toMatch(/\bAXIS\s*\d/);
+  expect(body).not.toMatch(RX_VALUE);
   expect(body).toMatch(/not an eyeglass prescription/i);
 
   for (const scheme of ["light", "dark"] as const) {

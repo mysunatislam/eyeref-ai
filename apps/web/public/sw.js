@@ -5,11 +5,12 @@
  * results live in the browser's own storage, and requests to the research API (another
  * origin) are not intercepted at all.
  */
-const VERSION = "eyeref-v1";
+const VERSION = "eyeref-v2";
 const SHELL = [
   "/",
   "/assess",
   "/results",
+  "/report",
   "/history",
   "/research",
   "/validation",

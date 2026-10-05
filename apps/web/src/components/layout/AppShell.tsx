@@ -22,11 +22,14 @@ const NAV = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
+  // The referral report is a standalone document on paper, with its own disclaimers and
+  // SIMULATED marking. Every other page prints with the app's banner and footer intact.
+  const paper = path === "/report";
   const [s, set] = useSettings();
   const [open, setOpen] = useState(false);
   return (
     <div className="flex min-h-dvh flex-col" data-research={s.researchMode ? "on" : "off"}>
-      <header className="glass sticky top-0 z-40 border-x-0 border-t-0">
+      <header className={cn("glass sticky top-0 z-40 border-x-0 border-t-0", paper && "print:hidden")}>
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 sm:px-6">
           <Link
             href="/"
@@ -90,9 +93,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
         )}
       </header>
-      <SimulationBanner />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-6 pb-16 sm:px-6">{children}</main>
-      <footer className="border-line border-t">
+      <div className={cn(paper && "print:hidden")}>
+        <SimulationBanner />
+      </div>
+      <main
+        className={cn(
+          "mx-auto w-full max-w-6xl flex-1 px-4 pt-6 pb-16 sm:px-6",
+          paper && "print:max-w-none print:p-0",
+        )}
+      >
+        {children}
+      </main>
+      <footer className={cn("border-line border-t", paper && "print:hidden")}>
         <div className="text-muted mx-auto flex max-w-6xl flex-col gap-2 px-4 py-6 text-xs sm:flex-row sm:items-center sm:px-6">
           <span>
             EyeRef AI v0.1.0 · Experimental research prototype · Not a medical device · Not a prescription.

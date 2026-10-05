@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { extractFeatures } from "../cv/features";
 import { assessQuality } from "../cv/quality";
-import { meridianEyeDeg } from "../devices";
 import {
   MlEstimatorUnavailable,
   PhysicsHeuristicEstimator,
@@ -13,27 +12,8 @@ import { circularAxisError } from "../optics/powerVector";
 import { renderEye } from "../simulation/renderer";
 import { makeSubject, SIM_DEVICE, simulateFrame } from "../simulation/session";
 import { assignSides, headPoseFromMatrix, rollFromEyes } from "../tracking/eyeGeometry";
-import type { CaptureMetadata, FrameRecord, QualityGrade } from "../types";
-
-const meta = (o: Partial<CaptureMetadata> = {}): CaptureMetadata => ({
-  eye: "OD",
-  timestamp: "2026-10-04T00:00:00Z",
-  workingDistanceM: 1,
-  distanceSource: "simulated",
-  distanceSdM: 0.05,
-  deviceRotationDeg: 0,
-  headPose: { yawDeg: 0, pitchDeg: 0, rollDeg: 0 },
-  illumination: "flash",
-  sourceAngleImageDeg: null,
-  eccentricityMm: null,
-  mirrored: false,
-  ageGroup: "adult_40_59",
-  frameIndex: 0,
-  simulated: true,
-  motionPxPerFrame: 0.5,
-  ...o,
-});
-const IRIS = { cx: 79.5, cy: 79.5, r: 52 };
+import type { CaptureMetadata } from "../types";
+import { frame, IRIS, meta } from "./fixtures";
 
 describe("on-device segmentation and features (synthetic)", () => {
   it("measures the pupil", () => {
@@ -88,37 +68,6 @@ describe("quality model", () => {
     expect(assessQuality(blank, segmentation, features, meta()).grade).toBe("reject");
   });
 });
-
-function frame(
-  eye: "OD" | "OS",
-  rot: number,
-  power: number | null,
-  grade: QualityGrade = "excellent",
-  simulated = true,
-): FrameRecord {
-  const m = meta({ eye, deviceRotationDeg: rot, simulated });
-  return {
-    metadata: m,
-    features: extractFeatures(renderEye({ seed: 1 }).image, 270, IRIS).features,
-    quality: {
-      score: grade === "excellent" ? 0.9 : 0.1,
-      grade,
-      subscores: {} as never,
-      hardFailures: [],
-      advisories: [],
-    },
-    estimate: {
-      meridianDeg: meridianEyeDeg(m, SIM_DEVICE),
-      status: power === null ? "interval" : "quantitative",
-      powerD: power,
-      sigmaD: 0.2,
-      intervalD: power === null ? [-2.3, 0.3] : null,
-      estimator: "t",
-      estimatorVersion: "0",
-      notes: [],
-    },
-  };
-}
 
 describe("fusion and gating", () => {
   it("never produces values from rejected frames", () => {

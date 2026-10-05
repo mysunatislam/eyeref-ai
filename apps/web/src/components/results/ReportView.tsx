@@ -1,5 +1,5 @@
 "use client";
-import { AlertTriangle, Download, FlaskConical, Microscope, RotateCcw, Trash2 } from "lucide-react";
+import { AlertTriangle, Download, FileText, FlaskConical, Microscope, RotateCcw, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +44,12 @@ export function ReportView({ a }: { a: StoredAssessment }) {
           </h1>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Link
+            href={`/report?id=${encodeURIComponent(a.id)}`}
+            className={buttonVariants({ variant: "secondary", size: "sm" })}
+          >
+            <FileText /> Referral report
+          </Link>
           <Link
             href={`/research?id=${encodeURIComponent(a.id)}`}
             className={buttonVariants({ variant: "secondary", size: "sm" })}
