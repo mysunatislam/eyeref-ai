@@ -61,6 +61,43 @@ def test_dataset_workflow_and_deletion(client):
     assert client.get("/api/subjects").json() == []
 
 
+def _visit(client, sub):
+    ses = client.post("/api/sessions", json={"subject_id": sub, "device_id": "generic-phone-rear"}).json()["id"]
+    r = client.post(f"/api/sessions/{ses}/captures", data={"metadata": json.dumps({"eye": "OD", "working_distance_m": 1})})
+    assert r.status_code == 200, r.text
+    return ses
+
+
+def _reference(client, sub, sphere, **visit):
+    return client.post(f"/api/subjects/{sub}/ground-truth",
+                       json={"eye": "OD", "method": "autorefractor", "sphere": sphere, "cylinder": 0, **visit})
+
+
+def _paired(client):
+    rows = client.get("/api/dataset/export", params={"fmt": "json"}).json()
+    return {r["session_id"]: r.get("gt_autorefractor_se") for r in rows}
+
+
+def test_captures_are_paired_only_with_a_reference_from_the_same_visit(client):
+    sub = client.post("/api/subjects", json={"code": "VISITS-1", "consent_research": True}).json()["id"]
+    v1 = _visit(client, sub)
+    assert _reference(client, sub, -1.0).json()["session_id"] is None
+    assert _paired(client) == {v1: -1.0}  # no visit named, but the subject has had only this one
+
+    v2 = _visit(client, sub)
+    assert _paired(client) == {v1: None, v2: None}  # now it could belong to either, so it is paired with neither
+    assert _reference(client, sub, -2.0, session_id=v1).json()["session_id"] == v1
+    assert _reference(client, sub, -3.0, session_id=v2).status_code == 200
+    assert _reference(client, sub, -3.5, session_id=v2).status_code == 200  # measured again: the latest counts
+    assert _paired(client) == {v1: -2.0, v2: -3.5}
+
+    other = client.post("/api/subjects", json={"code": "VISITS-2", "consent_research": True}).json()["id"]
+    assert _reference(client, other, -1.0, session_id=v1).status_code == 404  # another subject's visit
+    assert _reference(client, sub, -1.0, session_id="no-such-visit").status_code == 404
+    assert client.delete(f"/api/subjects/{sub}").status_code == 200
+    assert _paired(client) == {}
+
+
 def test_estimate_from_features(client):
     sim = client.post("/api/simulate", json={"subject_id": "API-2", "frames_per_meridian": 3}).json()
     frames = [{"metadata": f["metadata"], "features": f["features"], "quality": f["quality"]} for f in sim["frames"]]

@@ -108,6 +108,11 @@ class GroundTruthIn(BaseModel):
     raw: Optional[dict[str, Any]] = None
 
 
+class SubjectGroundTruthIn(GroundTruthIn):
+    session_id: Optional[str] = Field(
+        None, description="The visit it was measured at. Without one, it is paired only while the subject has one visit")
+
+
 class SessionFields(BaseModel):
     device_id: str
     protocol_version: str = "guided-1"
@@ -165,6 +170,19 @@ def utc(at: datetime) -> datetime:
     return at.replace(tzinfo=UTC) if at.tzinfo is None else at.astimezone(UTC)  # SQLite drops the zone
 
 
+def visit_references(ses: m.CaptureSession) -> dict[tuple[str, str], m.GroundTruth]:
+    """The reference refraction for each (eye, method) of one visit: the latest one measured at that visit,
+    else the latest one recorded without a visit, while the subject has had no other visit. A reference
+    from another visit is never used: the protocol pairs a capture with a measurement taken alongside it."""
+    only_visit = len(ses.subject.sessions) == 1
+    picked: dict[tuple[str, str], m.GroundTruth] = {}
+    # those measured at the visit sort last, so they replace the others; within each, the latest wins
+    for gt in sorted(ses.subject.ground_truths, key=lambda g: (g.session_id is not None, utc(g.measured_at), g.id)):
+        if gt.session_id == ses.id or (gt.session_id is None and only_visit):
+            picked[(gt.eye, gt.method)] = gt
+    return picked
+
+
 T = TypeVar("T", bound=BaseModel)
 
 
@@ -220,10 +238,10 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
                            profile=dev.model_dump(), calibration_version=dev.calibration_version))
             s.flush()  # no ORM relationship to Device, so insert it explicitly first
 
-    def new_ground_truth(subject_id: str, body: GroundTruthIn) -> m.GroundTruth:
+    def new_ground_truth(subject_id: str, body: GroundTruthIn, session_id: Optional[str]) -> m.GroundTruth:
         rx = SphCylAxis(body.sphere, body.cylinder, body.axis).in_convention("minus")
-        return m.GroundTruth(subject_id=subject_id, eye=body.eye, method=body.method, sphere=rx.sph, cylinder=rx.cyl,
-                             axis=rx.axis, spherical_equivalent=rx.spherical_equivalent,
+        return m.GroundTruth(subject_id=subject_id, session_id=session_id, eye=body.eye, method=body.method,
+                             sphere=rx.sph, cylinder=rx.cyl, axis=rx.axis, spherical_equivalent=rx.spherical_equivalent,
                              vertex_distance_mm=body.vertex_distance_mm, instrument=body.instrument,
                              examiner=body.examiner, raw=body.raw)
 
@@ -402,17 +420,22 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
 
 
     @app.post("/api/subjects/{subject_id}/ground-truth")
-    def add_ground_truth(subject_id: str, body: GroundTruthIn, s: Session = Depends(get_db),
+    def add_ground_truth(subject_id: str, body: SubjectGroundTruthIn, s: Session = Depends(get_db),
                          who: str = Depends(caller)) -> dict[str, Any]:
         if not s.get(m.Subject, subject_id):
             raise HTTPException(404)
-        row = new_ground_truth(subject_id, body)
+        if body.session_id is not None:
+            ses = s.get(m.CaptureSession, body.session_id)
+            if ses is None or ses.subject_id != subject_id:
+                raise HTTPException(404, f"this subject has no session '{body.session_id}'")
+        row = new_ground_truth(subject_id, body, body.session_id)
         s.add(row)
         s.flush()  # assigns row.id
-        audit(s, who, "ground_truth.add", subject_id, ground_truth_id=row.id, eye=body.eye, method=body.method)
+        audit(s, who, "ground_truth.add", subject_id, ground_truth_id=row.id, session_id=row.session_id,
+              eye=body.eye, method=body.method)
         s.commit()
-        return {"id": row.id, "sphere": row.sphere, "cylinder": row.cylinder, "axis": row.axis,
-                "se": row.spherical_equivalent}
+        return {"id": row.id, "session_id": row.session_id, "sphere": row.sphere, "cylinder": row.cylinder,
+                "axis": row.axis, "se": row.spherical_equivalent}
 
 
     @app.post("/api/sessions")
@@ -544,10 +567,13 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
             ensure_device_row(s, dev)
             if new_device:
                 audit(s, who, "device.save", device_id=dev.id, calibration_version=dev.calibration_version)
-            s.add_all([new_ground_truth(subj.id, g) for g in body.ground_truth])
-            ses = m.CaptureSession(subject_id=subj.id, client_ref=body.client_ref, **body.session.model_dump())
+            # the visit is when its eyes were photographed, however much later the record is uploaded
+            ses = m.CaptureSession(subject_id=subj.id, client_ref=body.client_ref,
+                                   started_at=min(utc(c.metadata.timestamp) for c in body.captures),
+                                   **body.session.model_dump())
             s.add(ses)
             s.flush()  # assigns ses.id
+            s.add_all([new_ground_truth(subj.id, g, ses.id) for g in body.ground_truth])
             rows = [new_capture(ses.id, c.metadata, c.features, c.quality, dev) for c in body.captures]
             s.add_all(rows)
             s.flush()  # assigns the capture ids, which name the stored images: one object per capture
@@ -583,25 +609,30 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
     @app.get("/api/dataset/export")
     def export_dataset(fmt: Literal["csv", "json"] = Query("csv"), include_simulated: bool = False,
                        s: Session = Depends(get_db), who: str = Depends(caller)) -> Response:
-        """One row per capture with flattened features + linked ground truth (per eye, per method)."""
+        """One row per capture with flattened features and the reference refractions of the same visit, per
+        method."""
         rows: list[dict[str, Any]] = []
+        refs: dict[str, dict[tuple[str, str], m.GroundTruth]] = {}
         for c in s.scalars(select(m.Capture)):
             ses = c.session
             if ses.simulated and not include_simulated:
                 continue
             row: dict[str, Any] = {
                 "capture_id": c.id, "subject_code": ses.subject.code, "subject_id": ses.subject_id,
-                "age_group": ses.subject.age_group, "device_id": ses.device_id, "session_id": ses.id, "eye": c.eye,
+                "age_group": ses.subject.age_group, "device_id": ses.device_id, "session_id": ses.id,
+                "session_started_at": utc(ses.started_at).isoformat(), "eye": c.eye,
                 "frame_index": c.frame_index, "meridian_deg": c.meridian_deg, "working_distance_m": c.working_distance_m,
                 "illumination": c.illumination, "quality_score": c.quality_score, "quality_grade": c.quality_grade,
                 "condition_label": ses.condition_label, "cycloplegia": ses.cycloplegia, "simulated": ses.simulated,
             }
             if c.features_json:
                 row.update({f"f_{k}": v for k, v in PhotorefractionFeatures.model_validate(c.features_json).numeric_vector().items()})
-            for gt in ses.subject.ground_truths:
-                if gt.eye == c.eye:
-                    row.update({f"gt_{gt.method}_sph": gt.sphere, f"gt_{gt.method}_cyl": gt.cylinder,
-                                f"gt_{gt.method}_axis": gt.axis, f"gt_{gt.method}_se": gt.spherical_equivalent})
+            if ses.id not in refs:
+                refs[ses.id] = visit_references(ses)
+            for (eye, method), gt in refs[ses.id].items():
+                if eye == c.eye:
+                    row.update({f"gt_{method}_sph": gt.sphere, f"gt_{method}_cyl": gt.cylinder,
+                                f"gt_{method}_axis": gt.axis, f"gt_{method}_se": gt.spherical_equivalent})
             rows.append(row)
         audit(s, who, "dataset.export", format=fmt, include_simulated=include_simulated, rows=len(rows),
               subjects=len({r["subject_id"] for r in rows}))

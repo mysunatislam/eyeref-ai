@@ -118,6 +118,25 @@ def test_a_returning_subject_gets_another_session(client, simulated):
     assert actions[:4] == ["subject.create", "assessment.upload", "subject.consent", "assessment.upload"]
 
 
+def test_each_visit_is_paired_with_its_own_reference_and_dated_by_its_captures(client, simulated):
+    visits = [_record(simulated, ref=f"visit-{i}") for i in (1, 2, 3)]
+    visits[1]["ground_truth"] = [{"eye": "OD", "method": "autorefractor", "sphere": -3.0, "cylinder": 0}]
+    visits[2]["ground_truth"] = []
+    for week, rec in enumerate(visits):  # photographed a week apart, all uploaded today
+        for j, c in enumerate(rec["captures"]):
+            c["metadata"]["timestamp"] = f"2026-09-{1 + 7 * week:02d}T10:{j // 60:02d}:{j % 60:02d}Z"
+    ids = [_send(client, rec).json()["session_id"] for rec in visits]
+
+    rows = client.get("/api/dataset/export", params={"fmt": "json", "include_simulated": True}).json()
+    assert {(r["session_id"], r["eye"]): r.get("gt_autorefractor_se") for r in rows} == {
+        (ids[0], "OD"): -2.25, (ids[0], "OS"): -1.75,
+        (ids[1], "OD"): -3.0, (ids[1], "OS"): None,  # none taken for that eye at this visit, and none borrowed
+        (ids[2], "OD"): None, (ids[2], "OS"): None,
+    }
+    started = {r["session_id"]: r["session_started_at"] for r in rows}
+    assert [started[i] for i in ids] == [f"2026-09-{d:02d}T10:00:00+00:00" for d in (1, 8, 15)]
+
+
 def _break(record, how):
     if how == "no research consent":
         record["subject"]["consent_research"] = False

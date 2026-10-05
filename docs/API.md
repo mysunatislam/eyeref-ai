@@ -78,6 +78,8 @@ record = {client_ref, subject: {code, age_group, consent_research, consent_image
   when two copies arrive at the same moment. A new record answers 201.
 - **Returning participants.** A subject code that already exists gets another session rather than
   a 409, so test-retest visits work. Image consent given at a later visit is recorded on the subject.
+- **One visit.** The reference refractions sent with a record belong to its session, and are paired
+  only with that session's captures. The session is dated by its first capture, not by the upload.
 - **Consent.** 403 without `consent_research`, and 403 if images are sent without
   `consent_image_storage`. Each image must belong to exactly one capture (`image` is its index).
 - **No mixing.** The session, every capture and the report must agree on `simulated`, and the report
@@ -94,11 +96,11 @@ The step-by-step endpoints below remain for scripts and other clients.
 | POST | `/api/subjects` | `{code, age_group, consent_research, consent_image_storage, ...}`. Returns **403 without `consent_research`** and 409 for a duplicate code |
 | GET | `/api/subjects` | List |
 | DELETE | `/api/subjects/{id}` | Cascading delete, including the stored images |
-| POST | `/api/subjects/{id}/ground-truth` | `{eye, method, sphere, cylinder, axis, vertex_distance_mm, instrument, examiner, raw}`. Stored in minus cylinder |
+| POST | `/api/subjects/{id}/ground-truth` | `{eye, method, sphere, cylinder, axis, vertex_distance_mm, instrument, examiner, raw, session_id}`. Stored in minus cylinder. `session_id` is the visit it was measured at (404 if the subject has no such session); give it whenever the subject may have more than one visit |
 | POST | `/api/sessions` | `{subject_id, device_id, protocol_version, cycloplegia, condition_label, simulated, ...}` |
 | POST | `/api/sessions/{id}/captures` | multipart: `metadata`, `features`, `quality`, optional `image` (PNG). The image is refused with 403 without image consent, is stored once per capture, and is encrypted at rest when `EYEREF_STORAGE_KEY` is set |
 | POST | `/api/sessions/{id}/predictions` | `AssessmentReport`. Stores one row per eye with model, extractor and calibration versions |
-| GET | `/api/dataset/export?fmt=csv\|json&include_simulated=false` | One row per capture, with flattened features and the ground truth per method |
+| GET | `/api/dataset/export?fmt=csv\|json&include_simulated=false` | One row per capture, with flattened features, the visit's start, and the reference refractions of the same visit per method ([pairing](DATASET.md#schema-backendeyerefdbmodelspy)) |
 
 ## Audit log
 
@@ -112,7 +114,7 @@ nothing and records nothing.
 | `subject.create` | A subject is enrolled | Research and image consent, consent version |
 | `subject.list` | The subject list is read | Number of subjects |
 | `subject.delete` | A subject and all their data are deleted | Number of images deleted |
-| `ground_truth.add` | A reference refraction is added | Its id, the eye, the method |
+| `ground_truth.add` | A reference refraction is added | Its id, the visit, the eye, the method |
 | `session.create` | A capture session starts | Its id, the device profile, whether it is simulated |
 | `capture.add` | A capture is stored | Its id, the session, the eye, whether an image was stored |
 | `prediction.add` | A report's results are stored | The session, the new prediction ids |

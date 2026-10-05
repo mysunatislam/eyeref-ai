@@ -126,6 +126,10 @@ class GroundTruth(Base):
     __tablename__ = "ground_truth"
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
     subject_id: Mapped[str] = mapped_column(ForeignKey("subjects.id", ondelete="CASCADE"), index=True)
+    # The visit it was measured at, so captures are paired only with a reference taken at the same visit.
+    # Without one it is paired only while the subject has a single visit (docs/DATASET.md).
+    session_id: Mapped[Optional[str]] = mapped_column(
+        ForeignKey("capture_sessions.id", ondelete="CASCADE"), nullable=True, index=True)
     eye: Mapped[str] = mapped_column(String(2))
     method: Mapped[str] = mapped_column(String(32))  # autorefractor|subjective|cycloplegic|retinoscopy|trial_lens
     sphere: Mapped[float] = mapped_column(Float)
@@ -139,6 +143,7 @@ class GroundTruth(Base):
     raw: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, nullable=True)  # e.g. 3 autorefractor readings
 
     subject: Mapped[Subject] = relationship(back_populates="ground_truths")
+    session: Mapped[Optional[CaptureSession]] = relationship()  # also orders deletes: references before visits
 
 
 class AuditEvent(Base):
