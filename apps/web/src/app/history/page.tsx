@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { TrendChart } from "@/components/charts/TrendChart";
 import { BackupRestore } from "@/components/history/BackupRestore";
+import { DeviceData } from "@/components/history/DeviceData";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { LEVEL } from "@/components/results/EyeResultCard";
 import { download } from "@/components/results/ReportView";
@@ -17,7 +18,7 @@ import { useAssessments } from "@/lib/storage/hooks";
 import { AGE_LABEL } from "@/lib/utils";
 
 export default function HistoryPage() {
-  const { items, unreadable, reload } = useAssessments();
+  const { items, unreadable } = useAssessments();
   const [kind, setKind] = useState<"real" | "sim">("real");
   const [who, setWho] = useState<string>("all");
   const shown = useMemo(
@@ -50,7 +51,6 @@ export default function HistoryPage() {
               onClick={async () => {
                 if (!confirm("Delete ALL assessments and images stored on this device?")) return;
                 await clearAssessments();
-                reload();
               }}
             >
               <Trash2 /> Delete all
@@ -159,8 +159,9 @@ export default function HistoryPage() {
         </div>
       )}
       {items !== null && (
-        <div className="mt-6">
-          <BackupRestore items={items} onRestored={reload} />
+        <div className="mt-6 space-y-4">
+          <DeviceData items={items} />
+          <BackupRestore items={items} />
         </div>
       )}
     </>

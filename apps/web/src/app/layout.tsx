@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { ImageRetention } from "@/components/history/ImageRetention";
 import { AppShell } from "@/components/layout/AppShell";
 import { ServiceWorker } from "@/components/pwa/ServiceWorker";
 import "./globals.css";
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-dvh font-sans antialiased">
         <AppShell>{children}</AppShell>
         <ServiceWorker />
+        <ImageRetention />
       </body>
     </html>
   );

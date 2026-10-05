@@ -18,6 +18,8 @@ export interface Settings {
   apiUrl: string;
   apiToken: string; // research API bearer token; stays on this device
   storeCrops: boolean;
+  imageRetentionDays: number | null; // eye images older than this are deleted; null keeps them
+  lastBackupAt: string | null; // when this device last downloaded an encrypted backup
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -35,13 +37,15 @@ export const DEFAULT_SETTINGS: Settings = {
   apiUrl: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000",
   apiToken: "",
   storeCrops: true,
+  imageRetentionDays: null,
+  lastBackupAt: null,
 };
 
 const KEY = "eyeref.settings.v1";
 const listeners = new Set<() => void>();
 let cache: Settings | null = null;
 
-function read(): Settings {
+export function readSettings(): Settings {
   if (cache) return cache;
   try {
     const raw = typeof window !== "undefined" ? window.localStorage.getItem(KEY) : null;
@@ -53,7 +57,7 @@ function read(): Settings {
 }
 
 export function writeSettings(patch: Partial<Settings>) {
-  cache = { ...read(), ...patch };
+  cache = { ...readSettings(), ...patch };
   try {
     window.localStorage.setItem(KEY, JSON.stringify(cache));
   } catch {
@@ -68,7 +72,7 @@ export function useSettings(): [Settings, (p: Partial<Settings>) => void] {
       listeners.add(l);
       return () => listeners.delete(l);
     },
-    read,
+    readSettings,
     () => DEFAULT_SETTINGS,
   );
   return [s, useCallback((p: Partial<Settings>) => writeSettings(p), [])];

@@ -14,6 +14,7 @@ test("history survives a wipe through an encrypted backup", async ({ page }, inf
   await page.goto("/history");
   const card = page.locator("#backup");
   await expect(card.getByText("Back up 1 assessment")).toBeVisible();
+  await expect(card.getByText("Not backed up from this device yet.")).toBeVisible();
 
   // Back up: the downloaded file is encrypted, with no readable results in it.
   await card.getByLabel(/^Passphrase/).fill(PASS);
@@ -29,6 +30,7 @@ test("history survives a wipe through an encrypted backup", async ({ page }, inf
   expect(JSON.parse(text)).toMatchObject({ format: "eyeref-backup/1", count: 1 });
   expect(text).not.toMatch(/Virtual subject|quantitative|SIMULATED/);
   await expect(card.getByRole("status").first()).toContainText("Encrypted backup of 1 assessment downloaded");
+  await expect(card.getByText("Last backup today.")).toBeVisible();
 
   // Wipe the device.
   await page.getByRole("button", { name: "Delete all" }).click();
