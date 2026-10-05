@@ -27,7 +27,10 @@ Accuracy is reported **within** the released set, **and** coverage (the fraction
 reported. A method that releases 30% of eyes with excellent accuracy is a different product from one
 that releases 90%.
 
-## Metrics (all implemented in `ml/eyeref_ml/evaluation`)
+## Metrics
+
+`ml/eyeref_ml/evaluation/study.py` computes these from the research server's data (see
+[Analysing a study](#analysing-a-study)), and `eye_level.py` computes them for the simulated benchmark.
 
 | Quantity | Metrics |
 | --- | --- |
@@ -43,6 +46,57 @@ that releases 90%.
 
 Report 95% confidence intervals for every metric. Use bootstrap resampling over **subjects**, not over
 eyes or frames.
+
+Not yet computed from real data: the quality and gating analysis. It needs every frame, and a rerun
+of the estimator without the gate, which the simulated benchmark does.
+
+## Analysing a study
+
+1. Export every eye from the research server: `GET /api/dataset/export?level=eye` (CSV). There is one
+   row per eye per visit, with what the product released and the reference refractions measured at
+   that visit.
+2. Run the analysis:
+
+   ```
+   cd ml && python -m eyeref_ml.evaluation.study eyeref_eyes.csv --one-eye --out study.json
+   ```
+
+   Or run `make study EXPORT=eyeref_eyes.csv`. Leave out `--one-eye` for the secondary analysis with
+   both eyes. The script prints a summary and writes every metric, with its interval, to the JSON file.
+
+How the script applies this protocol:
+
+- **One study.** It refuses an export that mixes simulated and real data. It also refuses results from
+  more than one model version unless `--model-version` names the frozen one. A result stored twice for
+  the same eye and visit counts once (the later one).
+- **Outcomes.** Every eye photographed at a visit is counted. An eye with no result, or with no usable
+  frame, is a protocol failure.
+- **Reference.** By default this is the autorefractor. `--reference best` takes cycloplegic, then
+  subjective, then autorefractor, then retinoscopy, then trial lens. A lensmeter reading is never a
+  reference: it measures the spectacles.
+- **Agreement** is computed over the eyes given a number. When the reference's |M| exceeds 4 D, both
+  sides are compared at the cornea, using the vertex distance recorded with the reference (12 mm if
+  none was recorded). Sphere, cylinder and axis are compared only where the gate released them.
+- **Screening** counts every eye with a reference. An eye that could not be screened (repeat or
+  protocol failure), or that was given no probability, counts as referred and scores 1 on the ROC
+  curve. A probability of 0.5 or more is a referral, except for astigmatism, where the product refers
+  at 0.7. Hyperopia and astigmatism use the product's age thresholds: +0.50 D and 0.75 D for teenagers
+  and adults, +1.50 D and 1.00 D at 8 to 12 years, and +2.00 D and 1.50 D at 3 to 7 years. The product
+  gives an astigmatism probability only when at least three meridians gave a quantitative reading, so
+  an eye without one counts as referred for astigmatism. Anisometropia is judged per visit, for visits
+  with a reference for both eyes. The JSON report has each question's 2x2 table, with how many
+  referrals were unscreened eyes (STARD 2015), and its ROC curve.
+- **Calibration** compares the myopia, hyperopia and astigmatism probabilities with what the
+  reference found, over the screened eyes, at the product's age thresholds. The JSON report has the
+  reliability table, by tenth of probability. The summary gives the expected calibration error: the
+  mean gap between predicted and observed frequency, weighted by the eyes in each tenth.
+- **Subgroups** report the release rate and the SE agreement separately by device, age group,
+  refractive range of the reference, pupil size, distance, iris colour, pigmentation and sex. Pupil
+  size and distance are the medians over that eye's captures at the visit. The distance bands
+  separate the protocol's 1.0 m and 1.5 m. A subgroup that was not collected is left out.
+- **Repeatability** uses the released SE of the same eye from separate visits on the same day (UTC).
+- **Intervals** are 95% percentile intervals from 2000 resamples of subjects (`--boot`, `--seed`). A
+  subject drawn twice counts as two subjects.
 
 ## Generalisation tests
 

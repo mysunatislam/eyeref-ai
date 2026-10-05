@@ -24,3 +24,6 @@ node_modules/
 .next/
 apps/web/public/mediapipe/
 *.tsbuildinfo
+
+# study analysis output (make study)
+/study.json

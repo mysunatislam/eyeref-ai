@@ -96,8 +96,10 @@ see the EyeRef result.
 - Check the agreement panel and the rejection rate. A rejection rate above 40% means the protocol needs
   fixing; do not keep collecting.
 
-**Analysis at n = 100 eyes.** See VALIDATION_PROTOCOL.md. Use one randomly chosen eye per person for
-the primary analysis, and both eyes in a mixed model as a secondary analysis.
+**Analysis at n = 100 eyes.** See VALIDATION_PROTOCOL.md, which shows how to run the analysis on the
+research server's export. Use one randomly chosen eye per person for the primary analysis (`--one-eye`),
+and both eyes as a secondary analysis, with intervals from resampling people so that the two eyes of one
+person are not counted as independent.
 
 ## Stage 3: children (only after stage 2 is published or at least analysed)
 

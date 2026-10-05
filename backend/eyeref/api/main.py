@@ -15,6 +15,8 @@ import csv
 import io
 import json
 import os
+import statistics
+from collections.abc import Iterable
 from datetime import UTC, datetime
 from typing import Any, Literal, Optional, TypeVar
 
@@ -181,6 +183,38 @@ def visit_references(ses: m.CaptureSession) -> dict[tuple[str, str], m.GroundTru
         if gt.session_id == ses.id or (gt.session_id is None and only_visit):
             picked[(gt.eye, gt.method)] = gt
     return picked
+
+
+def median_of(values: Iterable[Optional[float]]) -> Optional[float]:
+    known = [v for v in values if v is not None]
+    return statistics.median(known) if known else None
+
+
+def reference_columns(refs: dict[tuple[str, str], m.GroundTruth], eye: str) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    for (e, method), gt in refs.items():
+        if e == eye:
+            out.update({f"gt_{method}_sph": gt.sphere, f"gt_{method}_cyl": gt.cylinder, f"gt_{method}_axis": gt.axis,
+                        f"gt_{method}_se": gt.spherical_equivalent, f"gt_{method}_vertex_mm": gt.vertex_distance_mm})
+    return out
+
+
+def result_columns(p: m.Prediction) -> dict[str, Any]:
+    """What the product released for one eye. Sphere, cylinder and axis are empty unless its gate released them."""
+    eye = p.report_json.get("eyes", {}).get(p.eye, {})
+    probs = eye.get("class_probabilities") or {}
+    return {
+        "prediction_id": p.id, "predicted_at": utc(p.created_at).isoformat(), "output_level": p.output_level,
+        "pred_se": p.se, "pred_se_ci_low": p.se_ci_low, "pred_se_ci_high": p.se_ci_high,
+        "pred_m": p.m, "pred_j0": p.j0, "pred_j45": p.j45, "pred_sph": p.sphere, "pred_cyl": p.cylinder,
+        "pred_axis": p.axis, "pred_class": p.refractive_class, "confidence": p.confidence,
+        "p_myopia": probs.get("myopia"), "p_emmetropia": probs.get("emmetropia"), "p_hyperopia": probs.get("hyperopia"),
+        "p_astigmatism": eye.get("astigmatism_probability"), "astigmatism_status": eye.get("astigmatism_status"),
+        "p_anisometropia": p.report_json.get("anisometropia_probability"),
+        "n_frames": eye.get("n_frames"), "n_usable_frames": eye.get("n_usable_frames"),
+        "quality_grade": eye.get("quality_grade"), "model_name": p.model_name, "model_version": p.model_version,
+        "calibration_version": p.calibration_version, "extractor_version": p.extractor_version,
+    }
 
 
 T = TypeVar("T", bound=BaseModel)
@@ -606,11 +640,7 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
             profiles[dev.id] = dev
         return uploaded(ses, subject_created=created, already=False)
 
-    @app.get("/api/dataset/export")
-    def export_dataset(fmt: Literal["csv", "json"] = Query("csv"), include_simulated: bool = False,
-                       s: Session = Depends(get_db), who: str = Depends(caller)) -> Response:
-        """One row per capture with flattened features and the reference refractions of the same visit, per
-        method."""
+    def capture_rows(s: Session, include_simulated: bool) -> list[dict[str, Any]]:
         rows: list[dict[str, Any]] = []
         refs: dict[str, dict[tuple[str, str], m.GroundTruth]] = {}
         for c in s.scalars(select(m.Capture)):
@@ -629,12 +659,46 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
                 row.update({f"f_{k}": v for k, v in PhotorefractionFeatures.model_validate(c.features_json).numeric_vector().items()})
             if ses.id not in refs:
                 refs[ses.id] = visit_references(ses)
-            for (eye, method), gt in refs[ses.id].items():
-                if eye == c.eye:
-                    row.update({f"gt_{method}_sph": gt.sphere, f"gt_{method}_cyl": gt.cylinder,
-                                f"gt_{method}_axis": gt.axis, f"gt_{method}_se": gt.spherical_equivalent})
+            row.update(reference_columns(refs[ses.id], c.eye))
             rows.append(row)
-        audit(s, who, "dataset.export", format=fmt, include_simulated=include_simulated, rows=len(rows),
+        return rows
+
+    def eye_rows(s: Session, include_simulated: bool) -> list[dict[str, Any]]:
+        rows: list[dict[str, Any]] = []
+        for ses in s.scalars(select(m.CaptureSession).order_by(m.CaptureSession.started_at, m.CaptureSession.id)):
+            if ses.simulated and not include_simulated:
+                continue
+            refs = visit_references(ses)
+            subj = ses.subject
+            for eye in sorted({c.eye for c in ses.captures} | {p.eye for p in ses.predictions}):
+                captures = [c for c in ses.captures if c.eye == eye]
+                row: dict[str, Any] = {
+                    "subject_code": subj.code, "subject_id": subj.id, "age_group": subj.age_group, "sex": subj.sex,
+                    "iris_color": subj.iris_color, "pigmentation": subj.fitzpatrick_or_pigmentation, "site": subj.site,
+                    "session_id": ses.id, "session_started_at": utc(ses.started_at).isoformat(),
+                    "device_id": ses.device_id, "protocol_version": ses.protocol_version, "cycloplegia": ses.cycloplegia,
+                    "condition_label": ses.condition_label, "simulated": ses.simulated, "eye": eye,
+                    "n_captures": len(captures), "pupil_mm": median_of(c.pupil_diameter_mm for c in captures),
+                    "distance_m": median_of(c.working_distance_m for c in captures), **reference_columns(refs, eye),
+                }
+                results = sorted((p for p in ses.predictions if p.eye == eye), key=lambda p: (utc(p.created_at), p.id))
+                # an eye photographed without a result still gets a row: the protocol reports every eye that entered it
+                rows.extend([{**row, **result_columns(p)} for p in results] or [row])
+        return rows
+
+    @app.get("/api/dataset/export")
+    def export_dataset(
+        fmt: Literal["csv", "json"] = Query("csv"),
+        include_simulated: bool = False,
+        level: Literal["capture", "eye"] = Query(
+            "capture", description="capture: one row per capture, for training. eye: one row per eye per visit and "
+                                   "result, with what was released, for validation (docs/VALIDATION_PROTOCOL.md)"),
+        s: Session = Depends(get_db),
+        who: str = Depends(caller),
+    ) -> Response:
+        """The research data, with the reference refractions measured at the same visit, per method."""
+        rows = capture_rows(s, include_simulated) if level == "capture" else eye_rows(s, include_simulated)
+        audit(s, who, "dataset.export", format=fmt, level=level, include_simulated=include_simulated, rows=len(rows),
               subjects=len({r["subject_id"] for r in rows}))
         s.commit()  # before anything is sent: no export leaves without its record
         if fmt == "json":
@@ -645,8 +709,9 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
         w.writeheader()
         w.writerows(rows)
         stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+        name = "eyeref_dataset" if level == "capture" else "eyeref_eyes"
         return Response(buf.getvalue(), media_type="text/csv",
-                        headers={"Content-Disposition": f'attachment; filename="eyeref_dataset_{stamp}.csv"'})
+                        headers={"Content-Disposition": f'attachment; filename="{name}_{stamp}.csv"'})
 
     @app.get("/api/audit")
     def audit_log(

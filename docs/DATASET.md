@@ -33,8 +33,16 @@
 JSON Schemas of the exchange models live in `shared/schemas` and are regenerated with `make schemas`.
 
 `GET /api/dataset/export?fmt=csv` produces one row per capture. Each row holds the flattened `f_*`
-features, `session_started_at`, and the `gt_<method>_{sph,cyl,axis,se}` columns for that eye. This
+features, `session_started_at`, and the `gt_<method>_{sph,cyl,axis,se,vertex_mm}` columns for that eye. This
 is the training table format used by `ml/`.
+
+`level=eye` produces one row per eye per visit instead: the result the product released (outcome, SE
+and its interval, power vector, class and astigmatism probabilities, frame counts, model version) next
+to the same references. For the protocol's subgroups, each row also has the median pupil diameter
+(`pupil_mm`) and working distance (`distance_m`) of that eye's captures, and the subject's sex, iris
+colour and pigmentation when they were collected. This is the input to the study analysis in
+VALIDATION_PROTOCOL.md. An eye photographed
+at a visit without a result still gets a row, so every eye that entered the protocol is counted.
 
 A capture is paired only with a reference measured at the same visit, as the validation protocol
 requires. If a method was recorded twice for an eye at one visit, the later entry counts. A reference
