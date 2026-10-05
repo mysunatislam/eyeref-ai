@@ -87,7 +87,12 @@ export default function ValidationPage() {
             </CardDescription>
           </div>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
+        <CardContent
+          className="overflow-x-auto"
+          tabIndex={0}
+          role="region"
+          aria-label="Model comparison table"
+        >
           <table className="num w-full min-w-[760px] text-xs">
             <thead className="text-muted text-left text-[10px] tracking-wider uppercase">
               <tr>
@@ -150,7 +155,12 @@ export default function ValidationPage() {
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <span className="text-sm font-medium">Details for</span>
-        <Select className="max-w-xs" value={model} onChange={(ev) => setModel(ev.target.value)}>
+        <Select
+          aria-label="Model to show details for"
+          className="max-w-xs"
+          value={model}
+          onChange={(ev) => setModel(ev.target.value)}
+        >
           {models.map((k) => (
             <option key={k} value={k}>
               {MODEL_LABEL[k] ?? k}
@@ -292,7 +302,12 @@ export default function ValidationPage() {
                 renderer.
               </CardDescription>
             </div>
-            <Select className="max-w-[180px]" value={sub} onChange={(ev) => setSub(ev.target.value)}>
+            <Select
+              aria-label="Subgroup"
+              className="max-w-[180px]"
+              value={sub}
+              onChange={(ev) => setSub(ev.target.value)}
+            >
               {Object.keys(subgroups).map((k) => (
                 <option key={k} value={k}>
                   {k}
@@ -300,7 +315,7 @@ export default function ValidationPage() {
               ))}
             </Select>
           </CardHeader>
-          <CardContent className="overflow-x-auto">
+          <CardContent className="overflow-x-auto" tabIndex={0} role="region" aria-label="Subgroup table">
             <table className="num w-full min-w-[520px] text-xs">
               <thead className="text-muted text-left text-[10px] tracking-wider uppercase">
                 <tr>

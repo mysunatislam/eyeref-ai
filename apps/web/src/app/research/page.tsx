@@ -40,7 +40,7 @@ function Research() {
       <Card>
         <CardContent className="pt-5 text-sm">
           No assessments stored on this device yet. Run one in{" "}
-          <Link href="/assess" className="text-accent">
+          <Link href="/assess" className="text-accent underline underline-offset-2">
             Assess
           </Link>{" "}
           (Simulation Mode works without a camera).
@@ -234,7 +234,7 @@ function Research() {
         <CardHeader>
           <CardTitle>Frame table</CardTitle>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
+        <CardContent className="overflow-x-auto" tabIndex={0} role="region" aria-label="Frame table">
           <table className="num w-full min-w-[640px] text-xs">
             <thead className="text-muted text-left text-[10px] tracking-wider uppercase">
               <tr>

@@ -13,7 +13,9 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "fetch-models": "node scripts/fetch-models.mjs"
+    "fetch-models": "node scripts/fetch-models.mjs",
+    "e2e": "playwright test",
+    "prebuild": "node scripts/fetch-models.mjs"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "1.0.1",
@@ -28,7 +30,9 @@
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "1.63.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^22",
     "@types/react": "^19",

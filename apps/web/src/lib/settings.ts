@@ -16,6 +16,7 @@ export interface Settings {
   personalHvidMm: number | null;
   pxPerMm: number | null; // screen calibration for the vision test
   apiUrl: string;
+  apiToken: string; // research API bearer token; stays on this device
   storeCrops: boolean;
 }
 
@@ -32,6 +33,7 @@ export const DEFAULT_SETTINGS: Settings = {
   personalHvidMm: null,
   pxPerMm: null,
   apiUrl: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000",
+  apiToken: "",
   storeCrops: true,
 };
 

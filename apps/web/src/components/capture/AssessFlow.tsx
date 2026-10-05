@@ -54,7 +54,7 @@ export function AssessFlow() {
 
   return (
     <div className="space-y-6">
-      <ol className="flex items-center gap-2 overflow-x-auto pb-1" aria-label="Assessment steps">
+      <ol className="flex items-center gap-2 overflow-x-auto pb-1" aria-label="Assessment steps" tabIndex={0}>
         {RAIL.map((r, j) => (
           <li key={r.id} className="flex items-center gap-2">
             <span

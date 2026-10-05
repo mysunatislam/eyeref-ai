@@ -115,8 +115,22 @@ export default function CalibrationPage() {
                   }}
                 />
               </Field>
-              <Field label="Research backend URL">
+              <Field
+                label="Research backend URL"
+                hint="The app's security policy only allows the backend it was built for (NEXT_PUBLIC_API_URL) plus EYEREF_CSP_CONNECT_SRC."
+              >
                 <Input defaultValue={s.apiUrl} onBlur={(e) => set({ apiUrl: e.target.value.trim() })} />
+              </Field>
+              <Field
+                label="Research backend access token"
+                hint="Only needed when the backend sets EYEREF_API_TOKENS. Stored on this device only."
+              >
+                <Input
+                  type="password"
+                  autoComplete="off"
+                  defaultValue={s.apiToken}
+                  onBlur={(e) => set({ apiToken: e.target.value.trim() })}
+                />
               </Field>
             </div>
           </CardContent>
@@ -133,7 +147,11 @@ export default function CalibrationPage() {
             </Badge>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Select value={s.deviceId} onChange={(e) => set({ deviceId: e.target.value })}>
+            <Select
+              aria-label="Device profile"
+              value={s.deviceId}
+              onChange={(e) => set({ deviceId: e.target.value })}
+            >
               {[...DEVICE_PROFILES.filter((d) => !d.simulated), ...s.customDevices].map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.model}

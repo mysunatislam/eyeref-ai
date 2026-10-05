@@ -6,6 +6,26 @@ upper-case letter (`OD`, `OS`, `M`, `J0`, `J45`) are left unchanged.
 
 The API is optional. The web app runs fully on the device without it.
 
+## Authentication
+
+The API stores pseudonymous health data, so it is locked with bearer tokens once they are configured:
+
+```bash
+export EYEREF_API_TOKENS="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
+export EYEREF_STORAGE_KEY="$(python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')"
+export EYEREF_ENV=production   # refuse to start without tokens or an image-encryption key, hide /docs
+```
+
+- Every request except the public list below needs `Authorization: Bearer <token>`. Otherwise it gets
+  401 with `WWW-Authenticate: Bearer`.
+- Public: `GET /health`, `GET /api/models`, `GET /api/devices`, `GET /api/meta/extractor`,
+  `GET /api/assistant/status`, and CORS preflight requests.
+- Several comma-separated tokens can be active at once, so a token can be rotated without downtime.
+  Tokens shorter than 24 characters are refused at startup.
+- Tokens are compared in constant time and never appear in logs or in the config's repr.
+- In the web app, paste the token under Calibration → App settings. It is stored on that device only.
+- With no tokens in development (the default), auth is off and `/health` reports `"auth": "disabled"`.
+
 ## Meta
 
 | Method | Path | Description |
@@ -86,4 +106,6 @@ See `.env.example`. The variables are:
 - `EYEREF_STORAGE_KEY` (a Fernet key)
 - `EYEREF_MODEL_PATH`
 - `EYEREF_CORS_ORIGINS`
+- `EYEREF_ENV` (`development` or `production`)
+- `EYEREF_API_TOKENS` (comma-separated bearer tokens)
 - `MAIRA_*`

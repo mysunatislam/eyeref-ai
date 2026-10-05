@@ -49,6 +49,7 @@ from ..types import (
     PhotorefractionFeatures,
     QualityAssessment,
 )
+from .auth import AuthConfig, TokenAuthMiddleware, UnsafeConfigError
 
 
 class FrameInput(BaseModel):
@@ -120,17 +121,28 @@ MODEL_PATH = os.environ.get("EYEREF_MODEL_PATH", "../ml/artifacts/meridional_mlp
 
 
 def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
-               assistant_client_factory=make_client) -> FastAPI:
+               assistant_client_factory=make_client, auth: Optional[AuthConfig] = None) -> FastAPI:
+    auth = auth if auth is not None else AuthConfig.from_env()
+    auth.validate()
+    hide_docs = auth.production
     app = FastAPI(
         title="EyeRef AI research API",
         version=__version__,
         description="Attachment-free smartphone photorefraction RESEARCH prototype. Not a medical device.",
+        docs_url=None if hide_docs else "/docs",
+        redoc_url=None if hide_docs else "/redoc",
+        openapi_url=None if hide_docs else "/openapi.json",
     )
-    origins = os.environ.get("EYEREF_CORS_ORIGINS", "http://localhost:3000").split(",")
-    app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["*"], allow_headers=["*"])
+    origins = [o.strip() for o in os.environ.get("EYEREF_CORS_ORIGINS", "http://localhost:3000").split(",") if o.strip()]
+    # added first so it sits inside CORS: 401 responses still carry CORS headers
+    app.add_middleware(TokenAuthMiddleware, config=auth)
+    app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["*"],
+                       allow_headers=["authorization", "content-type"])
 
     db = Database(database_url)
     storage = LocalStorage(os.path.join(data_dir, "objects"))
+    if auth.production and not storage.encrypted:
+        raise UnsafeConfigError("EYEREF_ENV=production requires EYEREF_STORAGE_KEY so eye images are encrypted at rest")
     profiles = load_profiles(os.path.join(data_dir, "device_profiles"))
     physics = PhysicsHeuristicEstimator()
     learned = OnnxMeridionalEstimator(MODEL_PATH)
@@ -154,7 +166,7 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
     @app.get("/health")
     def health() -> dict[str, Any]:
         return {"status": "ok", "version": __version__, "storage_encrypted": storage.encrypted,
-                "ml_model_available": learned.available}
+                "ml_model_available": learned.available, "auth": "token" if auth.enabled else "disabled"}
 
     @app.get("/api/models")
     def models() -> list[dict[str, Any]]:

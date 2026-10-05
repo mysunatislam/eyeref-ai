@@ -10,12 +10,10 @@ import type { FaceLandmarker as FaceLandmarkerT } from "@mediapipe/tasks-vision"
 import type { HeadPose } from "../types";
 import { eyesFromLandmarks, headPoseFromMatrix, type EyeObservation } from "./eyeGeometry";
 
-const WASM_URL =
-  process.env.NEXT_PUBLIC_MEDIAPIPE_WASM_URL ??
-  "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm";
-const MODEL_URL =
-  process.env.NEXT_PUBLIC_FACE_MODEL_URL ??
-  "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
+// Self-hosted by scripts/fetch-models.mjs (runs before every build), so no third-party
+// server is contacted at runtime. Override only to serve them from your own CDN.
+const WASM_URL = process.env.NEXT_PUBLIC_MEDIAPIPE_WASM_URL || "/mediapipe/wasm";
+const MODEL_URL = process.env.NEXT_PUBLIC_FACE_MODEL_URL || "/mediapipe/face_landmarker.task";
 
 export interface FaceObservation {
   eyes: { OD: EyeObservation; OS: EyeObservation };

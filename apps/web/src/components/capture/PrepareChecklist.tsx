@@ -38,7 +38,7 @@ export function PrepareChecklist({ onReady }: { onReady?: (ok: boolean) => void 
               <span
                 className={cn(
                   "mt-0.5 grid size-5 shrink-0 place-items-center rounded-md border",
-                  checked[i] ? "border-ok bg-ok text-white" : "border-line",
+                  checked[i] ? "border-ok bg-ok text-on-ok" : "border-line",
                 )}
               >
                 {checked[i] && <Check className="size-3.5" />}

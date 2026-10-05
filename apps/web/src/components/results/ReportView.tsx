@@ -132,7 +132,12 @@ export function ReportView({ a }: { a: StoredAssessment }) {
               <FlaskConical className="size-4" /> Simulator ground truth (SIMULATED DATA)
             </CardTitle>
           </CardHeader>
-          <CardContent className="overflow-x-auto">
+          <CardContent
+            className="overflow-x-auto"
+            tabIndex={0}
+            role="region"
+            aria-label="Simulator ground truth table"
+          >
             <table className="num w-full text-sm">
               <thead className="text-muted text-left text-[11px] tracking-wider uppercase">
                 <tr>

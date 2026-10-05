@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/field";
-import { api, ApiError, type AssistantStatus } from "@/lib/api";
+import { api, ApiError, connOf, type AssistantStatus } from "@/lib/api";
 import { useSettings } from "@/lib/settings";
 import type { AssessmentReport } from "@/lib/types";
 
@@ -28,7 +28,7 @@ export function AiExplainPanel({ report }: { report: AssessmentReport }) {
   useEffect(() => {
     let alive = true;
     api
-      .assistantStatus(s.apiUrl)
+      .assistantStatus(connOf({ apiUrl: s.apiUrl, apiToken: s.apiToken }))
       .then((r) => {
         if (!alive) return;
         setInfo(r);
@@ -38,7 +38,7 @@ export function AiExplainPanel({ report }: { report: AssessmentReport }) {
     return () => {
       alive = false;
     };
-  }, [s.apiUrl]);
+  }, [s.apiUrl, s.apiToken]);
 
   const thirdParty = info?.thirdParty ?? true;
   const canAsk = !busy && (!thirdParty || consent);
@@ -47,7 +47,7 @@ export function AiExplainPanel({ report }: { report: AssessmentReport }) {
     setBusy(true);
     setErr(null);
     try {
-      setAnswer(await api.explain(s.apiUrl, report, q.trim() || null, thirdParty && consent));
+      setAnswer(await api.explain(connOf(s), report, q.trim() || null, thirdParty && consent));
     } catch (e) {
       setErr(e instanceof ApiError ? `${e.status || ""} ${e.message}`.trim() : String(e));
     } finally {

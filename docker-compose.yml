@@ -11,6 +11,8 @@ services:
         required: false
     environment:
       EYEREF_CORS_ORIGINS: http://localhost:3000
+      EYEREF_ENV: ${EYEREF_ENV:-development}
+      EYEREF_API_TOKENS: ${EYEREF_API_TOKENS:-}
       EYEREF_ASSISTANT: ${EYEREF_ASSISTANT:-ollama}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-gemma3:4b}
@@ -25,7 +27,8 @@ services:
     build:
       context: ./apps/web
       args:
-        NEXT_PUBLIC_API_URL: http://localhost:8000
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+        EYEREF_CSP_CONNECT_SRC: ${EYEREF_CSP_CONNECT_SRC:-}
     depends_on:
       - api
     ports:

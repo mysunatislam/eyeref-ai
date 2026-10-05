@@ -48,7 +48,7 @@ first, then astigmatism later.
 | Dead-zone gradient gain per device | **REQUIRES TRAINING DATA** | Needs a bench calibration with trial lenses (docs/DEVICE_CALIBRATION.md) |
 | SE accuracy, myopia/hyperopia screening on real people | **REQUIRES CLINICAL VALIDATION** | Protocol in docs/VALIDATION_PROTOCOL.md |
 | CYL / AXIS output | **REQUIRES CLINICAL VALIDATION** | Gated off; research flag only |
-| Research API, encrypted image storage, dataset export, consent enforcement | **WORKING** | SQLite + Fernet; not hardened for production |
+| Research API, encrypted image storage, dataset export, consent enforcement | **WORKING** | Bearer-token access control (required when `EYEREF_ENV=production`), Fernet at rest. SQLite by default; the SQLAlchemy URL is configurable, but other databases are untested |
 | Optional AI explanation (local Gemma via Ollama by default; Gigalogy Maira optional) | **PARTIALLY WORKING** | Text-only summary, numeric guard tested against prescription-leaking replies, consent required for any remote provider. Verified against mocks only, because model downloads are blocked in the build sandbox. Run `scripts/check_assistant.py` once on your machine |
 | Installable app (PWA) with offline use | **WORKING** | Manifest, icons and a service worker that caches app code and the MediaPipe model, never results or camera frames. Verified offline in Chromium. Needs HTTPS to install |
 | Continuous integration | **WORKING** | `.github/workflows/ci.yml`: ruff, pytest, eslint, prettier, tsc, vitest, production build, web/backend contract. Runs on the first push |
@@ -139,3 +139,30 @@ scripts/         export_schemas.py, run-all.sh
 - The server refuses to store data without research consent, and refuses images without separate
   image consent. It encrypts images at rest when `EYEREF_STORAGE_KEY` is set.
 - Credentials come only from environment variables. Never commit `.env` or key files.
+
+## Security
+
+- **No third-party requests at runtime.** The MediaPipe runtime and face model are served by the app
+  itself. The build fetches the model and checks its SHA-256 (`apps/web/scripts/fetch-models.mjs`). A
+  browser test fails if any request leaves the app's own origin.
+- **Content Security Policy.** The web app may connect only to itself and the research backend it was
+  built for (`NEXT_PUBLIC_API_URL`, plus `EYEREF_CSP_CONNECT_SRC`). There are no plugins and no
+  framing.
+- **Research API.** Bearer tokens are required in production, along with encrypted image storage, and
+  the interactive docs are hidden. See [API](docs/API.md#authentication).
+- **Checks on every push.** Unit tests, browser tests including camera mode with a fake camera, and a
+  WCAG 2.1 AA accessibility scan in light and dark mode.
+
+## Releasing
+
+```bash
+git tag v0.2.0 && git push origin v0.2.0
+```
+
+The tag runs the full CI suite. It then publishes `ghcr.io/mysunatislam/eyeref-ai-api` and
+`ghcr.io/mysunatislam/eyeref-ai-web`, and creates a GitHub release with generated notes.
+
+- The web image is built for a backend at `http://localhost:8000`. For a hosted deployment, build it
+  with your own `NEXT_PUBLIC_API_URL`, because the security policy is fixed at build time.
+- Dependabot opens grouped update PRs every week for npm and pip, and every month for Actions and base
+  images.
