@@ -50,3 +50,19 @@ test("the app is installable and opens offline", async ({ page, context }) => {
   }
   await context.setOffline(false);
 });
+
+test("switches show their real state: the knob sits inside the track, on the side it means", async ({
+  page,
+}) => {
+  await page.goto("/calibration");
+  const switches = page.getByRole("switch");
+  expect(await switches.count()).toBeGreaterThan(0);
+  for (const sw of await switches.all()) {
+    const track = (await sw.boundingBox())!;
+    const knob = (await sw.locator("span").boundingBox())!;
+    expect(knob.x).toBeGreaterThanOrEqual(track.x);
+    expect(knob.x + knob.width).toBeLessThanOrEqual(track.x + track.width);
+    const onRight = knob.x + knob.width / 2 > track.x + track.width / 2;
+    expect(onRight).toBe((await sw.getAttribute("aria-checked")) === "true");
+  }
+});
