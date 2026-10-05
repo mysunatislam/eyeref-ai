@@ -7,6 +7,7 @@ const ROUTES = [
   "/history",
   "/research",
   "/validation",
+  "/validation/study",
   "/dataset",
   "/calibration",
   "/vision-test",

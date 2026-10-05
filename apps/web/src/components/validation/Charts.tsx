@@ -13,6 +13,7 @@ import {
   Tooltip,
   XAxis,
   YAxis,
+  ZAxis,
 } from "recharts";
 import type { EyeMetrics, ValidationReport } from "@/lib/validationReport";
 import { MODEL_LABEL } from "@/lib/validationReport";
@@ -20,7 +21,11 @@ import { MODEL_LABEL } from "@/lib/validationReport";
 const tip = { background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12, fontSize: 12 };
 const tick = { fontSize: 11, fill: "var(--muted)" };
 
-export function BlandAltman({ ba }: { ba: EyeMetrics["bland_altman_se"] }) {
+export function BlandAltman({
+  ba,
+}: {
+  ba: Pick<EyeMetrics["bland_altman_se"], "mean_diff" | "loa_low" | "loa_high" | "points">;
+}) {
   return (
     <div className="h-64 w-full">
       <ResponsiveContainer>
@@ -80,6 +85,51 @@ export function RocChart({ roc }: { roc: { fpr: number; tpr: number }[] }) {
             strokeDasharray="4 4"
           />
         </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+/** Reliability diagram: mean predicted probability against observed frequency, one point per bin. */
+export function ReliabilityChart({
+  bins,
+}: {
+  bins: { predicted: number; observed: number; eyes: number }[];
+}) {
+  return (
+    <div className="h-56 w-full">
+      <ResponsiveContainer>
+        <ScatterChart margin={{ top: 8, right: 12, bottom: 12, left: -16 }}>
+          <CartesianGrid stroke="var(--line)" strokeDasharray="3 3" />
+          <XAxis
+            type="number"
+            dataKey="predicted"
+            name="predicted"
+            domain={[0, 1]}
+            tick={tick}
+            label={{ value: "predicted probability", fontSize: 10, fill: "var(--muted)", dy: 14 }}
+          />
+          <YAxis type="number" dataKey="observed" name="observed" domain={[0, 1]} tick={tick} />
+          <ZAxis type="number" dataKey="eyes" name="eyes" range={[30, 300]} />
+          <Tooltip
+            contentStyle={tip}
+            formatter={(v) => (typeof v === "number" ? +v.toFixed(2) : String(v))}
+          />
+          <ReferenceLine
+            segment={[
+              { x: 0, y: 0 },
+              { x: 1, y: 1 },
+            ]}
+            stroke="var(--line)"
+            strokeDasharray="4 4"
+          />
+          <Scatter
+            data={bins}
+            fill="var(--accent)"
+            line={{ stroke: "var(--accent)" }}
+            isAnimationActive={false}
+          />
+        </ScatterChart>
       </ResponsiveContainer>
     </div>
   );

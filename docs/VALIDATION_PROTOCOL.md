@@ -63,6 +63,10 @@ of the estimator without the gate, which the simulated benchmark does.
 
    Or run `make study EXPORT=eyeref_eyes.csv`. Leave out `--one-eye` for the secondary analysis with
    both eyes. The script prints a summary and writes every metric, with its interval, to the JSON file.
+3. Open the JSON file in the web app: Validation, then "Open a study report". It shows the tables and
+   figures a paper needs: outcomes, the Bland–Altman plot, screening accuracy with each condition's
+   2x2 table and ROC curve, the reliability diagrams, repeatability and the subgroups. The file is read
+   in the browser and is not uploaded. A report computed from simulated data is marked as such.
 
 How the script applies this protocol:
 

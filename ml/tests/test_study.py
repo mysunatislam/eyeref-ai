@@ -3,6 +3,8 @@
 import importlib
 import json
 import math
+import os
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -21,6 +23,9 @@ from eyeref_ml.evaluation.study import (
     subject_bootstrap,
 )
 from sklearn import metrics
+
+#: Read by the web app's study page tests (apps/web/src/lib/__tests__/studyReport.test.ts, e2e/study.spec.ts).
+WEB_FIXTURE = Path(__file__).resolve().parents[2] / "shared" / "fixtures" / "study_report.sample.json"
 
 
 def _eye(subject, eye="OD", visit=None, day="2026-09-01", outcome="quantitative", pred=-1.0, ref=-1.0, **extra):
@@ -257,10 +262,13 @@ def test_the_command_line_writes_the_report_and_a_summary(tmp_path, capsys):
 
     assert main([str(path), "--boot", "100", "--out", str(out)]) == 0
     report = json.loads(out.read_text())
+    assert (report["kind"], report["format_version"]) == ("eyeref-study-report", 1)
     assert report["simulated"] is False and "label" not in report
     assert report["n"]["subjects"] == 30 and report["n"]["eyes_compared"] == 60
     bias = report["metrics"]["agreement"]["se"]["bias"]
     assert bias["ci95"][0] <= bias["value"] <= bias["ci95"][1]
+    points = report["bland_altman_se"]  # one per eye compared, for the plot
+    assert len(points) == 60 and np.mean([p["diff"] for p in points]) == pytest.approx(bias["value"], abs=1e-3)
     myopes = sum(r["gt_autorefractor_se"] <= -0.5 for r in rows)
     table = report["n"]["screening_tables"]["myopia_0_50"]
     assert table["true_positive"] + table["false_negative"] == myopes
@@ -303,3 +311,48 @@ def test_the_research_servers_export_is_analysed_as_it_comes(tmp_path, monkeypat
     assert report["label"].startswith("SIMULATED")
     assert report["n"]["eyes"] == 4 and report["n"]["eyes_compared"] == 4
     assert report["metrics"]["agreement"]["se"]["mae"]["value"] < 1.0
+
+
+def _made_up_study():
+    """A small made-up study, marked simulated, with something in every part of the report."""
+    rng = np.random.default_rng(7)
+    rows = []
+    for i in range(16):
+        se = round(float(rng.normal(-1.5, 2.5)) * 4) / 4
+        outcome = ["quantitative"] * 5 + ["screening", "quantitative", "repeat"]
+        for visit in ("a", "b") if i < 6 else ("a",):  # six subjects measured twice that day
+            for eye in ("OD", "OS"):
+                ref = se + (1.25 if eye == "OS" and i % 4 == 0 else 0.0)  # a few anisometropes
+                cyl = -0.25 * int(rng.integers(0, 7))
+                rows.append(_eye(
+                    f"s{i:02d}", eye, visit=f"s{i:02d}-{visit}", outcome="protocol_failure" if i == 15 else outcome[i % 8],
+                    pred=ref + float(rng.normal(0, 0.35)), ref=ref, simulated=True,
+                    gt_autorefractor_sph=ref - cyl / 2, gt_autorefractor_cyl=cyl, gt_autorefractor_axis=90.0,
+                    p_astigmatism=float(np.clip(-cyl / 1.5 + rng.normal(0, 0.15), 0.01, 0.99)),
+                    p_anisometropia=0.8 if i % 4 == 0 else 0.1, device_id=f"phone-{'ab'[i % 2]}",
+                    pupil_mm=float(rng.uniform(3.5, 7.5)), distance_m=(1.0, 1.5)[i % 3 == 0],
+                    iris_color=("brown", "blue", "green")[i % 3]))
+    return rows
+
+
+def _stable(report):
+    """The report without what changes from run to run: the time, and float noise past 6 decimals."""
+    def walk(v):
+        if isinstance(v, dict):
+            return {k: walk(x) for k, x in v.items()}
+        if isinstance(v, list):
+            return [walk(x) for x in v]
+        return round(v, 6) if isinstance(v, float) else v
+    return {**walk(report), "generated_at": "2026-01-01T00:00:00+00:00"}
+
+
+def test_the_web_apps_study_report_sample_is_what_the_analysis_writes():
+    report = _stable(study_report(pd.DataFrame(_made_up_study()), n_boot=200, seed=1))
+    text = json.dumps(report, indent=2, allow_nan=False) + "\n"
+    if os.environ.get("EYEREF_UPDATE_FIXTURES"):
+        WEB_FIXTURE.write_text(text)
+    assert report["label"].startswith("SIMULATED")
+    for part in ("screening", "calibration", "repeatability", "subgroups"):
+        assert report["metrics"][part], part
+    assert json.loads(WEB_FIXTURE.read_text()) == json.loads(text), (
+        "the web app's sample study report is out of date: rerun with EYEREF_UPDATE_FIXTURES=1")
