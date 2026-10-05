@@ -2,6 +2,7 @@ import json
 
 import httpx
 import pytest
+from databases import fresh_database
 from eyeref.api.main import create_app
 from eyeref.assistant.core import SYSTEM_RULES, AssistantConfigError, AssistantUnavailable, explain_report
 from eyeref.assistant.guard import guard_text
@@ -21,7 +22,7 @@ def _ollama(answer: str, seen: list, models=("gemma3:4b",)):
 
 
 def _app(tmp_path, transport):
-    return TestClient(create_app("sqlite://", data_dir=str(tmp_path),
+    return TestClient(create_app(fresh_database(tmp_path), data_dir=str(tmp_path),
                                  assistant_client_factory=lambda cfg: OllamaClient(cfg, transport=transport,
                                                                                    sleep=lambda s: None)))
 
@@ -39,7 +40,7 @@ def test_default_provider_is_local_ollama(monkeypatch):
 
 def test_off_switch(monkeypatch, tmp_path):
     monkeypatch.setenv("EYEREF_ASSISTANT", "off")
-    c = TestClient(create_app("sqlite://", data_dir=str(tmp_path)))
+    c = TestClient(create_app(fresh_database(tmp_path), data_dir=str(tmp_path)))
     assert c.get("/api/assistant/status").json()["configured"] is False
     assert c.post("/api/assistant/explain", json=_body()).status_code == 503
 

@@ -1,5 +1,6 @@
 import pytest
 from cryptography.fernet import Fernet
+from databases import fresh_database
 from eyeref.api.auth import AuthConfig, AuthConfigError, UnsafeConfigError
 from eyeref.api.main import create_app
 from fastapi.testclient import TestClient
@@ -11,7 +12,7 @@ OTHER = "o" * 32
 def _client(tmp_path, monkeypatch, tokens=(TOKEN,), env="development"):
     monkeypatch.setenv("EYEREF_CORS_ORIGINS", "http://localhost:3000")
     monkeypatch.setenv("EYEREF_STORAGE_KEY", Fernet.generate_key().decode())
-    return TestClient(create_app("sqlite://", data_dir=str(tmp_path), auth=AuthConfig(tokens, env)))
+    return TestClient(create_app(fresh_database(tmp_path), data_dir=str(tmp_path), auth=AuthConfig(tokens, env)))
 
 
 def _subject(code="S-1"):
@@ -88,4 +89,4 @@ def test_tokens_from_env_and_never_in_repr(monkeypatch):
 def test_production_requires_encrypted_image_storage(tmp_path, monkeypatch):
     monkeypatch.delenv("EYEREF_STORAGE_KEY", raising=False)
     with pytest.raises(UnsafeConfigError, match="EYEREF_STORAGE_KEY"):
-        create_app("sqlite://", data_dir=str(tmp_path), auth=AuthConfig((TOKEN,), "production"))
+        create_app(fresh_database(tmp_path), data_dir=str(tmp_path), auth=AuthConfig((TOKEN,), "production"))
