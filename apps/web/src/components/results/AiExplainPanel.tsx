@@ -5,19 +5,20 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/field";
-import { api, ApiError } from "@/lib/api";
+import { api, ApiError, type AssistantStatus } from "@/lib/api";
 import { useSettings } from "@/lib/settings";
 import type { AssessmentReport } from "@/lib/types";
 
 /**
- * OPTIONAL third-party explanation (Gigalogy Maira via the backend). It only rephrases the
- * existing report: the backend sends a de-identified text summary (no images, no profile) and
- * redacts any refraction-like number the model invents. Requires explicit consent per request.
+ * OPTIONAL plain-language explanation by a language model via the backend. By default this is a
+ * local model (Gemma through Ollama) so nothing leaves the machine; a remote provider needs explicit
+ * consent per request. It only rephrases the existing report: the backend sends a de-identified text
+ * summary (no images, no profile) and redacts any refraction-like number the model invents.
  */
 export function AiExplainPanel({ report }: { report: AssessmentReport }) {
   const [s] = useSettings();
   const [status, setStatus] = useState<"checking" | "off" | "ready" | "unreachable">("checking");
-  const [label, setLabel] = useState("");
+  const [info, setInfo] = useState<AssistantStatus | null>(null);
   const [consent, setConsent] = useState(false);
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
@@ -30,8 +31,8 @@ export function AiExplainPanel({ report }: { report: AssessmentReport }) {
       .assistantStatus(s.apiUrl)
       .then((r) => {
         if (!alive) return;
-        setLabel(r.label);
-        setStatus(r.configured ? "ready" : "off");
+        setInfo(r);
+        setStatus(r.configured && r.available ? "ready" : "off");
       })
       .catch(() => alive && setStatus("unreachable"));
     return () => {
@@ -39,11 +40,14 @@ export function AiExplainPanel({ report }: { report: AssessmentReport }) {
     };
   }, [s.apiUrl]);
 
+  const thirdParty = info?.thirdParty ?? true;
+  const canAsk = !busy && (!thirdParty || consent);
+
   const ask = async () => {
     setBusy(true);
     setErr(null);
     try {
-      setAnswer(await api.explain(s.apiUrl, report, q.trim() || null, consent));
+      setAnswer(await api.explain(s.apiUrl, report, q.trim() || null, thirdParty && consent));
     } catch (e) {
       setErr(e instanceof ApiError ? `${e.status || ""} ${e.message}`.trim() : String(e));
     } finally {
@@ -59,10 +63,12 @@ export function AiExplainPanel({ report }: { report: AssessmentReport }) {
             <Bot className="text-accent size-4" /> Plain-language explanation
           </CardTitle>
           <CardDescription>
-            Optional. Uses a third-party AI service. It cannot create or change any measurement.
+            Optional. A language model rephrases this report. It cannot create or change any measurement.
           </CardDescription>
         </div>
-        <Badge tone="accent">Optional · AI</Badge>
+        <Badge tone="accent">
+          {info?.provider === "ollama" && !thirdParty ? "Local AI" : "Optional · AI"}
+        </Badge>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
         {status === "checking" && <p className="text-muted">Checking whether the assistant is configured…</p>}
@@ -73,32 +79,41 @@ export function AiExplainPanel({ report }: { report: AssessmentReport }) {
           </p>
         )}
         {status === "off" && (
-          <p className="text-muted">
-            The assistant is not configured on the backend (set MAIRA_API_KEY and MAIRA_PROJECT_KEY in its
-            environment).
-          </p>
+          <div className="text-muted space-y-1">
+            <p>The explanation assistant is not available{info?.reason ? `: ${info.reason}` : "."}</p>
+            {info?.provider === "ollama" && (
+              <p className="text-xs">
+                To enable it, install Ollama and run <code>ollama pull gemma3:4b</code>. The model runs on
+                this computer and the report never leaves it.
+              </p>
+            )}
+          </div>
         )}
         {status === "ready" && (
           <>
-            <label className="text-ink-2 flex items-start gap-2 text-xs">
-              <input
-                type="checkbox"
-                className="mt-0.5"
-                checked={consent}
-                onChange={(e) => setConsent(e.target.checked)}
-              />
-              <span>
-                I agree to send a de-identified text summary of this report (no images, no name, no age
-                details beyond the age band) to {label || "the third-party AI service"}.
-              </span>
-            </label>
+            {thirdParty ? (
+              <label className="text-ink-2 flex items-start gap-2 text-xs">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={consent}
+                  onChange={(e) => setConsent(e.target.checked)}
+                />
+                <span>
+                  I agree to send a de-identified text summary of this report (no images, no name, no age
+                  details beyond the age band) to {info?.label || "the third-party AI service"}.
+                </span>
+              </label>
+            ) : (
+              <p className="text-ink-2 text-xs">{info?.label}</p>
+            )}
             <Input
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Optional question, e.g. what does 'screening only' mean?"
               maxLength={500}
             />
-            <Button onClick={ask} disabled={!consent || busy} variant="secondary">
+            <Button onClick={ask} disabled={!canAsk} variant="secondary">
               {busy && <Loader2 className="animate-spin" />} Explain this result
             </Button>
           </>

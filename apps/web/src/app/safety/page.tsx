@@ -46,7 +46,7 @@ const SECTIONS = [
       "Images are analysed on this device. Nothing is uploaded unless an investigator uploads a record with consent in Dataset mode.",
       "Face landmarks are used for geometry only. There is no face identification or recognition.",
       "Eye-crop images are kept only with consent and can be deleted at any time from History.",
-      "The optional AI explanation sends a de-identified text summary, never images, and only after you agree each time.",
+      "The optional AI explanation runs on a local model by default. It sees only a de-identified text summary, never images, and a remote AI service is used only if configured and only after you agree each time.",
     ],
   },
   {

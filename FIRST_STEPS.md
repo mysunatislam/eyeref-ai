@@ -27,8 +27,9 @@ build pass. Every page was smoke-tested in Chromium.
   - Consent-enforced subjects, sessions, captures, ground truth and predictions.
   - Fernet-encrypted image storage, CSV/JSON export, and model and calibration versions on every
     prediction.
-- **Optional Maira explanation.** Credentials come from env vars only. It needs consent on every
-  request, sends text only, and a guard strips any refraction number that is not in the report.
+- **Optional AI explanation.** By default it uses a local Gemma model through Ollama, so nothing leaves
+  the machine; hosted Maira is optional and needs consent on every request. It sends text only, and a
+  guard strips any refraction number that is not in the report.
 - **Contract test.** It proves that a report produced in the browser validates against the backend
   schema.
 
@@ -142,8 +143,9 @@ make web                   # http://localhost:3000  (Simulation Mode works witho
 make backend               # optional API on :8000 (OpenAPI at /docs)
 make data && make ml-train # regenerate SIMULATED dataset, models, validation report
 make schemas               # shared/schemas JSON Schemas
-cp .env.example .env       # optional; add MAIRA_API_KEY / MAIRA_PROJECT_KEY here, never commit
-set -a; . ./.env; set +a; .venv/bin/python scripts/check_maira.py   # one live test call, prints no keys
+ollama pull gemma3:4b      # optional local AI explanation (install Ollama first)
+.venv/bin/python scripts/check_assistant.py   # one guarded test explanation, prints no keys
+cp .env.example .env       # optional settings; never commit .env
 docker compose up --build  # web :3000 + api :8000
 ```
 

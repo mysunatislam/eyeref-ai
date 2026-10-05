@@ -13,6 +13,9 @@ from collections.abc import Iterable
 
 DIOPTRE = re.compile(r"(?<![\w.])([+\-−]?\d{1,2}(?:[.,]\d{1,2})?)\s*(?:D\b|dioptres?|diopters?|dpt)", re.I)
 RX_FIELD = re.compile(r"\b(SPH|CYL|AXIS|sphere|cylinder|axis)\s*[:=]?\s*([+\-−]?\d{1,3}(?:[.,]\d{1,2})?)\s*(°|deg)?", re.I)
+# small local models often drop the unit: "-2.75", "+1.50", "minus 3.25"
+SIGNED_POWER = re.compile(r"(?<![\w.\[])([+\-−]\d{1,2}[.,]\d{2})(?![\d%])")
+SPELLED_POWER = re.compile(r"\b(?:minus|plus)\s+(\d{1,2}(?:[.,]\d{1,2})?)\b", re.I)
 AXIS_DEG = re.compile(r"(?<![\w.])(\d{1,3})\s*(?:°|degrees?)", re.I)
 PRESCRIPTION_CLAIM = re.compile(r"\b(your|the)\s+(eyeglass\s+|glasses\s+)?prescription\s+(is|would be|should be)\b", re.I)
 
@@ -51,6 +54,8 @@ def guard_text(text: str, allowed: set[float]) -> tuple[str, int]:
     text = RX_FIELD.sub(sub_num, text)
     text = DIOPTRE.sub(sub_num, text)
     text = AXIS_DEG.sub(sub_num, text)
+    text = SIGNED_POWER.sub(sub_num, text)
+    text = SPELLED_POWER.sub(sub_num, text)
     if PRESCRIPTION_CLAIM.search(text):
         count += 1
         text = PRESCRIPTION_CLAIM.sub("a clinical refraction would determine the prescription; this screening", text)

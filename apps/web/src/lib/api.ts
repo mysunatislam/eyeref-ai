@@ -77,10 +77,18 @@ export function slimReport(r: AssessmentReport): AssessmentReport {
   };
 }
 
+export interface AssistantStatus {
+  configured: boolean;
+  available: boolean;
+  provider: string | null;
+  thirdParty: boolean;
+  label: string | null;
+  reason?: string | null;
+}
+
 export const api = {
   health: (base: string) => call<{ status: string; version: string }>(base, "/health"),
-  assistantStatus: (base: string) =>
-    call<{ configured: boolean; provider: string | null; label: string }>(base, "/api/assistant/status"),
+  assistantStatus: (base: string) => call<AssistantStatus>(base, "/api/assistant/status"),
   explain: (base: string, report: AssessmentReport, question: string | null, consentThirdParty: boolean) =>
     call<{ text: string; redactions: number; provider: string; label: string }>(
       base,

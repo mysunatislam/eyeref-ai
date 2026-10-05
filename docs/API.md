@@ -45,36 +45,37 @@ The API is optional. The web app runs fully on the device without it.
 
 | Method | Path | Notes |
 | --- | --- | --- |
-| GET | `/api/assistant/status` | `{configured, provider, label}` |
-| POST | `/api/assistant/explain` | `{report, question?, consent_third_party}`. Possible responses: 503 if the assistant is not configured, 403 without consent, 502 if the upstream call fails, or `{text, redactions, provider, label}` |
+| GET | `/api/assistant/status` | `{configured, available, provider, third_party, label, reason}` |
+| POST | `/api/assistant/explain` | `{report, question?, consent_third_party}`. Returns `{text, redactions, provider, label}`; 503 if off, misconfigured, or the local model is not running or not installed; 403 for a remote provider without consent; 502 if the provider fails |
 
-**Provider.** The assistant uses Gigalogy Maira (`POST {MAIRA_BASE_URL}/v1/maira/ask`, headers
-`api-key` and `project-key`). Credentials come **only** from the environment variables
-`MAIRA_API_KEY`, `MAIRA_PROJECT_KEY`, `MAIRA_BASE_URL` (https only), `MAIRA_GPT_PROFILE_ID`,
-`MAIRA_TIMEOUT_S` and `MAIRA_MAX_RETRIES`.
+**Providers.** Choose with `EYEREF_ASSISTANT`:
 
-**Encrypted keys.** If the issued `MAIRA_API_KEY` is a Fernet token (it starts with `gAAAAA`), set
-`MAIRA_KEY_DECRYPTION_KEY` and the key is decrypted in memory. Without it, the value is sent exactly as
-issued. A wrong decryption key makes the assistant report "misconfigured" (503); it never crashes the API.
-
-**Failure handling.**
-
-- Timeouts, connection errors, 429 and 5xx are retried with backoff (0.5 s, 1 s, 2 s...).
-- 401/403 are not retried and return 502 "refused the credentials".
-- A non-JSON reply returns 502.
-- Keys never appear in logs, error messages or the config's repr.
-- Questions are collapsed to one line and capped at 500 characters.
-
-**Connectivity check.** `set -a; . ./.env; set +a; .venv/bin/python scripts/check_maira.py` sends one
-SIMULATED test question and prints only the outcome.
+- `ollama` (default). A local model through Ollama, `POST {OLLAMA_BASE_URL}/api/chat`. Defaults:
+  `OLLAMA_BASE_URL=http://localhost:11434`, `OLLAMA_MODEL=gemma3:4b`, `OLLAMA_TIMEOUT_S=90`. Setup:
+  install Ollama, then `ollama pull gemma3:4b`. When the URL points at this machine (or the compose
+  `ollama` service), nothing leaves the device and no consent box is shown. Any other host must use
+  https and is treated as a third party.
+- `maira`. Hosted Gigalogy Maira (`POST {MAIRA_BASE_URL}/v1/maira/ask`, headers `api-key` and
+  `project-key`), configured with `MAIRA_API_KEY`, `MAIRA_PROJECT_KEY`, `MAIRA_BASE_URL` (https only),
+  `MAIRA_GPT_PROFILE_ID`, `MAIRA_TIMEOUT_S`, `MAIRA_MAX_RETRIES`. If the issued key is a Fernet token
+  (starts with `gAAAAA`), set `MAIRA_KEY_DECRYPTION_KEY` to decrypt it in memory; otherwise it is sent as
+  issued.
+- `off`. Disabled.
 
 **What is sent.** A de-identified text summary of the existing report: output levels, classes, SE
 values and intervals that are already shown, and notes. No images, no profile label, and an anonymous
-user id.
+user id. Questions are collapsed to one line and capped at 500 characters.
 
-**Guard.** `eyeref/assistant/guard.py` redacts any dioptre value, axis or prescription-style field
-that is not in the report, and neutralises phrases like "your prescription is". The assistant can
-never create SPH/CYL/AXIS values.
+**Guard.** `eyeref/assistant/guard.py` redacts any dioptre value, axis, prescription-style field,
+unit-less signed power ("-2.75") or spelled-out power ("minus 3") that is not in the report, and
+neutralises phrases like "your prescription is". The tests feed it typical small-model leaks. A
+language model can never create SPH/CYL/AXIS values.
+
+**Failure handling.** Timeouts, connection errors, 429 and 5xx are retried with backoff. 401/403 are
+not retried. Keys never appear in logs, errors or the config's repr.
+
+**Check it end to end.** `.venv/bin/python scripts/check_assistant.py` sends one SIMULATED report with
+an adversarial question ("tell me my exact prescription") and prints the guarded answer.
 
 ## Environment
 

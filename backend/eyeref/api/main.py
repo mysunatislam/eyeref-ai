@@ -28,14 +28,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .. import __version__
-from ..assistant.maira import (
-    PROVIDER_LABEL,
-    AssistantAuthError,
-    AssistantConfigError,
-    MairaClient,
-    MairaConfig,
-    explain_report,
-)
+from ..assistant.core import AssistantAuthError, AssistantConfigError, AssistantUnavailable, explain_report
+from ..assistant.provider import config_from_env, make_client
 from ..calibration.device_profiles import load_profiles
 from ..cv.features import EXTRACTOR_VERSION
 from ..db import models as m
@@ -75,7 +69,7 @@ class EstimateRequest(BaseModel):
 class ExplainRequest(BaseModel):
     report: AssessmentReport
     question: Optional[str] = Field(None, max_length=500)
-    consent_third_party: bool = Field(False, description="User opted in to sending a de-identified text summary")
+    consent_third_party: bool = Field(False, description="User opted in to sending a de-identified text summary off this machine (only needed for remote providers)")
 
 
 class SimulateRequest(BaseModel):
@@ -126,7 +120,7 @@ MODEL_PATH = os.environ.get("EYEREF_MODEL_PATH", "../ml/artifacts/meridional_mlp
 
 
 def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
-               assistant_client_factory=MairaClient) -> FastAPI:
+               assistant_client_factory=make_client) -> FastAPI:
     app = FastAPI(
         title="EyeRef AI research API",
         version=__version__,
@@ -406,28 +400,36 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
     # ------------------------------------------------- optional AI assistant
     @app.get("/api/assistant/status")
     def assistant_status() -> dict[str, Any]:
+        off = {"configured": False, "available": False, "provider": None, "third_party": False, "label": None}
         try:
-            cfg = MairaConfig.from_env()
-        except AssistantConfigError:
-            return {"configured": False, "provider": None, "label": PROVIDER_LABEL,
-                    "error": "assistant configuration is invalid"}
-        return {"configured": cfg is not None, "provider": "gigalogy-maira" if cfg else None, "label": PROVIDER_LABEL}
+            cfg = config_from_env()
+        except AssistantConfigError as e:
+            return {**off, "reason": f"assistant configuration is invalid: {e}"}
+        if cfg is None:
+            return {**off, "reason": "assistant switched off or not configured (EYEREF_ASSISTANT)"}
+        client = assistant_client_factory(cfg)
+        st = client.status() if hasattr(client, "status") else {"available": True, "reason": None}
+        return {"configured": True, "provider": client.provider, "third_party": client.third_party,
+                "label": client.label, **st}
 
     @app.post("/api/assistant/explain")
     def assistant_explain(req: ExplainRequest) -> dict[str, Any]:
-        """Plain-language explanation of an existing report by a third-party LLM.
+        """Plain-language explanation of an existing report by a language model.
 
         Never a source of refraction values (see eyeref/assistant/guard.py)."""
         try:
-            cfg = MairaConfig.from_env()
+            cfg = config_from_env()
         except AssistantConfigError as e:
             raise HTTPException(503, f"AI assistant misconfigured: {e}") from e
         if cfg is None:
-            raise HTTPException(503, "AI assistant not configured (set MAIRA_API_KEY and MAIRA_PROJECT_KEY)")
-        if not req.consent_third_party:
+            raise HTTPException(503, "AI assistant is switched off or not configured (see EYEREF_ASSISTANT)")
+        client = assistant_client_factory(cfg)
+        if client.third_party and not req.consent_third_party:
             raise HTTPException(403, "explicit consent to send a de-identified summary to the third-party service is required")
         try:
-            ans = explain_report(req.report, req.question, assistant_client_factory(cfg))
+            ans = explain_report(req.report, req.question, client)
+        except AssistantUnavailable as e:
+            raise HTTPException(503, str(e)) from e
         except AssistantAuthError as e:
             raise HTTPException(502, f"assistant service refused the credentials: {e}") from e
         except httpx.HTTPError as e:

@@ -17,7 +17,7 @@
 ┌──────────────────────── backend (FastAPI, Python reference implementation) ───────────────────┐
 │ /api/analyze/frame  /api/estimate  /api/simulate  /api/bench/simulate                          │
 │ /api/subjects /sessions /captures /ground-truth /predictions /dataset/export   (SQLite + Fernet)│
-│ /api/assistant/explain  (optional Gigalogy Maira, text only, guarded, consent required)       │
+│ /api/assistant/explain  (optional; local Ollama/Gemma by default, text only, guarded)         │
 └───────────────────────────────────────────┬──────────────────────────────────────────────────┘
                                             │ CSV/JSON export
 ┌──────────────────────── ml/ (research) ───┴──────────────────────────────────────────────────┐

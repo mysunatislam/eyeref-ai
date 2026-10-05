@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { AppShell } from "@/components/layout/AppShell";
+import { ServiceWorker } from "@/components/pwa/ServiceWorker";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -7,6 +8,9 @@ export const metadata: Metadata = {
   description:
     "Research prototype for camera-based eccentric photorefraction screening. Not a medical device; not a prescription.",
   robots: { index: false, follow: false },
+  applicationName: "EyeRef AI",
+  appleWebApp: { capable: true, title: "EyeRef", statusBarStyle: "default" },
+  icons: { apple: "/icons/apple-touch-icon.png" },
 };
 
 export const viewport: Viewport = {
@@ -24,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-dvh font-sans antialiased">
         <AppShell>{children}</AppShell>
+        <ServiceWorker />
       </body>
     </html>
   );

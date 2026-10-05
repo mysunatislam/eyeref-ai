@@ -1,5 +1,8 @@
 # EyeRef AI research stack. `docker compose up --build`, then open http://localhost:3000
 # Camera access needs HTTPS or localhost; for phones on the LAN put a TLS proxy in front.
+# Local AI explanation (optional): either run Ollama on the host (default below), or
+#   OLLAMA_BASE_URL=http://ollama:11434 docker compose --profile ai up --build
+#   docker compose exec ollama ollama pull gemma3:4b
 services:
   api:
     build: ./backend
@@ -8,6 +11,11 @@ services:
         required: false
     environment:
       EYEREF_CORS_ORIGINS: http://localhost:3000
+      EYEREF_ASSISTANT: ${EYEREF_ASSISTANT:-ollama}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-gemma3:4b}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - eyeref-data:/data
       - ./ml/artifacts:/models:ro
@@ -22,5 +30,13 @@ services:
       - api
     ports:
       - "3000:3000"
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["ai"]
+    volumes:
+      - ollama-models:/root/.ollama
+    ports:
+      - "11434:11434"
 volumes:
   eyeref-data:
+  ollama-models:

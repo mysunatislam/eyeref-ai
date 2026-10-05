@@ -55,6 +55,7 @@ def test_explain_report_uses_headers_and_guards():
 
 
 def test_api_requires_config_and_consent(tmp_path, monkeypatch):
+    monkeypatch.setenv("EYEREF_ASSISTANT", "maira")
     monkeypatch.delenv("MAIRA_API_KEY", raising=False)
     c = TestClient(create_app("sqlite://", data_dir=str(tmp_path)))
     body = {"report": _report().model_dump(mode="json"), "consent_third_party": True}
@@ -100,6 +101,7 @@ def test_encrypted_key_is_decrypted_in_memory(monkeypatch):
 
 
 def test_bad_decryption_key_is_a_config_error_not_a_crash(tmp_path, monkeypatch):
+    monkeypatch.setenv("EYEREF_ASSISTANT", "maira")
     from cryptography.fernet import Fernet
     monkeypatch.setenv("MAIRA_API_KEY", Fernet(Fernet.generate_key()).encrypt(b"x").decode())
     monkeypatch.setenv("MAIRA_PROJECT_KEY", "p")
@@ -148,6 +150,7 @@ def test_gives_up_after_max_retries():
 
 
 def test_auth_failure_is_not_retried_and_hides_key(tmp_path, monkeypatch):
+    monkeypatch.setenv("EYEREF_ASSISTANT", "maira")
     monkeypatch.setenv("MAIRA_API_KEY", "super-secret-key")
     monkeypatch.setenv("MAIRA_PROJECT_KEY", "p")
     seen: list = []
@@ -161,6 +164,7 @@ def test_auth_failure_is_not_retried_and_hides_key(tmp_path, monkeypatch):
 
 
 def test_non_json_reply_is_a_clean_502(tmp_path, monkeypatch):
+    monkeypatch.setenv("EYEREF_ASSISTANT", "maira")
     monkeypatch.setenv("MAIRA_API_KEY", "k")
     monkeypatch.setenv("MAIRA_PROJECT_KEY", "p")
     c = TestClient(create_app("sqlite://", data_dir=str(tmp_path),
