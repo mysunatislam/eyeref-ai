@@ -9,6 +9,8 @@ Design rules (docs/DATASET.md):
   encrypted) object store, never in the DB.
 * Deleting a subject cascades to sessions, captures, ground truth and
   predictions, and the storage layer deletes the image objects.
+* Every change to research data, and every read or export of it, adds an audit
+  event in the same transaction.
 """
 
 from __future__ import annotations
@@ -135,6 +137,22 @@ class GroundTruth(Base):
     raw: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, nullable=True)  # e.g. 3 autorefractor readings
 
     subject: Mapped[Subject] = relationship(back_populates="ground_truths")
+
+
+class AuditEvent(Base):
+    """Who changed or exported research data, and when (docs/API.md#audit-log).
+
+    Holds ids and counts, never personal data, so the trail outlives a subject's deletion: no
+    foreign key to subjects, and no subject code.
+    """
+
+    __tablename__ = "audit_events"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    actor: Mapped[str] = mapped_column(String(64))  # API token fingerprint, or "anonymous" with auth off
+    action: Mapped[str] = mapped_column(String(64), index=True)
+    subject_id: Mapped[Optional[str]] = mapped_column(String(32), nullable=True, index=True)
+    details: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, nullable=True)
 
 
 class Prediction(Base):

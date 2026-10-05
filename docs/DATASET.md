@@ -10,6 +10,9 @@
   - Images need a separate `consent_image_storage`.
   - Deleting a subject cascades to its sessions, captures, predictions and ground truth, and deletes
     the encrypted image objects.
+- **Audited.** Every change to research data, and every read or export of it, is recorded with the
+  token that made it. The record holds ids and counts only, so it is kept after a subject is deleted
+  (see [API](API.md#audit-log)).
 - **No face images.** The app stores only eye crops, about 1.6 × the iris diameter, and only with
   consent.
 - **Simulated data is flagged** at the session level, and exports exclude it unless
@@ -25,6 +28,7 @@
 | `captures` | session, eye, frame index, timestamp, `working_distance_m`, illumination, **`meridian_deg`**, metadata JSON, features JSON, quality JSON / score / grade, `pupil_diameter_mm`, encrypted `image_key` |
 | `ground_truth` | subject, eye, **method** (autorefractor, subjective, cycloplegic, retinoscopy, trial_lens, lensmeter), sphere / cylinder / axis (**stored as minus cylinder**), SE, vertex distance, instrument, examiner, raw printout JSON |
 | `predictions` | session, eye, output level, SE + CI, sphere, cylinder, axis, M/J0/J45, confidence, class, **model name and version, calibration version, device profile, extractor version**, full report JSON |
+| `audit_events` | time, actor (token fingerprint), action, subject id, details (ids, counts and flags only). No foreign keys, so events outlive what they describe |
 
 JSON Schemas of the exchange models live in `shared/schemas` and are regenerated with `make schemas`.
 

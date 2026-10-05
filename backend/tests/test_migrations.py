@@ -13,6 +13,7 @@ from databases import SERVER_URL, fresh_database
 from eyeref.db import models as m
 from eyeref.db.__main__ import main
 from eyeref.db.session import (
+    BASELINE_REVISION,
     NewerSchemaError,
     alembic_config,
     connect,
@@ -41,8 +42,9 @@ def test_migrations_build_exactly_what_the_models_describe(tmp_path):
 def test_a_database_from_before_migrations_is_adopted_with_its_data(tmp_path):
     url = fresh_database(tmp_path)
     old = connect(url)
-    m.Base.metadata.create_all(old)  # how earlier versions created the schema
+    upgrade(old, BASELINE_REVISION)  # the schema earlier versions made with create_all...
     with old.begin() as conn:
+        conn.execute(text("DROP TABLE alembic_version"))  # ...which recorded no version
         conn.execute(
             m.Subject.__table__.insert().values(
                 id="s1", code="SITE1-0001", age_group="adult_18_39", consent_research=True,

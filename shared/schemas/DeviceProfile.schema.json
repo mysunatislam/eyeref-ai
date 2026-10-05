@@ -2,6 +2,7 @@
  "description": "Camera + illumination geometry for one phone/webcam model.\n\n``flash_offset_mm`` is the vector from the camera lens centre to the\nlight-source centre, expressed in the *captured image* frame with the\ndevice in its reference orientation (x right, y up, as seen in the\nnon-mirrored image).  ``aperture_diameter_mm`` is the entrance-pupil\ndiameter (focal length / f-number); eccentricity is measured from its edge.",
  "properties": {
   "id": {
+   "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$",
    "title": "Id",
    "type": "string"
   },
