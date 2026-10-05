@@ -52,6 +52,7 @@ first, then astigmatism later.
 | CYL / AXIS output | **REQUIRES CLINICAL VALIDATION** | Gated off; research flag only |
 | Research API, encrypted image storage, dataset export, consent enforcement | **WORKING** | Bearer-token access control (required when `EYEREF_ENV=production`), Fernet at rest. SQLite by default; the SQLAlchemy URL is configurable, but other databases are untested |
 | Optional AI explanation (local Gemma via Ollama by default; Gigalogy Maira optional) | **PARTIALLY WORKING** | Text-only summary, numeric guard tested against prescription-leaking replies, consent required for any remote provider. Verified against mocks only, because model downloads are blocked in the build sandbox. Run `scripts/check_assistant.py` once on your machine |
+| Error recovery: crash pages, update prompt, unreadable records | **WORKING** | A failed page offers a retry without losing stored data, a new version offers a reload, and records the app cannot read are counted instead of hiding the rest |
 | Installable app (PWA) with offline use | **WORKING** | Manifest, icons and a service worker that caches app code and the MediaPipe model, never results or camera frames. Verified offline in Chromium. Needs HTTPS to install |
 | Continuous integration | **WORKING** | `.github/workflows/ci.yml`: ruff, pytest, eslint, prettier, tsc, vitest, production build, web/backend contract. Runs on the first push |
 | Vision test (tumbling E logMAR, astigmatic dial) | **WORKING** | Separate from refraction; needs screen calibration |

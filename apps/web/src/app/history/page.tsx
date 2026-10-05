@@ -17,7 +17,7 @@ import { useAssessments } from "@/lib/storage/hooks";
 import { AGE_LABEL } from "@/lib/utils";
 
 export default function HistoryPage() {
-  const { items, reload } = useAssessments();
+  const { items, unreadable, reload } = useAssessments();
   const [kind, setKind] = useState<"real" | "sim">("real");
   const [who, setWho] = useState<string>("all");
   const shown = useMemo(
@@ -58,6 +58,13 @@ export default function HistoryPage() {
           </>
         }
       />
+      {unreadable > 0 && (
+        <p className="border-warn bg-warn-soft text-ink mb-4 rounded-xl border px-4 py-2 text-sm">
+          {unreadable === 1 ? "1 saved record" : `${unreadable} saved records`} could not be read and
+          {unreadable === 1 ? " is" : " are"} not shown. They were written by another version or are damaged.
+          Restoring a backup below brings back a readable copy.
+        </p>
+      )}
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <Tabs
           value={kind}
