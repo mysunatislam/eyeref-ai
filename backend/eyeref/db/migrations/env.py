@@ -8,7 +8,7 @@ from logging.config import fileConfig
 
 from alembic import context
 from eyeref.db.models import Base
-from eyeref.db.session import connect
+from eyeref.db.session import connect, migrating
 from sqlalchemy import text
 
 if context.config.config_file_name is not None:  # the alembic command line
@@ -38,7 +38,7 @@ def run_online() -> None:
         return
     engine = connect()
     try:
-        with engine.connect() as connection:
+        with migrating(engine) as connection:
             _run(connection)
     finally:
         engine.dispose()

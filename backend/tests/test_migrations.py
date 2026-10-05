@@ -5,15 +5,24 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
-from alembic import command
 from alembic.autogenerate import compare_metadata
+from alembic.operations import Operations
 from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from databases import SERVER_URL, fresh_database
 from eyeref.db import models as m
 from eyeref.db.__main__ import main
-from eyeref.db.session import alembic_config, connect, current_revision, make_engine, upgrade
-from sqlalchemy import inspect, text
+from eyeref.db.session import (
+    NewerSchemaError,
+    alembic_config,
+    connect,
+    current_revision,
+    downgrade,
+    make_engine,
+    migrating,
+    upgrade,
+)
+from sqlalchemy import String, inspect, text
 
 HEAD = ScriptDirectory.from_config(alembic_config()).get_current_head()
 BACKEND = Path(__file__).resolve().parents[1]
@@ -58,13 +67,50 @@ def test_upgrading_an_up_to_date_database_changes_nothing(tmp_path):
 
 def test_every_migration_can_be_undone_and_applied_again(tmp_path):
     engine = make_engine(fresh_database(tmp_path))
-    cfg = alembic_config()
-    with engine.begin() as conn:
-        cfg.attributes["connection"] = conn
-        command.downgrade(cfg, "base")
+    downgrade(engine, "base")
     assert inspect(engine).get_table_names() == ["alembic_version"]
     upgrade(engine)
     assert current_revision(engine) == HEAD
+
+
+@pytest.mark.skipif((SERVER_URL or "sqlite").split(":")[0] != "sqlite", reason="others alter tables in place")
+def test_rebuilding_a_table_while_migrating_keeps_the_rows_that_refer_to_it(tmp_path):
+    # SQLite alters a table by copying it and dropping the original. With foreign keys enforced, the
+    # drop would cascade to every session and capture of every subject.
+    engine = make_engine(fresh_database(tmp_path))
+    now = datetime.now(UTC)
+    with engine.begin() as conn:
+        conn.execute(m.Subject.__table__.insert().values(
+            id="s1", code="SITE1-0001", age_group="adult_18_39", consent_research=True, consent_image_storage=False,
+            simulated=False, created_at=now))
+        conn.execute(m.Device.__table__.insert().values(
+            id="d1", manufacturer="lab", model="phone", camera="rear", profile={}, calibration_version="v1",
+            created_at=now))
+        conn.execute(m.CaptureSession.__table__.insert().values(
+            id="ses1", subject_id="s1", device_id="d1", protocol_version="guided-1", cycloplegia=False,
+            simulated=False, started_at=now))
+        conn.execute(m.Capture.__table__.insert().values(
+            id="c1", session_id="ses1", eye="OD", frame_index=0, timestamp=now, illumination="flash",
+            metadata_json={}, image_encrypted=False))
+    with migrating(engine) as conn:
+        ops = Operations(MigrationContext.configure(conn))
+        with ops.batch_alter_table("subjects", recreate="always") as batch:
+            batch.alter_column("site", type_=String(128))
+    with engine.connect() as conn:
+        counts = [conn.execute(text(f"select count(*) from {t}")).scalar_one()
+                  for t in ("subjects", "capture_sessions", "captures")]
+        assert counts == [1, 1, 1]
+        assert conn.exec_driver_sql("PRAGMA foreign_keys").scalar_one() == 1  # enforced again afterwards
+
+
+def test_an_older_version_refuses_a_database_a_newer_one_migrated(tmp_path):
+    url = fresh_database(tmp_path)
+    engine = make_engine(url)
+    with engine.begin() as conn:
+        conn.execute(text("UPDATE alembic_version SET version_num = '9999'"))  # as a later release leaves it
+    with pytest.raises(NewerSchemaError, match="revision 9999, written by a newer version"):
+        make_engine(url)
+    assert current_revision(engine) == "9999"
 
 
 def test_the_command_line_migrates_the_configured_database(tmp_path, monkeypatch, capsys):
