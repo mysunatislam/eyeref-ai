@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Stat } from "@/components/ui/stat";
 import { formatAxis, formatDiopters } from "@/lib/optics/powerVector";
 import type { AgeGroup, EyeResult, OutputLevel } from "@/lib/types";
-import { cn, pct } from "@/lib/utils";
+import { cn, probability } from "@/lib/utils";
 
 export const LEVEL: Record<OutputLevel, { label: string; tone: "ok" | "warn" | "bad" }> = {
   quantitative: { label: "Quantitative estimate", tone: "ok" },
@@ -85,7 +85,9 @@ export function EyeResultCard({ eye, ageGroup }: { eye: EyeResult; ageGroup: Age
                   tone={k === "emmetropia" ? "ok" : k === "myopia" ? "accent" : "warn"}
                   label={`${k} probability`}
                 />
-                <span className="num w-10 shrink-0 text-right">{pct(eye.classProbabilities![k])}</span>
+                <span className="num w-12 shrink-0 text-right">
+                  {probability(eye.classProbabilities![k])}
+                </span>
               </div>
             ))}
           </div>
@@ -94,7 +96,7 @@ export function EyeResultCard({ eye, ageGroup }: { eye: EyeResult; ageGroup: Age
         <div className="border-line grid grid-cols-3 gap-4 border-t pt-4">
           <Stat
             label="Confidence"
-            value={pct(eye.confidence)}
+            value={probability(eye.confidence)}
             tone={eye.confidence !== null && eye.confidence >= 0.8 ? "ok" : "warn"}
           />
           <Stat label="Image quality" value={<span className="capitalize">{eye.qualityGrade ?? "—"}</span>} />
@@ -126,7 +128,7 @@ export function EyeResultCard({ eye, ageGroup }: { eye: EyeResult; ageGroup: Age
           ) : (
             <div className="text-ink-2 mt-1 text-xs">
               {eye.astigmatismStatus === "screening_only"
-                ? `Not quantified. Probability of ≥ 0.75 D astigmatism: ${pct(eye.astigmatismProbability)} (screening signal only).`
+                ? `Not quantified. Probability of ≥ 0.75 D astigmatism: ${probability(eye.astigmatismProbability)} (screening signal only).`
                 : "Not assessed. CYL/AXIS requires validated multi-meridian data and is gated off by default."}
             </div>
           )}

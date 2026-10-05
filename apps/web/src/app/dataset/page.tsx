@@ -17,7 +17,7 @@ import { useSettings } from "@/lib/settings";
 import { saveAssessment } from "@/lib/storage/db";
 import { useAssessments } from "@/lib/storage/hooks";
 import type { EyeSide, GroundTruthEntry, StoredAssessment } from "@/lib/types";
-import { cn, fmt, pct } from "@/lib/utils";
+import { cn, fmt, formatDateTime, pct } from "@/lib/utils";
 
 const METHODS: GroundTruthEntry["method"][] = [
   "autorefractor",
@@ -241,7 +241,7 @@ export default function DatasetPage() {
                 <span className="text-muted text-xs font-normal">{a.profile.label}</span>
               </div>
               <div className="text-muted text-xs">
-                {new Date(a.createdAt).toLocaleString()} · GT {a.groundTruth?.length ?? 0}
+                {formatDateTime(a.createdAt)} · GT {a.groundTruth?.length ?? 0}
               </div>
             </button>
           ))}

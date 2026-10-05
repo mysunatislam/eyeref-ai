@@ -8,6 +8,33 @@ export function cn(...inputs: ClassValue[]) {
 export const pct = (v: number | null | undefined, digits = 0) =>
   v === null || v === undefined || !Number.isFinite(v) ? "—" : `${(v * 100).toFixed(digits)}%`;
 
+/**
+ * A probability about one person's eyes. Rounding never claims certainty: past 99% it reads
+ * "> 99%", and below 1% it reads "< 1%".
+ */
+export const probability = (p: number | null | undefined) =>
+  p === null || p === undefined || !Number.isFinite(p)
+    ? "—"
+    : p > 0.99
+      ? "> 99%"
+      : p < 0.01
+        ? "< 1%"
+        : pct(p);
+
+/**
+ * The language of the interface. Dates and numbers follow it rather than the browser's locale, so
+ * an English sentence never mixes in another script's digits.
+ */
+export const UI_LOCALE = "en";
+
+/** "Oct 5, 2026, 2:13 PM" in this device's time zone. */
+export const formatDateTime = (when: string | number | Date) =>
+  new Date(when).toLocaleString(UI_LOCALE, { dateStyle: "medium", timeStyle: "short" });
+
+/** "Oct 5, 2026". */
+export const formatDate = (when: string | number | Date) =>
+  new Date(when).toLocaleDateString(UI_LOCALE, { dateStyle: "medium" });
+
 export const fmt = (v: number | null | undefined, digits = 2) =>
   v === null || v === undefined || !Number.isFinite(v) ? "—" : v.toFixed(digits);
 

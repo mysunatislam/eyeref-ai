@@ -20,7 +20,7 @@ import { formatAxis, formatDiopters } from "@/lib/optics/powerVector";
 import { useSettings } from "@/lib/settings";
 import { useAssessments } from "@/lib/storage/hooks";
 import type { EyeSide } from "@/lib/types";
-import { cn, fmt } from "@/lib/utils";
+import { cn, fmt, formatDateTime } from "@/lib/utils";
 
 function Research() {
   const { items } = useAssessments();
@@ -66,7 +66,7 @@ function Research() {
           {items.map((x) => (
             <option key={x.id} value={x.id}>
               {x.report.simulated ? "[SIM] " : ""}
-              {x.profile.label} · {new Date(x.createdAt).toLocaleString()}
+              {x.profile.label} · {formatDateTime(x.createdAt)}
             </option>
           ))}
         </Select>
