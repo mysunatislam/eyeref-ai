@@ -11,10 +11,13 @@ Generate a token with:  python -c "import secrets; print(secrets.token_urlsafe(3
 
 In development (the default) with no tokens set, auth is off and /health says so.
 Several tokens can be active at once so a token can be rotated without downtime.
+
+The audit log names the caller by the token's fingerprint, never the token itself.
 """
 
 from __future__ import annotations
 
+import hashlib
 import hmac
 import os
 from dataclasses import dataclass, field
@@ -33,6 +36,11 @@ PUBLIC_ENDPOINTS = {
     ("GET", "/api/assistant/status"),
 }
 DOCS_PATHS = {"/docs", "/docs/oauth2-redirect", "/redoc", "/openapi.json"}
+
+
+def fingerprint(token: str) -> str:
+    """A short name for a token that does not reveal it: how the audit log records who acted."""
+    return "tok_" + hashlib.sha256(token.encode()).hexdigest()[:12]
 
 
 class UnsafeConfigError(RuntimeError):
@@ -71,15 +79,20 @@ class AuthConfig:
         if any(len(t) < MIN_TOKEN_LENGTH for t in self.tokens):
             raise AuthConfigError(f"API tokens must be at least {MIN_TOKEN_LENGTH} characters")
 
-    def accepts(self, header: str | None) -> bool:
+    def match(self, header: str | None) -> str | None:
+        """The configured token an Authorization header carries, or None."""
         if not header or not header.lower().startswith("bearer "):
-            return False
+            return None
         given = header[7:].strip().encode()
         # compare against every token without short-circuiting, in constant time per token
-        ok = False
+        found = None
         for t in self.tokens:
-            ok |= hmac.compare_digest(given, t.encode())
-        return ok
+            if hmac.compare_digest(given, t.encode()):
+                found = t
+        return found
+
+    def accepts(self, header: str | None) -> bool:
+        return self.match(header) is not None
 
     def is_public(self, method: str, path: str) -> bool:
         if method == "OPTIONS":  # CORS preflight carries no credentials by design
@@ -90,7 +103,10 @@ class AuthConfig:
 
 
 class TokenAuthMiddleware:
-    """Pure ASGI middleware, installed inside CORS so 401s still carry CORS headers."""
+    """Pure ASGI middleware, installed inside CORS so 401s still carry CORS headers.
+
+    Puts the caller's token fingerprint in request.state.actor for the audit log.
+    """
 
     def __init__(self, app: ASGIApp, config: AuthConfig):
         self.app = app
@@ -105,9 +121,11 @@ class TokenAuthMiddleware:
             await self.app(scope, receive, send)
             return
         header = next((v.decode("latin-1") for k, v in scope["headers"] if k == b"authorization"), None)
-        if not self.config.accepts(header):
+        token = self.config.match(header)
+        if token is None:
             resp = JSONResponse({"detail": "missing or invalid API token"}, status_code=401,
                                 headers={"WWW-Authenticate": "Bearer"})
             await resp(scope, receive, send)
             return
+        scope.setdefault("state", {})["actor"] = fingerprint(token)
         await self.app(scope, receive, send)

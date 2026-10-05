@@ -22,7 +22,8 @@ export EYEREF_ENV=production   # refuse to start without tokens or an image-encr
   `GET /api/assistant/status`, and CORS preflight requests.
 - Several comma-separated tokens can be active at once, so a token can be rotated without downtime.
   Tokens shorter than 24 characters are refused at startup.
-- Tokens are compared in constant time and never appear in logs or in the config's repr.
+- Tokens are compared in constant time and never appear in logs or in the config's repr. The
+  [audit log](#audit-log) names each caller by the token's fingerprint instead.
 - In the web app, paste the token under Calibration → App settings. It is stored on that device only.
 - With no tokens in development (the default), auth is off and `/health` reports `"auth": "disabled"`.
 
@@ -69,6 +70,38 @@ export EYEREF_ENV=production   # refuse to start without tokens or an image-encr
 | POST | `/api/sessions/{id}/captures` | multipart: `metadata`, `features`, `quality`, optional `image` (PNG). The image is refused with 403 without image consent, is stored once per capture, and is encrypted at rest when `EYEREF_STORAGE_KEY` is set |
 | POST | `/api/sessions/{id}/predictions` | `AssessmentReport`. Stores one row per eye with model, extractor and calibration versions |
 | GET | `/api/dataset/export?fmt=csv\|json&include_simulated=false` | One row per capture, with flattened features and the ground truth per method |
+
+## Audit log
+
+Every change to research data, and every read or export of it, adds an event to the audit log in the
+same transaction as the action, so the two are saved together or not at all. An export is sent only
+after its event is saved. A refused request (no consent, a duplicate code, an unknown id) changes
+nothing and records nothing.
+
+| Action | Recorded when | Details |
+| --- | --- | --- |
+| `subject.create` | A subject is enrolled | Research and image consent, consent version |
+| `subject.list` | The subject list is read | Number of subjects |
+| `subject.delete` | A subject and all their data are deleted | Number of images deleted |
+| `ground_truth.add` | A reference refraction is added | Its id, the eye, the method |
+| `session.create` | A capture session starts | Its id, the device profile, whether it is simulated |
+| `capture.add` | A capture is stored | Its id, the session, the eye, whether an image was stored |
+| `prediction.add` | A report's results are stored | The session, the new prediction ids |
+| `dataset.export` | The dataset is exported | Format, rows, subjects, whether simulated data was included |
+| `device.save` | A device profile is added or replaced | Its id and calibration version |
+
+- **Who.** `actor` is the fingerprint of the API token that was used: `tok_` and the first 12 hex
+  digits of the token's SHA-256. The token itself is never stored. With auth off, `actor` is
+  `anonymous`. To find which token a fingerprint belongs to:
+  `python -c "import hashlib, sys; print('tok_' + hashlib.sha256(sys.argv[1].encode()).hexdigest()[:12])" "$TOKEN"`.
+- **No personal data.** Events hold ids, counts and flags: no subject codes, measurements, notes or
+  images. The trail is therefore kept when a subject is deleted, and still shows what happened to them.
+- **Reading it.** `GET /api/audit?subject_id=&action=&before=&limit=` returns `{events, next_before}`,
+  newest first. Each event is `{id, at, actor, action, subject_id, details}`, with `at` in UTC.
+  `limit` is 1 to 1000 (default 100). To get the next page, pass `next_before` as `before`; it is
+  `null` on the last page. Like every data endpoint, it needs a token.
+- A request with a missing or wrong token gets 401 before it reaches the API, so it appears in the
+  server's access log rather than the audit log.
 
 ## Optional AI explanation
 

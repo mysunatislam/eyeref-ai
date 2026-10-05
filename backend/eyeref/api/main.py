@@ -5,7 +5,8 @@ Docs: http://localhost:8000/docs   (see docs/API.md)
 
 The web app works without this server (on-device processing).  The API adds:
 persistent research datasets, server-side reference re-analysis of stored
-crops, simulation/bench endpoints and dataset export for training.
+crops, simulation/bench endpoints and dataset export for training.  Every change
+to research data, and every read of it, is recorded in an audit log.
 """
 
 from __future__ import annotations
@@ -20,7 +21,7 @@ from typing import Any, Literal, Optional
 import cv2
 import httpx
 import numpy as np
-from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, UploadFile
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
@@ -121,6 +122,23 @@ DATA_DIR = os.environ.get("EYEREF_DATA_DIR", "./data")
 MODEL_PATH = os.environ.get("EYEREF_MODEL_PATH", "../ml/artifacts/meridional_mlp.onnx")
 
 
+def caller(request: Request) -> str:
+    """Who is acting, for the audit log: the API token's fingerprint, or "anonymous" with auth off."""
+    return getattr(request.state, "actor", None) or "anonymous"
+
+
+def audit(s: Session, actor: str, action: str, subject_id: Optional[str] = None, **details: Any) -> None:
+    """Records an action in the session, so it commits, or rolls back, together with the action.
+
+    Details are ids, counts and flags only. Never subject codes, measurements or images.
+    """
+    s.add(m.AuditEvent(actor=actor, action=action, subject_id=subject_id, details=details or None))
+
+
+def utc(at: datetime) -> datetime:
+    return at.replace(tzinfo=UTC) if at.tzinfo is None else at.astimezone(UTC)  # SQLite drops the zone
+
+
 def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
                assistant_client_factory=make_client, auth: Optional[AuthConfig] = None,
                max_body_bytes: Optional[int] = None) -> FastAPI:
@@ -185,15 +203,16 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
         return list(profiles.values())
 
     @app.post("/api/devices", response_model=DeviceProfile)
-    def upsert_device(p: DeviceProfile, s: Session = Depends(get_db)) -> DeviceProfile:
+    def upsert_device(p: DeviceProfile, s: Session = Depends(get_db), who: str = Depends(caller)) -> DeviceProfile:
         from ..calibration.device_profiles import save_profile
 
-        save_profile(p, os.path.join(data_dir, "device_profiles"))
-        profiles[p.id] = p
         row = s.get(m.Device, p.id) or m.Device(id=p.id, manufacturer=p.manufacturer, model=p.model, camera=p.camera, profile={})
         row.profile, row.calibration_version = p.model_dump(), p.calibration_version
         s.add(row)
-        s.commit()
+        audit(s, who, "device.save", device_id=p.id, calibration_version=p.calibration_version)
+        s.commit()  # first, so a calibration change never takes effect without its audit record
+        save_profile(p, os.path.join(data_dir, "device_profiles"))
+        profiles[p.id] = p
         return p
 
     # ------------------------------------------------------------- analysis
@@ -266,27 +285,34 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
         return {c.name: getattr(x, c.name) for c in m.Subject.__table__.columns}
 
     @app.post("/api/subjects")
-    def create_subject(body: SubjectIn, s: Session = Depends(get_db)) -> dict[str, Any]:
+    def create_subject(body: SubjectIn, s: Session = Depends(get_db), who: str = Depends(caller)) -> dict[str, Any]:
         if not body.consent_research:
             raise HTTPException(403, "research consent is required before any data is stored")
         if s.scalar(select(m.Subject).where(m.Subject.code == body.code)):
             raise HTTPException(409, "subject code already exists")
         row = m.Subject(**body.model_dump())
         s.add(row)
+        s.flush()  # assigns row.id
+        audit(s, who, "subject.create", row.id, consent_research=row.consent_research,
+              consent_image_storage=row.consent_image_storage, consent_version=row.consent_version)
         s.commit()
         return subj_dict(row)
 
     @app.get("/api/subjects")
-    def list_subjects(s: Session = Depends(get_db)) -> list[dict[str, Any]]:
-        return [subj_dict(x) for x in s.scalars(select(m.Subject).order_by(m.Subject.created_at))]
+    def list_subjects(s: Session = Depends(get_db), who: str = Depends(caller)) -> list[dict[str, Any]]:
+        rows = [subj_dict(x) for x in s.scalars(select(m.Subject).order_by(m.Subject.created_at))]
+        audit(s, who, "subject.list", subjects=len(rows))
+        s.commit()
+        return rows
 
     @app.delete("/api/subjects/{subject_id}")
-    def delete_subject(subject_id: str, s: Session = Depends(get_db)) -> dict[str, Any]:
+    def delete_subject(subject_id: str, s: Session = Depends(get_db), who: str = Depends(caller)) -> dict[str, Any]:
         row = s.get(m.Subject, subject_id)
         if not row:
             raise HTTPException(404)
         keys = [c.image_key for ses in row.sessions for c in ses.captures if c.image_key]
         s.delete(row)
+        audit(s, who, "subject.delete", subject_id, images_deleted=len(keys))
         s.commit()
         for k in keys:
             storage.delete(k)
@@ -294,7 +320,8 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
 
 
     @app.post("/api/subjects/{subject_id}/ground-truth")
-    def add_ground_truth(subject_id: str, body: GroundTruthIn, s: Session = Depends(get_db)) -> dict[str, Any]:
+    def add_ground_truth(subject_id: str, body: GroundTruthIn, s: Session = Depends(get_db),
+                         who: str = Depends(caller)) -> dict[str, Any]:
         if not s.get(m.Subject, subject_id):
             raise HTTPException(404)
         rx = SphCylAxis(body.sphere, body.cylinder, body.axis).in_convention("minus")
@@ -303,12 +330,14 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
                             vertex_distance_mm=body.vertex_distance_mm, instrument=body.instrument,
                             examiner=body.examiner, raw=body.raw)
         s.add(row)
+        s.flush()  # assigns row.id
+        audit(s, who, "ground_truth.add", subject_id, ground_truth_id=row.id, eye=body.eye, method=body.method)
         s.commit()
         return {"id": row.id, "sphere": rx.sph, "cylinder": rx.cyl, "axis": rx.axis, "se": rx.spherical_equivalent}
 
 
     @app.post("/api/sessions")
-    def create_session(body: SessionIn, s: Session = Depends(get_db)) -> dict[str, Any]:
+    def create_session(body: SessionIn, s: Session = Depends(get_db), who: str = Depends(caller)) -> dict[str, Any]:
         if not s.get(m.Subject, body.subject_id):
             raise HTTPException(404, "subject not found")
         dev = device_or_404(body.device_id)
@@ -318,6 +347,9 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
             s.flush()  # no ORM relationship to Device, so insert it explicitly first
         row = m.CaptureSession(**body.model_dump())
         s.add(row)
+        s.flush()  # assigns row.id
+        audit(s, who, "session.create", body.subject_id, session_id=row.id, device_id=dev.id,
+              simulated=body.simulated)
         s.commit()
         return {"id": row.id}
 
@@ -329,6 +361,7 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
         quality: Optional[str] = Form(None),
         image: Optional[UploadFile] = File(None),
         s: Session = Depends(get_db),
+        who: str = Depends(caller),
     ) -> dict[str, Any]:
         ses = s.get(m.CaptureSession, session_id)
         if not ses:
@@ -357,6 +390,9 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
             storage.put(key, data)
             row.image_key, row.image_encrypted = key, storage.encrypted
         try:
+            s.flush()  # assigns row.id when there was no image to name
+            audit(s, who, "capture.add", ses.subject_id, session_id=session_id, capture_id=row.id, eye=row.eye,
+                  image_stored=key is not None)
             s.commit()
         except Exception:
             if key:
@@ -365,10 +401,12 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
         return {"id": row.id, "image_stored": row.image_key is not None, "encrypted": row.image_encrypted}
 
     @app.post("/api/sessions/{session_id}/predictions")
-    def add_prediction(session_id: str, report: AssessmentReport, s: Session = Depends(get_db)) -> dict[str, Any]:
-        if not s.get(m.CaptureSession, session_id):
+    def add_prediction(session_id: str, report: AssessmentReport, s: Session = Depends(get_db),
+                       who: str = Depends(caller)) -> dict[str, Any]:
+        ses = s.get(m.CaptureSession, session_id)
+        if not ses:
             raise HTTPException(404)
-        ids = []
+        rows = []
         for eye, r in report.eyes.items():
             pv = r.power_vector or {}
             row = m.Prediction(
@@ -382,13 +420,16 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
                 report_json=json.loads(report.model_dump_json()),
             )
             s.add(row)
-            ids.append(row.id)
+            rows.append(row)
+        s.flush()  # assigns the ids
+        ids = [row.id for row in rows]
+        audit(s, who, "prediction.add", ses.subject_id, session_id=session_id, prediction_ids=ids)
         s.commit()
         return {"ids": ids}
 
     @app.get("/api/dataset/export")
     def export_dataset(fmt: Literal["csv", "json"] = Query("csv"), include_simulated: bool = False,
-                       s: Session = Depends(get_db)) -> Response:
+                       s: Session = Depends(get_db), who: str = Depends(caller)) -> Response:
         """One row per capture with flattened features + linked ground truth (per eye, per method)."""
         rows: list[dict[str, Any]] = []
         for c in s.scalars(select(m.Capture)):
@@ -409,6 +450,9 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
                     row.update({f"gt_{gt.method}_sph": gt.sphere, f"gt_{gt.method}_cyl": gt.cylinder,
                                 f"gt_{gt.method}_axis": gt.axis, f"gt_{gt.method}_se": gt.spherical_equivalent})
             rows.append(row)
+        audit(s, who, "dataset.export", format=fmt, include_simulated=include_simulated, rows=len(rows),
+              subjects=len({r["subject_id"] for r in rows}))
+        s.commit()  # before anything is sent: no export leaves without its record
         if fmt == "json":
             return Response(json.dumps(rows, default=str), media_type="application/json")
         buf = io.StringIO()
@@ -419,6 +463,30 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
         stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
         return Response(buf.getvalue(), media_type="text/csv",
                         headers={"Content-Disposition": f'attachment; filename="eyeref_dataset_{stamp}.csv"'})
+
+    @app.get("/api/audit")
+    def audit_log(
+        subject_id: Optional[str] = None,
+        action: Optional[str] = None,
+        before: Optional[int] = Query(None, description="Only events older than this id; pass next_before to page back"),
+        limit: int = Query(100, ge=1, le=1000),
+        s: Session = Depends(get_db),
+    ) -> dict[str, Any]:
+        """Who changed or read research data, newest first. Kept after a subject is deleted."""
+        q = select(m.AuditEvent).order_by(m.AuditEvent.id.desc()).limit(limit + 1)
+        if subject_id:
+            q = q.where(m.AuditEvent.subject_id == subject_id)
+        if action:
+            q = q.where(m.AuditEvent.action == action)
+        if before is not None:
+            q = q.where(m.AuditEvent.id < before)
+        found = list(s.scalars(q))
+        page = found[:limit]
+        return {
+            "events": [{"id": e.id, "at": utc(e.at).isoformat(), "actor": e.actor, "action": e.action,
+                        "subject_id": e.subject_id, "details": e.details or {}} for e in page],
+            "next_before": page[-1].id if len(found) > limit else None,
+        }
 
     # ------------------------------------------------- optional AI assistant
     @app.get("/api/assistant/status")
