@@ -361,10 +361,13 @@ def test_the_research_servers_export_is_analysed_as_it_comes(tmp_path, monkeypat
 
     client = TestClient(api.create_app(f"sqlite:///{tmp_path / 'study.db'}", data_dir=str(tmp_path)))
     frames = []
-    for i, sid in enumerate(("SIM-C", "SIM-A")):
+    released = 0
+    # two myopes whose eyes cannot see the light at a metre, so every eye is given a number
+    for i, sid in enumerate(("SIM-C", "SIM-E")):
         subject = make_subject(sid, "adult_18_39")
         rep, recs, _ = run_simulated_assessment(subject)
         frames += recs
+        released += sum(rep.eyes[e].se_d is not None for e in ("OD", "OS"))
         record = {
             "client_ref": sid, "session": {"device_id": "simulated-phone", "simulated": True},
             "subject": {"code": f"SITE1-{i}", "age_group": "adult_18_39", "consent_research": True},
@@ -381,7 +384,7 @@ def test_the_research_servers_export_is_analysed_as_it_comes(tmp_path, monkeypat
 
     report = study_report(pd.read_csv(export), n_boot=50)
     assert report["label"].startswith("SIMULATED")
-    assert report["n"]["eyes"] == 4 and report["n"]["eyes_compared"] == 4
+    assert report["n"]["eyes"] == 4 and report["n"]["eyes_compared"] == released == 4
     assert report["metrics"]["agreement"]["se"]["mae"]["value"] < 1.0
     assert report["n"]["gate"]["with_uncertainty"] == 4 and len(report["risk_coverage"]) >= 1
     counted = report["n"]["frames"]

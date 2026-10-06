@@ -26,6 +26,10 @@ export function EyeResultCard({ eye, ageGroup }: { eye: EyeResult; ageGroup: Age
   const [open, setOpen] = useState(false);
   const lv = LEVEL[eye.outputLevel];
   const ci = eye.seCi95;
+  // how myopic the eye can be: the low end of its range, or of the dead zone it read in
+  const floor = eye.refractionRange95?.[0] ?? eye.deadZoneD?.[0] ?? null;
+  // with focusing unknown and no class, the probabilities would be the population's, not this eye's
+  const showProbabilities = eye.classProbabilities !== null && !(eye.focusLimited && !eye.refractiveClass);
   return (
     <Card className="overflow-hidden">
       <CardHeader className="items-center">
@@ -61,7 +65,23 @@ export function EyeResultCard({ eye, ageGroup }: { eye: EyeResult; ageGroup: Age
               {CLASS_LABEL[eye.refractiveClass]}
             </div>
             <div className="text-muted mt-1 text-xs">
-              No dioptre value is shown because the uncertainty is too wide for a number to be meaningful.
+              {eye.focusLimited
+                ? "No dioptre value is shown: the eyes could focus on the light, by an amount this capture cannot show."
+                : "No dioptre value is shown because the uncertainty is too wide for a number to be meaningful."}
+            </div>
+          </div>
+        ) : eye.outputLevel === "screening" && floor !== null ? (
+          <div>
+            <div className="text-muted text-[10px] font-semibold tracking-[0.12em] uppercase">
+              Screening range
+            </div>
+            <div className="num mt-1 text-2xl font-semibold tracking-tight">
+              No more myopic than {formatDiopters(floor)}
+            </div>
+            <div className="text-muted mt-1 text-xs">
+              {eye.focusLimited
+                ? "No class or dioptre value is shown: an eye that can focus on the light hides hyperopia and mild myopia from it, so a repeat would read the same."
+                : "No crescent was seen, so this capture gives a range, not a class or a number."}
             </div>
           </div>
         ) : (
@@ -75,7 +95,7 @@ export function EyeResultCard({ eye, ageGroup }: { eye: EyeResult; ageGroup: Age
 
         {eye.outputLevel !== "repeat" && <RefractionScale eye={eye} ageGroup={ageGroup} />}
 
-        {eye.classProbabilities && (
+        {showProbabilities && eye.classProbabilities && (
           <div className="space-y-1.5">
             {(["myopia", "emmetropia", "hyperopia"] as const).map((k) => (
               <div key={k} className="flex items-center gap-3 text-xs">

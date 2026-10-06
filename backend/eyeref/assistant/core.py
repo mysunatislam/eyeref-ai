@@ -16,7 +16,7 @@ from typing import Optional, Protocol
 import httpx
 
 from ..inference.fusion import AssessmentReport
-from .guard import allowed_values, guard_text
+from .guard import allowed_values, guard_text, numbers_in
 
 log = logging.getLogger(__name__)
 
@@ -87,6 +87,8 @@ def report_summary(rep: AssessmentReport) -> tuple[str, set[float]]:
         if r.quality_grade:
             parts.append(f"image quality {r.quality_grade}")
         parts.append(r.message)
+        # the message's own values, such as how myopic an eye that could be focusing can be, may be repeated
+        nums += numbers_in(r.message)
         lines.append("; ".join(parts))
     if rep.anisometropia_probability is not None:
         lines.append(f"Probability of a significant difference between eyes: {round(100 * rep.anisometropia_probability)}%.")

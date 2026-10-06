@@ -1,10 +1,12 @@
 """Deterministic virtual subjects and capture sessions (SIMULATED DATA).
 
 Each virtual subject has a seeded refraction drawn from a plausible population
-mixture, an age group (driving pupil size and accommodation behaviour), iris
-pigmentation and fundus reflectance.  A session follows the guided protocol:
-both eyes x N meridians (device rotations) x K frames, with realistic nuisance
-variation (distance error, head roll, gaze jitter, accommodation lapses, blinks
+mixture, an age group (driving pupil size and how far the eyes can focus),
+iris pigmentation and fundus reflectance.  The eyes focus on the light, as
+real ones do: an eye that can see it clearly focuses most of the way, and
+reads more myopic than it is.  A session follows the guided protocol: both
+eyes x N meridians (device rotations) x K frames, with realistic nuisance
+variation (distance error, head roll, gaze jitter, drift in focusing, blinks
 and motion blur that the quality model should reject).
 """
 
@@ -20,7 +22,7 @@ import numpy as np
 from ..calibration.device_profiles import BUILTIN_PROFILES
 from ..inference.estimators import PhotorefractionEstimator, PhysicsHeuristicEstimator
 from ..inference.fusion import AssessmentReport, GatingConfig, build_report
-from ..optics.classification import ACCOMMODATION_SD
+from ..optics.classification import ACCOMMODATION_AMPLITUDE_D, ACCOMMODATION_SD
 from ..optics.power_vector import PowerVector, SphCylAxis, from_power_vector, to_power_vector
 from ..pipeline import process_frame
 from ..types import CaptureMetadata, Circle, DeviceProfile, FrameRecord, HeadPose
@@ -46,7 +48,12 @@ class VirtualSubject:
     iris_rgb: tuple[int, int, int]
     skin_rgb: tuple[int, int, int]
     fundus_reflectance: float
-    accommodation_bias_d: float
+    #: how fully the eyes focus on the light: the share of what the eye that needs least must focus
+    focus_response: float
+
+
+#: the share of what they need that simulated eyes focus on the light: most of the way, as people do
+SIM_FOCUS_RESPONSE_RANGE = (0.5, 1.0)
 
 
 def make_subject(subject_id: str, age_group: Optional[str] = None) -> VirtualSubject:
@@ -78,8 +85,21 @@ def make_subject(subject_id: str, age_group: Optional[str] = None) -> VirtualSub
         iris_rgb=IRIS_PALETTE[int(rng.integers(0, len(IRIS_PALETTE)))],
         skin_rgb=SKIN_PALETTE[int(rng.integers(0, len(SKIN_PALETTE)))],
         fundus_reflectance=float(rng.uniform(0.6, 1.0)),
-        accommodation_bias_d=float(abs(rng.normal(0, ACCOMMODATION_SD[age] * 0.6))),
+        focus_response=float(rng.uniform(*SIM_FOCUS_RESPONSE_RANGE)),
     )
+
+
+def focus_on_light(s: VirtualSubject, distance_m: float) -> float:
+    """How far the eyes focus on a light `distance_m` away (D).
+
+    The eyes focus together, to clear the eye that needs least; an eye more
+    myopic than the light is near cannot see it clearly, and when neither can,
+    the eyes stay relaxed.  Twin of focusOnLight in the web app.
+    """
+    demands = [d for d in (rx.spherical_equivalent + 1.0 / distance_m for rx in (s.od, s.os)) if d >= 0]
+    if not demands:
+        return 0.0
+    return min(ACCOMMODATION_AMPLITUDE_D[s.age_group], s.focus_response * min(demands))
 
 
 @dataclass
@@ -117,13 +137,17 @@ def simulate_session(subject: VirtualSubject, device: Optional[DeviceProfile] = 
     rng = np.random.default_rng(seed_from(subject.subject_id) + 7919 * session_seed)
     ses = SimulatedSession(subject, device)
     ecc = device.eccentricity_mm() or 8.0
+    # focusing drifts from moment to moment, in both eyes at once
+    drift_rng = np.random.default_rng(seed_from(subject.subject_id + "|focus") + 7919 * session_seed)
+    drift = drift_rng.normal(0, ACCOMMODATION_SD[subject.age_group] * 0.3,
+                             (len(cfg.device_rotations_deg), cfg.frames_per_meridian))
     idx = 0
     for eye, rx in (("OD", subject.od), ("OS", subject.os)):
-        for rot in cfg.device_rotations_deg:
-            for _k in range(cfg.frames_per_meridian):
+        for r, rot in enumerate(cfg.device_rotations_deg):
+            for k in range(cfg.frames_per_meridian):
                 true_d = float(np.clip(rng.normal(cfg.target_distance_m, 0.06), 0.6, 1.5))
                 roll = float(rng.normal(0, 3.0))
-                acc = subject.accommodation_bias_d + abs(rng.normal(0, ACCOMMODATION_SD[subject.age_group] * 0.3))
+                acc = max(0.0, focus_on_light(subject, true_d) + float(drift[r, k]))
                 blink = rng.random() < cfg.blink_rate
                 motion = rng.random() < cfg.motion_rate
                 src_angle = ((device.source_angle_reference_deg() or 270.0) + rot) % 360.0

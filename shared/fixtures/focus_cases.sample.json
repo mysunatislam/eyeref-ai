@@ -1,0 +1,1158 @@
+{
+ "simulated": true,
+ "posteriors": [
+  {
+   "name": "myope",
+   "age_group": "adult_18_39",
+   "distance_m": 1,
+   "readings": {
+    "OD": {
+     "kind": "reading",
+     "mean_d": -3,
+     "sd_d": 0.45
+    },
+    "OS": {
+     "kind": "reading",
+     "mean_d": -3,
+     "sd_d": 0.45
+    }
+   },
+   "posterior": {
+    "light_d": -1,
+    "amplitude_d": 13.1,
+    "focus_response": [
+     0,
+     1
+    ],
+    "p_focusing": 0.00004565447400765453,
+    "mean_focus_d": 0.00004357196227309699,
+    "eyes": {
+     "OD": {
+      "median_d": -2.999989475215607,
+      "ci95": [
+       -3.8821692961448737,
+       -2.1177069357521114
+      ],
+      "class_probabilities": {
+       "myopia": 0.9999817317805288,
+       "emmetropia": 0.00001427458316893837,
+       "hyperopia": 0.000003993636302213055
+      }
+     },
+     "OS": {
+      "median_d": -2.999989475215607,
+      "ci95": [
+       -3.8821692961448737,
+       -2.1177069357521114
+      ],
+      "class_probabilities": {
+       "myopia": 0.9999817317805288,
+       "emmetropia": 0.00001427458316893837,
+       "hyperopia": 0.000003993636302213055
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "reads -0.75",
+   "age_group": "adult_18_39",
+   "distance_m": 1,
+   "readings": {
+    "OD": {
+     "kind": "reading",
+     "mean_d": -0.75,
+     "sd_d": 0.45
+    },
+    "OS": {
+     "kind": "reading",
+     "mean_d": -0.75,
+     "sd_d": 0.45
+    }
+   },
+   "posterior": {
+    "light_d": -1,
+    "amplitude_d": 13.1,
+    "focus_response": [
+     0,
+     1
+    ],
+    "p_focusing": 0.48900217879086944,
+    "mean_focus_d": 0.48471334913915165,
+    "eyes": {
+     "OD": {
+      "median_d": 0.34091643309168146,
+      "ci95": [
+       -1.3473159915271178,
+       10.851709106901037
+      ],
+      "class_probabilities": {
+       "myopia": 0.4181683479319884,
+       "emmetropia": 0.4233744331593605,
+       "hyperopia": 0.15845721890865105
+      }
+     },
+     "OS": {
+      "median_d": 0.34091643309168146,
+      "ci95": [
+       -1.3473159915271178,
+       10.851709106901037
+      ],
+      "class_probabilities": {
+       "myopia": 0.4181683479319884,
+       "emmetropia": 0.4233744331593605,
+       "hyperopia": 0.15845721890865105
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "older eye",
+   "age_group": "adult_60_plus",
+   "distance_m": 1,
+   "readings": {
+    "OD": {
+     "kind": "reading",
+     "mean_d": -0.75,
+     "sd_d": 0.3
+    },
+    "OS": {
+     "kind": "reading",
+     "mean_d": -0.75,
+     "sd_d": 0.3
+    }
+   },
+   "posterior": {
+    "light_d": -1,
+    "amplitude_d": 1,
+    "focus_response": [
+     0,
+     1
+    ],
+    "p_focusing": 0.447268749664879,
+    "mean_focus_d": 0.3167524444489609,
+    "eyes": {
+     "OD": {
+      "median_d": -0.4467654116015425,
+      "ci95": [
+       -1.1891040111847102,
+       0.5753834051040316
+      ],
+      "class_probabilities": {
+       "myopia": 0.4668212533411296,
+       "emmetropia": 0.502501563554268,
+       "hyperopia": 0.030677183104602435
+      }
+     },
+     "OS": {
+      "median_d": -0.4467654116015425,
+      "ci95": [
+       -1.1891040111847102,
+       0.5753834051040316
+      ],
+      "class_probabilities": {
+       "myopia": 0.4668212533411296,
+       "emmetropia": 0.502501563554268,
+       "hyperopia": 0.030677183104602435
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "hyperopic reading, child",
+   "age_group": "child_3_7",
+   "distance_m": 1,
+   "readings": {
+    "OD": {
+     "kind": "reading",
+     "mean_d": 0.6,
+     "sd_d": 0.9
+    },
+    "OS": {
+     "kind": "reading",
+     "mean_d": 0.6,
+     "sd_d": 0.9
+    }
+   },
+   "posterior": {
+    "light_d": -1,
+    "amplitude_d": 17.6,
+    "focus_response": [
+     0,
+     1
+    ],
+    "p_focusing": 0.6319856956680135,
+    "mean_focus_d": 0.5837901812825564,
+    "eyes": {
+     "OD": {
+      "median_d": 3.918013611520218,
+      "ci95": [
+       -0.5034466177915533,
+       17.895173163290732
+      ],
+      "class_probabilities": {
+       "myopia": 0.05621170967386377,
+       "emmetropia": 0.8295127570383626,
+       "hyperopia": 0.11427553328777362
+      }
+     },
+     "OS": {
+      "median_d": 3.918013611520218,
+      "ci95": [
+       -0.5034466177915533,
+       17.895173163290732
+      ],
+      "class_probabilities": {
+       "myopia": 0.05621170967386377,
+       "emmetropia": 0.8295127570383626,
+       "hyperopia": 0.11427553328777362
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "anisometropia",
+   "age_group": "adult_18_39",
+   "distance_m": 1,
+   "readings": {
+    "OD": {
+     "kind": "reading",
+     "mean_d": -4,
+     "sd_d": 0.45
+    },
+    "OS": {
+     "kind": "reading",
+     "mean_d": -0.8,
+     "sd_d": 0.45
+    }
+   },
+   "posterior": {
+    "light_d": -1,
+    "amplitude_d": 13.1,
+    "focus_response": [
+     0,
+     1
+    ],
+    "p_focusing": 0.7050688453752318,
+    "mean_focus_d": 0.9372770276908415,
+    "eyes": {
+     "OD": {
+      "median_d": -3.4542074778591005,
+      "ci95": [
+       -4.665223168320305,
+       -1.2550428751674807
+      ],
+      "class_probabilities": {
+       "myopia": 0.9999999999834834,
+       "emmetropia": 1.3300582857311838e-11,
+       "hyperopia": 3.215983035431691e-12
+      }
+     },
+     "OS": {
+      "median_d": -0.22763729538093563,
+      "ci95": [
+       -1.5478076041639912,
+       2.328208173077804
+      ],
+      "class_probabilities": {
+       "myopia": 0.2790395299539743,
+       "emmetropia": 0.3507473669382186,
+       "hyperopia": 0.3702131031078071
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "dead zone, child",
+   "age_group": "child_3_7",
+   "distance_m": 1,
+   "readings": {
+    "OD": {
+     "kind": "interval",
+     "lo_d": -2.33,
+     "hi_d": 0.33,
+     "sd_d": 0.85
+    },
+    "OS": {
+     "kind": "interval",
+     "lo_d": -2.33,
+     "hi_d": 0.33,
+     "sd_d": 0.85
+    }
+   },
+   "posterior": {
+    "light_d": -1,
+    "amplitude_d": 17.6,
+    "focus_response": [
+     0,
+     1
+    ],
+    "p_focusing": 0.46043400642392474,
+    "mean_focus_d": 0.40865439384579466,
+    "eyes": {
+     "OD": {
+      "median_d": 0.157797552313232,
+      "ci95": [
+       -2.8446001811494246,
+       14.985636207382637
+      ],
+      "class_probabilities": {
+       "myopia": 0.4492095048211852,
+       "emmetropia": 0.5314709655145785,
+       "hyperopia": 0.019319529664236224
+      }
+     },
+     "OS": {
+      "median_d": 0.157797552313232,
+      "ci95": [
+       -2.8446001811494246,
+       14.985636207382637
+      ],
+      "class_probabilities": {
+       "myopia": 0.4492095048211852,
+       "emmetropia": 0.5314709655145785,
+       "hyperopia": 0.019319529664236224
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "one eye",
+   "age_group": "adult_18_39",
+   "distance_m": 1,
+   "readings": {
+    "OD": {
+     "kind": "reading",
+     "mean_d": -3,
+     "sd_d": 0.45
+    },
+    "OS": {
+     "kind": "none"
+    }
+   },
+   "posterior": {
+    "light_d": -1,
+    "amplitude_d": 13.1,
+    "focus_response": [
+     0,
+     1
+    ],
+    "p_focusing": 0.011715499626440801,
+    "mean_focus_d": 0.008927970271590924,
+    "eyes": {
+     "OD": {
+      "median_d": -2.995711577981004,
+      "ci95": [
+       -3.880596020120235,
+       -2.068622552002835
+      ],
+      "class_probabilities": {
+       "myopia": 0.999991334567715,
+       "emmetropia": 0.0000062800486342329265,
+       "hyperopia": 0.0000023853836507159443
+      }
+     },
+     "OS": null
+    }
+   }
+  },
+  {
+   "name": "other eye",
+   "age_group": "teen",
+   "distance_m": 1,
+   "readings": {
+    "OD": {
+     "kind": "none"
+    },
+    "OS": {
+     "kind": "reading",
+     "mean_d": -0.75,
+     "sd_d": 0.45
+    }
+   },
+   "posterior": {
+    "light_d": -1,
+    "amplitude_d": 14.6,
+    "focus_response": [
+     0,
+     1
+    ],
+    "p_focusing": 0.5151547970639265,
+    "mean_focus_d": 0.6100047495655774,
+    "eyes": {
+     "OD": null,
+     "OS": {
+      "median_d": 0.22092304258443463,
+      "ci95": [
+       -1.44113906326775,
+       11.337493403862098
+      ],
+      "class_probabilities": {
+       "myopia": 0.41410623958566045,
+       "emmetropia": 0.3737228066332213,
+       "hyperopia": 0.21217095378111817
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "farther light",
+   "age_group": "adult_40_59",
+   "distance_m": 1.5,
+   "readings": {
+    "OD": {
+     "kind": "reading",
+     "mean_d": -0.67,
+     "sd_d": 0.45
+    },
+    "OS": {
+     "kind": "reading",
+     "mean_d": -0.67,
+     "sd_d": 0.45
+    }
+   },
+   "posterior": {
+    "light_d": -0.6666666666666666,
+    "amplitude_d": 6.5,
+    "focus_response": [
+     0,
+     1
+    ],
+    "p_focusing": 0.3262098896707775,
+    "mean_focus_d": 0.2933616639013739,
+    "eyes": {
+     "OD": {
+      "median_d": -0.24124682472798556,
+      "ci95": [
+       -1.40424456906992,
+       5.242301945757862
+      ],
+      "class_probabilities": {
+       "myopia": 0.46848539742392425,
+       "emmetropia": 0.4222202553600747,
+       "hyperopia": 0.10929434721600106
+      }
+     },
+     "OS": {
+      "median_d": -0.24124682472798556,
+      "ci95": [
+       -1.40424456906992,
+       5.242301945757862
+      ],
+      "class_probabilities": {
+       "myopia": 0.46848539742392425,
+       "emmetropia": 0.4222202553600747,
+       "hyperopia": 0.10929434721600106
+      }
+     }
+    }
+   }
+  }
+ ],
+ "reports": [
+  {
+   "powers": {
+    "OD": -3,
+    "OS": -3
+   },
+   "age_group": "adult_18_39",
+   "focus_model": null,
+   "eyes": {
+    "OD": {
+     "output_level": "quantitative",
+     "message": "Quantitative spherical-equivalent estimate within the configured uncertainty limit.",
+     "se_d": -2.998688298422848,
+     "se_ci95": [
+      -3.806515775901189,
+      -2.1909332233146923
+     ],
+     "refractive_class": "myopia",
+     "confidence": 0.9999975201894702,
+     "class_probabilities": {
+      "myopia": 0.9999975201894702,
+      "emmetropia": 0.000001957599936486254,
+      "hyperopia": 5.222105933233578e-7
+     },
+     "refraction_range95": [
+      -3.806515775901189,
+      -2.1909332233146923
+     ],
+     "focus_limited": false,
+     "power_vector": {
+      "M": -2.9986880739676387,
+      "J0": 1.0813963570907811e-19,
+      "J45": 8.915619809269136e-17
+     },
+     "notes": [
+      "Allows for the eyes focusing on the light 1.00 m away, which makes an eye read more myopic than it is: by up to 13.1 D at this age, at 0–100% of what the eye needs.",
+      "Drift in focusing of ±0.35 D (SD) included for this age group.",
+      "CYL/AXIS quantification is disabled until validated on controlled multi-meridian data."
+     ]
+    },
+    "OS": {
+     "output_level": "quantitative",
+     "message": "Quantitative spherical-equivalent estimate within the configured uncertainty limit.",
+     "se_d": -2.998688298422848,
+     "se_ci95": [
+      -3.806515775901189,
+      -2.1909332233146923
+     ],
+     "refractive_class": "myopia",
+     "confidence": 0.9999975201894702,
+     "class_probabilities": {
+      "myopia": 0.9999975201894702,
+      "emmetropia": 0.000001957599936486254,
+      "hyperopia": 5.222105933233578e-7
+     },
+     "refraction_range95": [
+      -3.806515775901189,
+      -2.1909332233146923
+     ],
+     "focus_limited": false,
+     "power_vector": {
+      "M": -2.9986880739676387,
+      "J0": 1.0813963570907811e-19,
+      "J45": 8.915619809269136e-17
+     },
+     "notes": [
+      "Allows for the eyes focusing on the light 1.00 m away, which makes an eye read more myopic than it is: by up to 13.1 D at this age, at 0–100% of what the eye needs.",
+      "Drift in focusing of ±0.35 D (SD) included for this age group.",
+      "CYL/AXIS quantification is disabled until validated on controlled multi-meridian data."
+     ]
+    }
+   },
+   "focus": {
+    "working_distance_m": 1,
+    "light_d": -1,
+    "amplitude_d": 13.1,
+    "focus_response": [
+     0,
+     1
+    ],
+    "p_focusing": 0.000006315964196371712,
+    "mean_focus_d": 0.000005981117005254052
+   },
+   "interpretation": "SIMULATED DATA. Your measurements show a pattern consistent with myopia refractive error."
+  },
+  {
+   "powers": {
+    "OD": -0.9,
+    "OS": -0.9
+   },
+   "age_group": "adult_18_39",
+   "focus_model": null,
+   "eyes": {
+    "OD": {
+     "output_level": "screening",
+     "message": "This eye could focus on the light 1.00 m away, which makes it read more myopic than it is (here −0.90 D) by an amount this capture cannot show. It is no more myopic than −1.51 D; whether it is emmetropic, mildly myopic or hyperopic needs an eye examination.",
+     "se_d": null,
+     "se_ci95": null,
+     "refractive_class": null,
+     "confidence": null,
+     "class_probabilities": {
+      "myopia": 0.5462298813950671,
+      "emmetropia": 0.34273687346473747,
+      "hyperopia": 0.11103324514019541
+     },
+     "refraction_range95": [
+      -1.5116077814044409,
+      9.301232774802243
+     ],
+     "focus_limited": true,
+     "power_vector": {
+      "M": -0.8996064221902916,
+      "J0": 3.244189071272293e-20,
+      "J45": -8.962467805264298e-18
+     },
+     "notes": [
+      "Allows for the eyes focusing on the light 1.00 m away, which makes an eye read more myopic than it is: by up to 13.1 D at this age, at 0–100% of what the eye needs.",
+      "Drift in focusing of ±0.35 D (SD) included for this age group.",
+      "CYL/AXIS quantification is disabled until validated on controlled multi-meridian data."
+     ]
+    },
+    "OS": {
+     "output_level": "screening",
+     "message": "This eye could focus on the light 1.00 m away, which makes it read more myopic than it is (here −0.90 D) by an amount this capture cannot show. It is no more myopic than −1.51 D; whether it is emmetropic, mildly myopic or hyperopic needs an eye examination.",
+     "se_d": null,
+     "se_ci95": null,
+     "refractive_class": null,
+     "confidence": null,
+     "class_probabilities": {
+      "myopia": 0.5462298813950671,
+      "emmetropia": 0.34273687346473747,
+      "hyperopia": 0.11103324514019541
+     },
+     "refraction_range95": [
+      -1.5116077814044409,
+      9.301232774802243
+     ],
+     "focus_limited": true,
+     "power_vector": {
+      "M": -0.8996064221902916,
+      "J0": 3.244189071272293e-20,
+      "J45": -8.962467805264298e-18
+     },
+     "notes": [
+      "Allows for the eyes focusing on the light 1.00 m away, which makes an eye read more myopic than it is: by up to 13.1 D at this age, at 0–100% of what the eye needs.",
+      "Drift in focusing of ±0.35 D (SD) included for this age group.",
+      "CYL/AXIS quantification is disabled until validated on controlled multi-meridian data."
+     ]
+    }
+   },
+   "focus": {
+    "working_distance_m": 1,
+    "light_d": -1,
+    "amplitude_d": 13.1,
+    "focus_response": [
+     0,
+     1
+    ],
+    "p_focusing": 0.4150211497830095,
+    "mean_focus_d": 0.408526205592432
+   },
+   "interpretation": "SIMULATED DATA. No refractive error this method can measure at this distance. An eye that can focus on the light hides hyperopia and mild myopia from it."
+  },
+  {
+   "powers": {
+    "OD": -0.3,
+    "OS": -0.3
+   },
+   "age_group": "child_3_7",
+   "focus_model": null,
+   "eyes": {
+    "OD": {
+     "output_level": "screening",
+     "message": "This eye could focus on the light 1.00 m away, which makes it read more myopic than it is (here −0.30 D) by an amount this capture cannot show. It is no more myopic than −1.30 D; whether it is emmetropic, mildly myopic or hyperopic needs an eye examination with eye drops.",
+     "se_d": null,
+     "se_ci95": null,
+     "refractive_class": null,
+     "confidence": null,
+     "class_probabilities": {
+      "myopia": 0.18444695581078138,
+      "emmetropia": 0.7787984680459955,
+      "hyperopia": 0.03675457614322308
+     },
+     "refraction_range95": [
+      -1.3032055723740013,
+      16.506039373296414
+     ],
+     "focus_limited": true,
+     "power_vector": {
+      "M": -0.29986880739676386,
+      "J0": 1.0813963570909289e-20,
+      "J45": 4.45195390513517e-18
+     },
+     "notes": [
+      "Allows for the eyes focusing on the light 1.00 m away, which makes an eye read more myopic than it is: by up to 17.6 D at this age, at 0–100% of what the eye needs.",
+      "Drift in focusing of ±0.80 D (SD) included for this age group.",
+      "CYL/AXIS quantification is disabled until validated on controlled multi-meridian data."
+     ]
+    },
+    "OS": {
+     "output_level": "screening",
+     "message": "This eye could focus on the light 1.00 m away, which makes it read more myopic than it is (here −0.30 D) by an amount this capture cannot show. It is no more myopic than −1.30 D; whether it is emmetropic, mildly myopic or hyperopic needs an eye examination with eye drops.",
+     "se_d": null,
+     "se_ci95": null,
+     "refractive_class": null,
+     "confidence": null,
+     "class_probabilities": {
+      "myopia": 0.18444695581078138,
+      "emmetropia": 0.7787984680459955,
+      "hyperopia": 0.03675457614322308
+     },
+     "refraction_range95": [
+      -1.3032055723740013,
+      16.506039373296414
+     ],
+     "focus_limited": true,
+     "power_vector": {
+      "M": -0.29986880739676386,
+      "J0": 1.0813963570909289e-20,
+      "J45": 4.45195390513517e-18
+     },
+     "notes": [
+      "Allows for the eyes focusing on the light 1.00 m away, which makes an eye read more myopic than it is: by up to 17.6 D at this age, at 0–100% of what the eye needs.",
+      "Drift in focusing of ±0.80 D (SD) included for this age group.",
+      "CYL/AXIS quantification is disabled until validated on controlled multi-meridian data."
+     ]
+    }
+   },
+   "focus": {
+    "working_distance_m": 1,
+    "light_d": -1,
+    "amplitude_d": 17.6,
+    "focus_response": [
+     0,
+     1
+    ],
+    "p_focusing": 0.5563406003747768,
+    "mean_focus_d": 0.525198369040604
+   },
+   "interpretation": "SIMULATED DATA. No refractive error this method can measure at this distance. An eye that can focus on the light hides hyperopia and mild myopia from it. In children, hyperopia is usually only found with eye drops (a cycloplegic refraction); this capture does not rule it out."
+  },
+  {
+   "powers": {
+    "OD": -4,
+    "OS": -0.8
+   },
+   "age_group": "adult_18_39",
+   "focus_model": null,
+   "eyes": {
+    "OD": {
+     "output_level": "screening",
+     "message": "This eye is myopic, between −4.60 D and −1.26 D. The eyes could focus on the light 1.00 m away, which makes an eye read more myopic than it is by an amount this capture cannot show, so no number is given.",
+     "se_d": null,
+     "se_ci95": null,
+     "refractive_class": "myopia",
+     "confidence": 0.9999999999998077,
+     "class_probabilities": {
+      "myopia": 0.9999999999998077,
+      "emmetropia": 1.5765166949677223e-13,
+      "hyperopia": 3.4638958368304884e-14
+     },
+     "refraction_range95": [
+      -4.5971381375579625,
+      -1.255507560931245
+     ],
+     "focus_limited": true,
+     "power_vector": {
+      "M": -3.998250765290185,
+      "J0": 1.4418618094542759e-19,
+      "J45": -1.5615998665053856e-19
+     },
+     "notes": [
+      "Allows for the eyes focusing on the light 1.00 m away, which makes an eye read more myopic than it is: by up to 13.1 D at this age, at 0–100% of what the eye needs.",
+      "Drift in focusing of ±0.35 D (SD) included for this age group.",
+      "CYL/AXIS quantification is disabled until validated on controlled multi-meridian data."
+     ]
+    },
+    "OS": {
+     "output_level": "screening",
+     "message": "This eye could focus on the light 1.00 m away, which makes it read more myopic than it is (here −0.80 D) by an amount this capture cannot show. It is no more myopic than −1.48 D; whether it is emmetropic, mildly myopic or hyperopic needs an eye examination.",
+     "se_d": null,
+     "se_ci95": null,
+     "refractive_class": null,
+     "confidence": null,
+     "class_probabilities": {
+      "myopia": 0.2761818122113674,
+      "emmetropia": 0.35533065427794996,
+      "hyperopia": 0.36848753351068264
+     },
+     "refraction_range95": [
+      -1.476788083192457,
+      2.2725966623607743
+     ],
+     "focus_limited": true,
+     "power_vector": {
+      "M": -0.7996501530580371,
+      "J0": 2.883723618909884e-20,
+      "J45": 2.6750763427473678e-17
+     },
+     "notes": [
+      "Allows for the eyes focusing on the light 1.00 m away, which makes an eye read more myopic than it is: by up to 13.1 D at this age, at 0–100% of what the eye needs.",
+      "Drift in focusing of ±0.35 D (SD) included for this age group.",
+      "CYL/AXIS quantification is disabled until validated on controlled multi-meridian data."
+     ]
+    }
+   },
+   "focus": {
+    "working_distance_m": 1,
+    "light_d": -1,
+    "amplitude_d": 13.1,
+    "focus_response": [
+     0,
+     1
+    ],
+    "p_focusing": 0.7113085958268146,
+    "mean_focus_d": 0.9475451649685187
+   },
+   "interpretation": "SIMULATED DATA. Your measurements show a pattern consistent with myopia refractive error."
+  },
+  {
+   "powers": {
+    "OD": -0.75,
+    "OS": -0.75
+   },
+   "age_group": "adult_60_plus",
+   "focus_model": null,
+   "eyes": {
+    "OD": {
+     "output_level": "quantitative",
+     "message": "Quantitative spherical-equivalent estimate within the configured uncertainty limit, allowing for the eyes focusing on the light.",
+     "se_d": -0.4545215621355404,
+     "se_ci95": [
+      -1.072162965096581,
+      0.48805643524306025
+     ],
+     "refractive_class": "emmetropia",
+     "confidence": 0.5127450700485803,
+     "class_probabilities": {
+      "myopia": 0.46837431424097914,
+      "emmetropia": 0.5127450700485803,
+      "hyperopia": 0.01888061571044064
+     },
+     "refraction_range95": [
+      -1.072162965096581,
+      0.48805643524306025
+     ],
+     "focus_limited": false,
+     "power_vector": {
+      "M": -0.7496720184919097,
+      "J0": 2.7034908927269527e-20,
+      "J45": 2.228904952317284e-17
+     },
+     "notes": [
+      "Allows for the eyes focusing on the light 1.00 m away, which makes an eye read more myopic than it is: by up to 1.0 D at this age, at 0–100% of what the eye needs.",
+      "Drift in focusing of ±0.10 D (SD) included for this age group.",
+      "CYL/AXIS quantification is disabled until validated on controlled multi-meridian data."
+     ]
+    },
+    "OS": {
+     "output_level": "quantitative",
+     "message": "Quantitative spherical-equivalent estimate within the configured uncertainty limit, allowing for the eyes focusing on the light.",
+     "se_d": -0.4545215621355404,
+     "se_ci95": [
+      -1.072162965096581,
+      0.48805643524306025
+     ],
+     "refractive_class": "emmetropia",
+     "confidence": 0.5127450700485803,
+     "class_probabilities": {
+      "myopia": 0.46837431424097914,
+      "emmetropia": 0.5127450700485803,
+      "hyperopia": 0.01888061571044064
+     },
+     "refraction_range95": [
+      -1.072162965096581,
+      0.48805643524306025
+     ],
+     "focus_limited": false,
+     "power_vector": {
+      "M": -0.7496720184919097,
+      "J0": 2.7034908927269527e-20,
+      "J45": 2.228904952317284e-17
+     },
+     "notes": [
+      "Allows for the eyes focusing on the light 1.00 m away, which makes an eye read more myopic than it is: by up to 1.0 D at this age, at 0–100% of what the eye needs.",
+      "Drift in focusing of ±0.10 D (SD) included for this age group.",
+      "CYL/AXIS quantification is disabled until validated on controlled multi-meridian data."
+     ]
+    }
+   },
+   "focus": {
+    "working_distance_m": 1,
+    "light_d": -1,
+    "amplitude_d": 1,
+    "focus_response": [
+     0,
+     1
+    ],
+    "p_focusing": 0.4661439999284354,
+    "mean_focus_d": 0.3278280988452758
+   },
+   "interpretation": "SIMULATED DATA. Measurements do not show a significant spherical refractive error within this method's limits."
+  },
+  {
+   "powers": {
+    "OD": null,
+    "OS": null
+   },
+   "age_group": "adult_18_39",
+   "focus_model": null,
+   "eyes": {
+    "OD": {
+     "output_level": "screening",
+     "message": "No crescent detected: the reading lies between −2.30 D and +0.30 D in all measured meridians. That rules out myopia beyond −2.33 D, but an eye that can focus on the light can hide hyperopia here, and mild myopia cannot be told from emmetropia at this distance. Optional: repeat at 1.5 m, or obtain clinical refraction.",
+     "se_d": null,
+     "se_ci95": null,
+     "refractive_class": null,
+     "confidence": null,
+     "class_probabilities": {
+      "myopia": 0.5387143727044953,
+      "emmetropia": 0.31159229165781965,
+      "hyperopia": 0.14969333563768505
+     },
+     "refraction_range95": [
+      -2.327314564612671,
+      11.111412283418883
+     ],
+     "focus_limited": false,
+     "power_vector": {
+      "M": -0.9912747173318186,
+      "J0": 2.4289983328033133e-19,
+      "J45": -1.65398200920446e-19
+     },
+     "notes": [
+      "Allows for the eyes focusing on the light 1.00 m away, which makes an eye read more myopic than it is: by up to 13.1 D at this age, at 0–100% of what the eye needs.",
+      "Drift in focusing of ±0.35 D (SD) included for this age group."
+     ]
+    },
+    "OS": {
+     "output_level": "screening",
+     "message": "No crescent detected: the reading lies between −2.30 D and +0.30 D in all measured meridians. That rules out myopia beyond −2.33 D, but an eye that can focus on the light can hide hyperopia here, and mild myopia cannot be told from emmetropia at this distance. Optional: repeat at 1.5 m, or obtain clinical refraction.",
+     "se_d": null,
+     "se_ci95": null,
+     "refractive_class": null,
+     "confidence": null,
+     "class_probabilities": {
+      "myopia": 0.5387143727044953,
+      "emmetropia": 0.31159229165781965,
+      "hyperopia": 0.14969333563768505
+     },
+     "refraction_range95": [
+      -2.327314564612671,
+      11.111412283418883
+     ],
+     "focus_limited": false,
+     "power_vector": {
+      "M": -0.9912747173318186,
+      "J0": 2.4289983328033133e-19,
+      "J45": -1.65398200920446e-19
+     },
+     "notes": [
+      "Allows for the eyes focusing on the light 1.00 m away, which makes an eye read more myopic than it is: by up to 13.1 D at this age, at 0–100% of what the eye needs.",
+      "Drift in focusing of ±0.35 D (SD) included for this age group."
+     ]
+    }
+   },
+   "focus": {
+    "working_distance_m": 1,
+    "light_d": -1,
+    "amplitude_d": 13.1,
+    "focus_response": [
+     0,
+     1
+    ],
+    "p_focusing": 0.44084726759536624,
+    "mean_focus_d": 0.38459674784163395
+   },
+   "interpretation": "SIMULATED DATA. No refractive error this method can measure at this distance. An eye that can focus on the light hides hyperopia and mild myopia from it."
+  },
+  {
+   "powers": {
+    "OD": null,
+    "OS": null
+   },
+   "age_group": "child_8_12",
+   "focus_model": null,
+   "eyes": {
+    "OD": {
+     "output_level": "screening",
+     "message": "No crescent detected: the reading lies between −2.30 D and +0.30 D in all measured meridians. That rules out myopia beyond −2.62 D, but an eye that can focus on the light can hide hyperopia here, and mild myopia cannot be told from emmetropia at this distance. Optional: repeat at 1.5 m, or obtain clinical refraction.",
+     "se_d": null,
+     "se_ci95": null,
+     "refractive_class": null,
+     "confidence": null,
+     "class_probabilities": {
+      "myopia": 0.5363704585514145,
+      "emmetropia": 0.4258042660029855,
+      "hyperopia": 0.03782527544559999
+     },
+     "refraction_range95": [
+      -2.6183245649107407,
+      13.618847424380807
+     ],
+     "focus_limited": false,
+     "power_vector": {
+      "M": -0.9912747173318186,
+      "J0": 2.4289983328033133e-19,
+      "J45": -1.65398200920446e-19
+     },
+     "notes": [
+      "Allows for the eyes focusing on the light 1.00 m away, which makes an eye read more myopic than it is: by up to 16.1 D at this age, at 0–100% of what the eye needs.",
+      "Drift in focusing of ±0.65 D (SD) included for this age group."
+     ]
+    },
+    "OS": {
+     "output_level": "screening",
+     "message": "No crescent detected: the reading lies between −2.30 D and +0.30 D in all measured meridians. That rules out myopia beyond −2.62 D, but an eye that can focus on the light can hide hyperopia here, and mild myopia cannot be told from emmetropia at this distance. Optional: repeat at 1.5 m, or obtain clinical refraction.",
+     "se_d": null,
+     "se_ci95": null,
+     "refractive_class": null,
+     "confidence": null,
+     "class_probabilities": {
+      "myopia": 0.5363704585514145,
+      "emmetropia": 0.4258042660029855,
+      "hyperopia": 0.03782527544559999
+     },
+     "refraction_range95": [
+      -2.6183245649107407,
+      13.618847424380807
+     ],
+     "focus_limited": false,
+     "power_vector": {
+      "M": -0.9912747173318186,
+      "J0": 2.4289983328033133e-19,
+      "J45": -1.65398200920446e-19
+     },
+     "notes": [
+      "Allows for the eyes focusing on the light 1.00 m away, which makes an eye read more myopic than it is: by up to 16.1 D at this age, at 0–100% of what the eye needs.",
+      "Drift in focusing of ±0.65 D (SD) included for this age group."
+     ]
+    }
+   },
+   "focus": {
+    "working_distance_m": 1,
+    "light_d": -1,
+    "amplitude_d": 16.1,
+    "focus_response": [
+     0,
+     1
+    ],
+    "p_focusing": 0.45088874477798657,
+    "mean_focus_d": 0.39725883135106005
+   },
+   "interpretation": "SIMULATED DATA. No refractive error this method can measure at this distance. An eye that can focus on the light hides hyperopia and mild myopia from it. In children, hyperopia is usually only found with eye drops (a cycloplegic refraction); this capture does not rule it out."
+  },
+  {
+   "powers": {
+    "OD": 1.5,
+    "OS": 1.5
+   },
+   "age_group": "adult_18_39",
+   "focus_model": null,
+   "eyes": {
+    "OD": {
+     "output_level": "screening",
+     "message": "This eye shows hyperopia even while it can focus on the light: +1.37 D or more. Finding how much needs an eye examination with eye drops.",
+     "se_d": null,
+     "se_ci95": null,
+     "refractive_class": "hyperopia",
+     "confidence": 0.9964361424773608,
+     "class_probabilities": {
+      "myopia": 6.385009066100668e-7,
+      "emmetropia": 0.003563219021732622,
+      "hyperopia": 0.9964361424773608
+     },
+     "refraction_range95": [
+      1.3698528471012867,
+      14.840598318910729
+     ],
+     "focus_limited": true,
+     "power_vector": {
+      "M": 1.4993440369838194,
+      "J0": -5.4069817854539055e-20,
+      "J45": -4.457809904634568e-17
+     },
+     "notes": [
+      "Allows for the eyes focusing on the light 1.00 m away, which makes an eye read more myopic than it is: by up to 13.1 D at this age, at 0–100% of what the eye needs.",
+      "Drift in focusing of ±0.35 D (SD) included for this age group.",
+      "CYL/AXIS quantification is disabled until validated on controlled multi-meridian data."
+     ]
+    },
+    "OS": {
+     "output_level": "screening",
+     "message": "This eye shows hyperopia even while it can focus on the light: +1.37 D or more. Finding how much needs an eye examination with eye drops.",
+     "se_d": null,
+     "se_ci95": null,
+     "refractive_class": "hyperopia",
+     "confidence": 0.9964361424773608,
+     "class_probabilities": {
+      "myopia": 6.385009066100668e-7,
+      "emmetropia": 0.003563219021732622,
+      "hyperopia": 0.9964361424773608
+     },
+     "refraction_range95": [
+      1.3698528471012867,
+      14.840598318910729
+     ],
+     "focus_limited": true,
+     "power_vector": {
+      "M": 1.4993440369838194,
+      "J0": -5.4069817854539055e-20,
+      "J45": -4.457809904634568e-17
+     },
+     "notes": [
+      "Allows for the eyes focusing on the light 1.00 m away, which makes an eye read more myopic than it is: by up to 13.1 D at this age, at 0–100% of what the eye needs.",
+      "Drift in focusing of ±0.35 D (SD) included for this age group.",
+      "CYL/AXIS quantification is disabled until validated on controlled multi-meridian data."
+     ]
+    }
+   },
+   "focus": {
+    "working_distance_m": 1,
+    "light_d": -1,
+    "amplitude_d": 13.1,
+    "focus_response": [
+     0,
+     1
+    ],
+    "p_focusing": 0.6945626881657812,
+    "mean_focus_d": 0.5664700854475653
+   },
+   "interpretation": "SIMULATED DATA. Your measurements show a pattern consistent with hyperopia refractive error."
+  },
+  {
+   "powers": {
+    "OD": -0.9,
+    "OS": -0.9
+   },
+   "age_group": "adult_18_39",
+   "focus_model": false,
+   "eyes": {
+    "OD": {
+     "output_level": "quantitative",
+     "message": "Quantitative spherical-equivalent estimate within the configured uncertainty limit.",
+     "se_d": -0.8996064221902916,
+     "se_ci95": [
+      -1.7100583128736409,
+      -0.1226717332300492
+     ],
+     "refractive_class": "myopia",
+     "confidence": 0.8341325071611512,
+     "class_probabilities": {
+      "myopia": 0.8341325071611512,
+      "emmetropia": 0.16552999147501568,
+      "hyperopia": 0.0003375013638331481
+     },
+     "refraction_range95": null,
+     "focus_limited": false,
+     "power_vector": {
+      "M": -0.8996064221902916,
+      "J0": 3.244189071272293e-20,
+      "J45": -8.962467805264298e-18
+     },
+     "notes": [
+      "Not corrected for focusing on the light: the reading is the eye as the camera saw it, focusing included. Drift in focusing of ±0.35 D (SD) included.",
+      "CYL/AXIS quantification is disabled until validated on controlled multi-meridian data."
+     ]
+    },
+    "OS": {
+     "output_level": "quantitative",
+     "message": "Quantitative spherical-equivalent estimate within the configured uncertainty limit.",
+     "se_d": -0.8996064221902916,
+     "se_ci95": [
+      -1.7100583128736409,
+      -0.1226717332300492
+     ],
+     "refractive_class": "myopia",
+     "confidence": 0.8341325071611512,
+     "class_probabilities": {
+      "myopia": 0.8341325071611512,
+      "emmetropia": 0.16552999147501568,
+      "hyperopia": 0.0003375013638331481
+     },
+     "refraction_range95": null,
+     "focus_limited": false,
+     "power_vector": {
+      "M": -0.8996064221902916,
+      "J0": 3.244189071272293e-20,
+      "J45": -8.962467805264298e-18
+     },
+     "notes": [
+      "Not corrected for focusing on the light: the reading is the eye as the camera saw it, focusing included. Drift in focusing of ±0.35 D (SD) included.",
+      "CYL/AXIS quantification is disabled until validated on controlled multi-meridian data."
+     ]
+    }
+   },
+   "focus": null,
+   "interpretation": "SIMULATED DATA. Your measurements show a pattern consistent with myopia refractive error."
+  }
+ ]
+}

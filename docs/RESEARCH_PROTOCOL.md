@@ -65,8 +65,10 @@ same report from the file it saves.
   light within reach is recorded but left out of the slope.
 - **The no-lens capture** is the control: with the frame empty the light is within reach, so the
   difference between it and the eye's own fogging line measures how far that eye followed the light. That
-  is the accommodation error every ordinary EyeRef capture carries, measured rather than modelled, and it
-  is reported next to the slope instead of being folded into it.
+  is the focusing every ordinary EyeRef capture allows for, measured here rather than assumed, and it is
+  reported next to the slope instead of being folded into it. The app assumes an eye follows anywhere from
+  none to all of the way (PHOTOREFRACTION.md § 5); this measurement is what can narrow that, and with it
+  the ranges the app gives eyes that can see the light.
 - The outcome is the slope and intercept of measured M against induced defocus. The ideal slope is 1.
   One slope is fitted across eyes, each eye with its own intercept, and its 95% interval treats each
   **person** as one unit (a cluster-robust standard error), because two eyes of one person move together.

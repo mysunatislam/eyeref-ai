@@ -32,7 +32,7 @@ const SECTIONS = [
     title: "Known limitations of camera photorefraction",
     items: [
       "Dead zone: around emmetropia and low myopia no crescent forms; the app reports an interval there.",
-      "Accommodation: young people can focus away hyperopia without cycloplegic drops, so hyperopia is under-read.",
+      "Focusing on the light: an eye that can see the light focuses on it and reads more myopic than it is. The app allows for this and gives such an eye a range, not a number, because hyperopia and mild myopia stay hidden without cycloplegic drops, especially in children.",
       "Small pupils (bright rooms, older adults) shrink the measurable range.",
       "Ordinary webcams and phone browsers give few pixels per pupil; higher-resolution native capture is planned.",
       "Dark irises, glasses, contact lenses, cataract and unusual fundus pigmentation can change the reflex.",

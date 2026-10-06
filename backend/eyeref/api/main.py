@@ -91,6 +91,9 @@ class EstimateRequest(BaseModel):
     estimator: Literal["physics", "ml"] = "physics"
     gating: GatingConfig = Field(default_factory=GatingConfig)
     symptoms_reported: bool = False
+    #: allow for the eyes focusing on the light; false for a capture through a stage 1 trial lens, and by
+    #: default off for the learned estimator (see eyeref.inference.fusion.build_report)
+    focus_model: Optional[bool] = None
 
 
 class ExplainRequest(BaseModel):
@@ -517,7 +520,8 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
         if not recs:
             raise HTTPException(422, "no frames")
         return build_report(recs, req.age_group, dev.id, dev.calibration_version, est.name, est.version, est.kind,
-                            req.frames[0].features.extractor_version, req.gating, req.symptoms_reported)
+                            req.frames[0].features.extractor_version, req.gating, req.symptoms_reported,
+                            req.focus_model)
 
 
     @app.post("/api/simulate")

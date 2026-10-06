@@ -182,7 +182,14 @@ export interface EyeResult {
   meridians: MeridianSummary[];
   reflexMeanLuma: number | null;
   deadZoneD: [number, number] | null;
-  /** ungated research view of the posterior (research dashboard only) */
+  /**
+   * 95% interval for the eye's own refraction after allowing for focusing on the light (D). Absent on
+   * records from before the focusing model, and on stage 1 captures.
+   */
+  refractionRange95?: [number, number] | null;
+  /** focusing on the light is what kept a number back: it could hide 1 D or more above the reading */
+  focusLimited?: boolean;
+  /** ungated research view of the reading's posterior, focusing included (research dashboard only) */
   research: {
     sph: number | null;
     cyl: number | null;
@@ -218,6 +225,23 @@ export interface AssessmentReport {
   interpretation: string;
   disclaimer: string;
   provenance: Provenance;
+  /** how the result allowed for the eyes focusing on the light; absent on older records and stage 1 */
+  focus?: FocusSummary | null;
+}
+
+/** The focusing model behind a report (inference/focus.ts). */
+export interface FocusSummary {
+  workingDistanceM: number;
+  /** −1/d: the refraction whose far point is the light (D) */
+  lightD: number;
+  /** how far the eyes can focus at this age (D) */
+  amplitudeD: number;
+  /** the share of what it needs that an eye was assumed to focus */
+  focusResponse: [number, number];
+  /** probability that the eyes focused on the light by 0.25 D or more */
+  pFocusing: number;
+  /** expected amount the eyes focused (D) */
+  meanFocusD: number;
 }
 
 export interface SubjectProfile {

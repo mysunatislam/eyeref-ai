@@ -1,10 +1,14 @@
 import { thresholdsForAge } from "@/lib/optics/classification";
+import { formatDiopters } from "@/lib/optics/powerVector";
 import type { AgeGroup, EyeResult } from "@/lib/types";
 
 const LO = -8;
 const HI = 6;
 
-/** Dioptre number line: screening thresholds, dead zone, CI band and point estimate. */
+/**
+ * Dioptre number line: screening thresholds, dead zone, CI band and point estimate, or without a number,
+ * the range the eye's own refraction lies in once focusing on the light is allowed for.
+ */
 export function RefractionScale({
   eye,
   ageGroup,
@@ -21,6 +25,7 @@ export function RefractionScale({
   const y0 = 18;
   const bh = 16;
   const showPoint = eye.outputLevel === "quantitative" && eye.seD !== null;
+  const range = showPoint ? null : (eye.refractionRange95 ?? null);
   return (
     <svg viewBox={`0 0 ${W} ${height}`} className="w-full" role="img" aria-label="Refraction scale">
       <defs>
@@ -56,6 +61,23 @@ export function RefractionScale({
           rx="3"
         >
           <title>Dead zone: no crescent is produced in this range</title>
+        </rect>
+      )}
+      {range && (
+        <rect
+          x={x(range[0])}
+          y={y0 + 3}
+          width={Math.max(2, x(range[1]) - x(range[0]))}
+          height={bh - 6}
+          rx="5"
+          fill="none"
+          stroke="var(--accent)"
+          strokeWidth="1.5"
+          strokeDasharray="4 2"
+        >
+          <title>
+            {`Where this eye's own refraction lies (95%), allowing for focusing on the light: ${formatDiopters(range[0])} to ${range[1] > HI ? `beyond ${formatDiopters(HI)}` : formatDiopters(range[1])}`}
+          </title>
         </rect>
       )}
       {showPoint && eye.seCi95 && (

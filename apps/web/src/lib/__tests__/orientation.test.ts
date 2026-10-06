@@ -76,13 +76,16 @@ describe("a frame's rotation", () => {
 
 describe("the light's direction in a live frame", () => {
   const est = new PhysicsHeuristicEstimator();
+  // eyes that do not focus on the light: these tests are about the meridian, not focusing
   const subject: VirtualSubject = {
     ...makeSubject("ROTATION-1", "adult_18_39"),
     od: { sph: -3.5, cyl: 0, axis: null },
+    focusResponse: 0,
   };
   const astig: VirtualSubject = {
     ...makeSubject("ROTATION-2", "adult_18_39"),
     od: { sph: -0.5, cyl: -3.5, axis: 180 },
+    focusResponse: 0,
   };
   const shot = (s: VirtualSubject, rotationDeg: number, frameRotation: number, i = 0) =>
     simulateFrame(s, "OD", rotationDeg, 100 + i, 7, {

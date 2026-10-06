@@ -49,7 +49,9 @@ def fuse_predictions(df: pd.DataFrame, mu: np.ndarray, sigma: np.ndarray, model_
                                     features=PhotorefractionFeatures(reflex_mean_luma=r.get("f_reflex_mean_luma")),
                                     quality=q, estimate=est))
         first = g.iloc[0]
-        res = fuse_eye(eye, recs, first.age_group, calibrated=True, cfg=gating)
+        # the model predicts each meridian's own refraction, as build_report assumes of a learned estimator,
+        # so the readings are not allowed for focusing on the light a second time
+        res = fuse_eye(eye, recs, first.age_group, calibrated=True, cfg=gating, focus_model=False)
         # ungated research estimate of sph/cyl/axis from the same usable frames
         usable = g[g.quality_usable.astype(bool)]
         sph = cyl = axis = p_ast = np.nan

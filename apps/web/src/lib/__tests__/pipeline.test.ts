@@ -102,11 +102,16 @@ describe("fusion and gating", () => {
       ...frame("OD", 0, -0.5),
       estimate: { ...frame("OD", 0, -0.5).estimate!, sigmaD: 0.9 },
     }));
-    const r = fuseEye("OD", frames, "child_3_7", false, {
-      ...DEFAULT_GATING,
-      minClassConfidenceScreening: 0.99,
+    const cfg = { ...DEFAULT_GATING, minClassConfidenceScreening: 0.99 };
+    // the reading as the camera saw it is too uncertain for any class
+    expect(fuseEye("OD", frames, "child_3_7", false, cfg, false).outputLevel).toBe("repeat");
+    // allowing for focusing on the light, the eye could hide hyperopia: a range with no class, as a repeat
+    // would read the same
+    expect(fuseEye("OD", frames, "child_3_7", false, cfg)).toMatchObject({
+      outputLevel: "screening",
+      refractiveClass: null,
+      focusLimited: true,
     });
-    expect(r.outputLevel).toBe("repeat");
   });
   it("reports dead-zone-only results as screening", () => {
     const r = fuseEye(
@@ -131,8 +136,12 @@ describe("fusion and gating", () => {
       estimator: { name: "t", version: "0", kind: "test" },
       extractorVersion: "x",
     });
-    expect(rep.eyes.OD.seD!).toBeCloseTo(-4, 0);
-    expect(rep.eyes.OS.seD!).toBeCloseTo(-1, 0);
+    const [od, os] = [rep.eyes.OD, rep.eyes.OS];
+    expect(Math.abs(od.powerVector!.M + 4)).toBeLessThan(0.15);
+    expect(Math.abs(os.powerVector!.M + 1)).toBeLessThan(0.15);
+    // the eyes could be focusing for the left eye's light, which moves both by the same amount
+    expect(Math.abs(od.seD! - os.seD! + 3)).toBeLessThan(0.15);
+    expect(od.seD!).toBeGreaterThan(-4);
     expect(rep.anisometropiaProbability!).toBeGreaterThan(0.9);
     expect(rep.provenance.modelName).toBe("t");
     expect(rep.interpretation.startsWith("SIMULATED")).toBe(true);
