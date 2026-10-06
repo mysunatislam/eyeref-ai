@@ -2,7 +2,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { snake } from "../api";
-import { buildReport } from "../inference/fusion";
+import { buildReport, focusModelFor } from "../inference/fusion";
 import { focusPosterior, type EyeReading } from "../inference/focus";
 import { thresholdsForAge } from "../optics/classification";
 import { focusOnLight, makeSubject } from "../simulation/session";
@@ -145,6 +145,25 @@ describe("a report that allows for focusing", () => {
     const r = report(null, null, "adult_18_39");
     expect(r.eyes.OD.outputLevel).toBe("screening");
     expect(r.eyes.OD.message).toContain("can hide hyperopia here");
+  });
+
+  it("allows for focusing after a learned model only when it learned what the camera saw", () => {
+    expect(focusModelFor("physics-heuristic")).toBe(true);
+    expect(focusModelFor("ml", "optical")).toBe(true);
+    expect(focusModelFor("ml", "clinical")).toBe(false);
+    expect(focusModelFor("ml")).toBe(false);
+    const learned = (learnedTarget?: "optical" | "clinical") =>
+      buildReport({
+        frames: [0, 90].flatMap((rot) => Array.from({ length: 5 }, () => frame("OD", rot, -0.9))),
+        ageGroup: "adult_18_39",
+        deviceId: "simulated-phone",
+        calibrationVersion: "c",
+        estimator: { name: "m", version: "0", kind: "ml", learnedTarget },
+        extractorVersion: "x",
+      });
+    expect(learned("optical").focus).not.toBeNull();
+    expect(learned("clinical").focus).toBeNull();
+    expect(learned().focus).toBeNull();
   });
 
   it("takes the reading as it stands when the focusing model is off, as stage 1 does", () => {

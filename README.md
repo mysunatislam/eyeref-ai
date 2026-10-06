@@ -66,27 +66,49 @@ first, then astigmatism later.
 
 ## Simulated benchmark (SIMULATED DATA)
 
-There are 240 virtual subjects and 15,360 frames, rendered as 4 simulated phones. The test set is
-split by subject. Spherical-equivalent mean absolute error across all test eyes, using the ungated
-posterior. These figures come from the simulator before its eyes focused on the light, and a rerun will
-move them:
+There are 240 virtual subjects and 15,360 frames, rendered as 4 simulated phones, and their eyes focus
+on the light as real ones do. The test set is split by subject. Every model learns each frame's meridian
+as the camera saw it, and the app then allows for the eyes focusing on the light, as it does for the
+physics ([What the models learn](docs/MODEL_TRAINING.md#what-the-models-learn)).
+
+How well each estimator measures what the camera saw, as the mean absolute error per frame:
 
 | Model | Subject split | Unseen device (sim-D) |
 | --- | --- | --- |
-| Physics only | 0.54 D | 0.69 D |
-| Ridge | 0.24 D | 0.54 D |
-| Polynomial ridge | **0.16 D** | 0.98 D |
-| Random forest | 0.17 D | **0.21 D** |
-| Gradient boosting | 0.17 D | 0.23 D |
-| Hybrid NN (features + physics prior) | 0.17 D | 0.38 D |
-| Hybrid CNN (crop + features) | 0.17 D | 0.41 D |
+| Physics only | 0.49 D | 0.59 D |
+| Ridge | 0.20 D | 0.26 D |
+| Polynomial ridge | **0.08 D** | 0.25 D |
+| Random forest | 0.09 D | 0.14 D |
+| Gradient boosting | 0.09 D | **0.14 D** |
+| Hybrid NN (features + physics prior) | 0.10 D | 0.36 D |
+| Hybrid CNN (crop + features) | 0.09 D | 0.37 D |
+
+What the app shows for each eye on the subject split, against the eye's own refraction:
+
+| Model | Number given | Error of the numbers | 95% interval held the truth | Range given | Range held the truth | Myopia sensitivity / specificity | Hyperopia sensitivity |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Physics only | 12% | 0.31 D | 100% | 8% | 100% | 84% / 29% | 22% |
+| Ridge | 26% | 0.33 D | 94% | 52% | 100% | 94% / 90% | 28% |
+| Polynomial ridge | 30% | 0.21 D | 100% | 51% | 100% | 95% / 89% | 33% |
+| Random forest | 29% | 0.22 D | 100% | 51% | 100% | 93% / 90% | 34% |
+| Gradient boosting | 30% | 0.20 D | 100% | 51% | 100% | 94% / 91% | 34% |
+| Hybrid NN | 28% | 0.23 D | 100% | 51% | 100% | 91% / 91% | 36% |
+| Hybrid CNN | 29% | 0.22 D | 100% | 51% | 100% | 91% / 90% | 33% |
 
 **Findings**
 
-- Deep learning did **not** beat tree ensembles on simulated data.
-- Learned models lose more on an unseen device than they gain in-distribution.
-- Conformal 95% intervals that were calibrated on seen devices under-cover on a new device. Coverage
-  drops to 57–86% for the linear and NN models.
+- The tree ensembles and neural networks measure what the camera saw about five times better than the
+  physics alone, so they give more eyes a number.
+- No model can see how far an eye focused on the light, so focusing decides who gets a number. With the
+  random forest, every eye over 60 gets one, 42% of eyes aged 40–59, 7% of eyes aged 18–39, and no one
+  under 18. About half of all eyes get a range instead, and every range held the truth.
+- Hyperopia is found in about a third of hyperopic eyes, because an eye that can focus hides it. That
+  is a limit of measuring at 1 m without eye drops, and the app says so for children.
+- The physics alone, on a phone whose gain was never measured, cannot place an eye inside the dead zone,
+  so it refers most of the eyes there for myopia (29% specificity). Bench calibration measures that gain.
+- Deep learning did **not** beat tree ensembles. The neural networks lose the most on an unseen device
+  and the tree ensembles the least. There the numbers' 95% intervals held the truth for 80–84% of eyes
+  with the ridge and NN models, and for 94–100% with the rest.
 
 The practical consequence is that every phone model needs its own calibration. These numbers only show
 that the pipeline is self-consistent.

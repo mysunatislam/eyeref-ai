@@ -10,6 +10,13 @@ Models
   hybrid_features (MLP, physics residual), hybrid_cnn (+ image branch)  (deep)
 All models share the runtime fusion/gating, so the comparison isolates the
 per-meridian estimator - answering "does deep learning actually help?".
+
+Each model learns the dataset's target (eyeref_ml.datasets.targets).  Its frame
+metrics score it against that target, which in simulation is the meridian as the
+camera saw it: how well it measures the optics.  Its eye metrics score what the
+app would show against each eye's own refraction, allowing for the eyes focusing
+on the light wherever the app would (eyeref.inference.fusion.focus_model_for).
+The cross-device table compares frame errors, the estimator's own job.
 """
 
 from __future__ import annotations
@@ -24,11 +31,12 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from eyeref.inference.fusion import GatingConfig
+from eyeref.inference.fusion import GatingConfig, focus_model_for
 
 from .. import __version__
 from ..datasets.splits import Split, device_holdout_split, subject_split
-from ..evaluation.eye_level import eye_metrics, fuse_predictions, subgroup_metrics
+from ..datasets.targets import Target, dataset_target, with_targets
+from ..evaluation.eye_level import dead_zone_intervals, eye_metrics, fuse_predictions, subgroup_metrics
 from ..evaluation.metrics import dioptric_metrics
 from ..models.baselines import add_physics_columns, baseline_models
 from .train_hybrid import TrainConfig, train_hybrid
@@ -36,43 +44,59 @@ from .train_hybrid import TrainConfig, train_hybrid
 REPO = Path(__file__).resolve().parents[3]
 
 
-def run_split(split: Split, crops: np.ndarray | None, epochs: int, gating: GatingConfig, with_subgroups: bool):
+def run_split(split: Split, crops: np.ndarray | None, epochs: int, gating: GatingConfig, with_subgroups: bool,
+              target: Target):
     results: dict[str, Any] = {}
     trained_hybrids = {}
     models: list[tuple[str, Any]] = [(m.name, m) for m in baseline_models()]
+
+    def done(name: str) -> None:
+        r = results[name]
+        print(f"    {name:20s} frame MAE {r['frame'].get('mae') or float('nan'):.3f}  "
+              f"eyes given a number {r['eye']['output_levels'].get('quantitative', 0):.0%}")
+
     for name, model in models:
         t0 = time.time()
         model.fit(split.train[split.train.quality_usable.astype(bool)], split.calib[split.calib.quality_usable.astype(bool)])
         mu, sd = model.predict(split.test)
-        results[name] = _evaluate(name, split.test, mu, sd, gating, with_subgroups, time.time() - t0)
-        print(f"    {name:20s} SE MAE {results[name]['eye']['se_all_eyes'].get('mae', float('nan')):.3f}")
+        # the physics reads the eye as the camera saw it, whatever the learned models learned
+        kind = "physics-heuristic" if name == "physics_only" else "ml"
+        results[name] = _evaluate(name, split.test, mu, sd, gating, with_subgroups, time.time() - t0,
+                                  focus_model_for(kind, target))
+        done(name)
     for name, use_img in (("hybrid_features", False), ("hybrid_cnn", True)):
         if use_img and crops is None:
             continue
         t0 = time.time()
         th = train_hybrid(split.train, split.calib, crops, TrainConfig(epochs=epochs, use_image=use_img))
         mu, sd = th.predict(split.test, crops)
-        results[name] = _evaluate(name, split.test, mu, sd, gating, with_subgroups, time.time() - t0)
+        results[name] = _evaluate(name, split.test, mu, sd, gating, with_subgroups, time.time() - t0,
+                                  focus_model_for("ml", target))
         results[name]["training_history"] = th.history
         results[name]["conformal_scale"] = th.conformal_scale
         trained_hybrids[name] = th
-        print(f"    {name:20s} SE MAE {results[name]['eye']['se_all_eyes'].get('mae', float('nan')):.3f}")
+        done(name)
     return results, trained_hybrids
 
 
-def _evaluate(name, test, mu, sd, gating, with_subgroups, seconds):
+def _evaluate(name, test, mu, sd, gating, with_subgroups, seconds, focus_model: bool):
     frames = test.assign(pred_mu=mu, pred_sigma=sd)
     usable = frames[frames.quality_usable.astype(bool)]
-    eyes = fuse_predictions(usable, usable.pred_mu.to_numpy(), usable.pred_sigma.to_numpy(), name, gating)
+    # without a crescent the app's physics reports the dead zone, not its centre
+    intervals = dead_zone_intervals(usable) if name == "physics_only" else None
+    eyes = fuse_predictions(usable, usable.pred_mu.to_numpy(), usable.pred_sigma.to_numpy(), name, gating,
+                            focus_model, intervals)
     out = {
-        "frame": dioptric_metrics(usable.pred_mu, usable.gt_power_meridian),
+        # against what the model learned: in simulation, the meridian as the camera saw it
+        "frame": dioptric_metrics(usable.pred_mu, usable.y),
         "eye": eye_metrics(eyes, frames),
+        "focus_model": focus_model,
         "train_seconds": round(seconds, 1),
     }
     if with_subgroups:
         out["subgroups"] = subgroup_metrics(eyes)
         cols = ["session_id", "eye", "device_id", "gt_se", "pred_M", "pred_M_sd", "output_level", "gt_cyl", "pred_cyl",
-                "gt_axis", "pred_axis", "age_group"]
+                "gt_axis", "pred_axis", "age_group", "range_low", "range_high", "focus_limited"]
         out["eyes_sample"] = json.loads(eyes[cols].head(200).to_json(orient="records"))
     return out
 
@@ -111,8 +135,9 @@ def main(argv: list[str] | None = None) -> None:
     if a.publish_web and not simulated:
         raise SystemExit("--publish-web puts the report in the web app, whose benchmark is simulated; a report on "
                          "real data lists study eyes, so it is not published")
-    print(f"loading {a.data} ({'SIMULATED' if simulated else 'REAL'} data)")
-    df = add_physics_columns(pd.read_csv(a.data / "frames.csv"))
+    target = dataset_target(manifest)
+    print(f"loading {a.data} ({'SIMULATED' if simulated else 'REAL'} data, target {target})")
+    df = with_targets(add_physics_columns(pd.read_csv(a.data / "frames.csv")), target)
     sp, dv = splits(df, a.holdout_device)
     crops = None if a.no_images or not (a.data / "crops.npz").exists() else np.load(a.data / "crops.npz")["crops"]
     gating = GatingConfig()
@@ -120,27 +145,27 @@ def main(argv: list[str] | None = None) -> None:
     model_version = f"{__version__}-sim" if simulated else f"{__version__}+{datetime.now(UTC):%Y%m%dT%H%M%SZ}"
 
     report: dict[str, Any] = {
-        "generated_at": pd.Timestamp.utcnow().isoformat(), "eyeref_ml_version": __version__,
-        "simulated": simulated, "dataset": manifest, "model_version": model_version,
+        "generated_at": pd.Timestamp.now("UTC").isoformat(), "eyeref_ml_version": __version__,
+        "simulated": simulated, "dataset": manifest, "model_version": model_version, "target": target,
         "warning": "SIMULATED DATA - metrics demonstrate the pipeline only and are NOT evidence of clinical accuracy."
         if simulated else manifest.get("warning", ""),
         "gating": gating.model_dump(), "experiments": {}, "cross_device_degradation": {},
     }
     print("experiment 1: subject-level split")
-    res, hybrids = run_split(sp, crops, a.epochs, gating, with_subgroups=True)
+    res, hybrids = run_split(sp, crops, a.epochs, gating, with_subgroups=True, target=target)
     report["experiments"]["subject_split"] = {"description": sp.description, "n_train_subjects": int(sp.train.subject_id.nunique()),
                                               "n_test_subjects": int(sp.test.subject_id.nunique()), "models": res}
     if dv is None:
         print("experiment 2: skipped, no device held out (--holdout-device)")
     else:
         print(f"experiment 2: leave-device-out ({a.holdout_device})")
-        res2, _ = run_split(dv, crops, max(5, a.epochs // 2), gating, with_subgroups=False)
+        res2, _ = run_split(dv, crops, max(5, a.epochs // 2), gating, with_subgroups=False, target=target)
         report["experiments"]["device_holdout"] = {"description": dv.description, "held_out_device": a.holdout_device,
                                                    "n_test_subjects": int(dv.test.subject_id.nunique()), "models": res2}
-        # degradation table
+        # degradation table: the estimator's own error, per frame against its target
         for name in res2:
-            a1 = res[name]["eye"]["se_all_eyes"].get("mae")
-            a2 = res2[name]["eye"]["se_all_eyes"].get("mae")
+            a1 = res[name]["frame"].get("mae")
+            a2 = res2[name]["frame"].get("mae")
             report["cross_device_degradation"][name] = {
                 "in_distribution_mae": a1, "unseen_device_mae": a2,
                 "degradation_d": (a2 - a1) if a1 is not None and a2 is not None else None}
@@ -153,9 +178,12 @@ def main(argv: list[str] | None = None) -> None:
     from ..export.onnx_export import export
 
     for name, th in hybrids.items():
-        summary = {"se_mae_subject_split": res[name]["eye"]["se_all_eyes"].get("mae")}
+        # the eyes given a range have no number, so the SE error is over the numbers the app gave
+        summary = {"frame_mae_subject_split": res[name]["frame"].get("mae"),
+                   "fraction_given_a_number_subject_split": res[name]["eye"]["output_levels"].get("quantitative", 0.0),
+                   "se_mae_of_numbers_given_subject_split": res[name]["eye"]["se_released_only"].get("mae")}
         fname = "meridional_mlp.onnx" if not th.use_image else "hybrid_cnn.onnx"
-        export(th, a.artifacts / fname, f"eyeref-{name}", model_version, simulated, manifest, summary)
+        export(th, a.artifacts / fname, f"eyeref-{name}", model_version, simulated, manifest, summary, target)
         print(f"exported {a.artifacts / fname}")
 
     if a.publish_web:

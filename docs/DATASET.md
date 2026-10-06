@@ -112,7 +112,9 @@ could belong to either, so it is paired with neither. Uploads from the web app a
 - **Primary label:** spherical equivalent from the best available reference. The priority order is
   cycloplegic, then subjective, then autorefractor, then retinoscopy.
 - **Training targets:** M, J0 and J45 from the reference, plus the **per-meridian power**
-  P(θ) = M + J0·cos 2θ + J45·sin 2θ at each capture's meridian.
+  P(θ) = M + J0·cos 2θ + J45·sin 2θ at each capture's meridian. These are the eye's own refraction.
+  The camera saw the eye focused on the light, by an amount no capture shows, so a model trained on
+  them learns how far its training eyes focused on average (MODEL_TRAINING.md, What the models learn).
 - Axis is recorded but always modelled through J0/J45.
 
 ## Optically valid augmentations (ml/eyeref_ml/datasets/augment.py)

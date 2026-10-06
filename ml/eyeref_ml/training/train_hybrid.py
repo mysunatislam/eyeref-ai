@@ -63,8 +63,9 @@ def _tensors(df: pd.DataFrame, mean: np.ndarray, std: np.ndarray, crops: np.ndar
 
 
 def _side_labels(df: pd.DataFrame) -> np.ndarray:
+    """The side of the pupil the crescent falls on, for the frame's target power."""
     out = []
-    for p, d, e, pmm in zip(df.gt_power_meridian, df.working_distance_m, df.eccentricity_mm, df.pupil_diameter_mm, strict=True):
+    for p, d, e, pmm in zip(df.y, df.working_distance_m, df.eccentricity_mm, df.pupil_diameter_mm, strict=True):
         if not pmm or not np.isfinite(pmm) or pmm <= 1.5:
             out.append(1)
             continue
@@ -87,11 +88,12 @@ def train_hybrid(train: pd.DataFrame, calib: pd.DataFrame, crops: np.ndarray | N
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, cfg.epochs)
 
     x_all, prior_all, img_all = _tensors(train, mean, std, crops if use_img else None)
-    y_all = torch.tensor(train.gt_power_meridian.to_numpy()[:, None], dtype=torch.float32)
+    y_all = torch.tensor(train.y.to_numpy()[:, None], dtype=torch.float32)
     side_all = torch.tensor(_side_labels(train), dtype=torch.long)
     mer_all = torch.tensor(train.meridian_deg.to_numpy(), dtype=torch.float32)
     groups = [g.index.to_numpy() for _, g in train.groupby(["session_id", "eye"])]
-    gt_eye = {i: train.loc[g[0], ["gt_M", "gt_J0", "gt_J45"]].to_numpy(float) for i, g in enumerate(groups)}
+    # the eye under the same target: focusing on the light moves M alone
+    gt_eye = {i: train.loc[g[0], ["y_M", "gt_J0", "gt_J45"]].to_numpy(float) for i, g in enumerate(groups)}
     ce = nn.CrossEntropyLoss()
     history = []
     for ep in range(cfg.epochs):
@@ -128,13 +130,13 @@ def train_hybrid(train: pd.DataFrame, calib: pd.DataFrame, crops: np.ndarray | N
     # split-conformal scaling of the predicted SD on held-out calibration subjects
     th = TrainedHybrid(net, mean, std, 1.0, use_img, history)
     mu_c, sd_c = th.predict(calib, crops, mc=10)
-    q = conformal_quantile(np.abs(mu_c - calib.gt_power_meridian.to_numpy()) / np.maximum(sd_c, 1e-3))
+    q = conformal_quantile(np.abs(mu_c - calib.y.to_numpy()) / np.maximum(sd_c, 1e-3))
     th.conformal_scale = float(q / 1.96) if math.isfinite(q) else 1.0
     x, prior, img = _tensors(calib, mean, std, crops if use_img else None)
     net.eval()
     with torch.no_grad():
         mu_d, lv_d, _ = net(x, prior, img)
     sd_d = lv_d.exp().sqrt().squeeze(1).numpy()
-    q_d = conformal_quantile(np.abs(mu_d.squeeze(1).numpy() - calib.gt_power_meridian.to_numpy()) / np.maximum(sd_d, 1e-3))
+    q_d = conformal_quantile(np.abs(mu_d.squeeze(1).numpy() - calib.y.to_numpy()) / np.maximum(sd_d, 1e-3))
     th.conformal_scale_det = float(q_d / 1.96) if math.isfinite(q_d) else 1.0
     return th

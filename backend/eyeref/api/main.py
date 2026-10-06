@@ -47,7 +47,7 @@ from ..cv.features import EXTRACTOR_VERSION
 from ..db import models as m
 from ..db.session import Database
 from ..inference.estimators import OnnxMeridionalEstimator, PhysicsHeuristicEstimator
-from ..inference.fusion import AssessmentReport, GatingConfig, build_report
+from ..inference.fusion import AssessmentReport, GatingConfig, build_report, focus_model_for
 from ..optics.power_vector import SphCylAxis
 from ..pipeline import process_frame
 from ..simulation.bench import run_simulated_bench
@@ -91,8 +91,8 @@ class EstimateRequest(BaseModel):
     estimator: Literal["physics", "ml"] = "physics"
     gating: GatingConfig = Field(default_factory=GatingConfig)
     symptoms_reported: bool = False
-    #: allow for the eyes focusing on the light; false for a capture through a stage 1 trial lens, and by
-    #: default off for the learned estimator (see eyeref.inference.fusion.build_report)
+    #: allow for the eyes focusing on the light; false for a capture through a stage 1 trial lens. By default on,
+    #: except for a learned model that learned clinical refractions (see eyeref.inference.fusion.focus_model_for)
     focus_model: Optional[bool] = None
 
 
@@ -519,9 +519,12 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
         ]
         if not recs:
             raise HTTPException(422, "no frames")
+        focus_model = req.focus_model
+        if focus_model is None:
+            focus_model = focus_model_for(est.kind, getattr(est, "learned_target", None))
         return build_report(recs, req.age_group, dev.id, dev.calibration_version, est.name, est.version, est.kind,
                             req.frames[0].features.extractor_version, req.gating, req.symptoms_reported,
-                            req.focus_model)
+                            focus_model)
 
 
     @app.post("/api/simulate")

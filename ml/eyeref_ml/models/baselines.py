@@ -1,7 +1,9 @@
 """Classical per-meridian estimators (the baseline any deep model must beat).
 
 Every model maps one frame's interpretable features + metadata to the
-refractive power along the probed meridian (mean and SD).  Eye-level
+refractive power along the probed meridian (mean and SD): the dataset's target
+``y``, which is the meridian as the camera saw it in simulation
+(eyeref_ml.datasets.targets).  Eye-level
 M/J0/J45 -> SPH/CYL/AXIS always goes through the SAME physics-based fusion
 (eyeref.inference.fusion), so comparisons isolate the estimator.
 """
@@ -72,7 +74,7 @@ class PhysicsOnly:
         self.sig = _ConformalSigma()
 
     def fit(self, train: pd.DataFrame, calib: pd.DataFrame) -> PhysicsOnly:
-        r = (calib.phys_power - calib.gt_power_meridian).abs().to_numpy()
+        r = (calib.phys_power - calib.y).abs().to_numpy()
         self.sig.fit(np.nan_to_num(r, nan=5.0), calib.phys_in_dead_zone.to_numpy())
         return self
 
@@ -87,8 +89,8 @@ class SklearnFrameModel:
         self.sig = _ConformalSigma()
 
     def fit(self, train: pd.DataFrame, calib: pd.DataFrame) -> SklearnFrameModel:
-        self.est.fit(design_matrix(train), train.gt_power_meridian.to_numpy())
-        r = np.abs(self.est.predict(design_matrix(calib)) - calib.gt_power_meridian.to_numpy())
+        self.est.fit(design_matrix(train), train.y.to_numpy())
+        r = np.abs(self.est.predict(design_matrix(calib)) - calib.y.to_numpy())
         self.sig.fit(r, calib.phys_in_dead_zone.to_numpy())
         return self
 

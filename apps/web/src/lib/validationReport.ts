@@ -9,6 +9,7 @@ export interface Reg {
   within_1_00: number | null;
   pearson_r: number | null;
   fraction_quantitative?: number | null;
+  fraction_range?: number | null;
 }
 export interface Screen {
   n: number;
@@ -30,6 +31,10 @@ export interface EyeMetrics {
   se_all_eyes: Reg;
   se_released_only: Reg;
   se_ci95_coverage: number | null;
+  /** Eyes that focusing on the light leaves open get a range: how many, and how often it holds the truth. */
+  ranges?: { n: number; fraction: number | null; coverage: number | null; coverage_all_eyes: number | null };
+  /** Eyes given a class, and how often it was right. */
+  classes?: { n: number; fraction: number | null; accuracy: number | null; wrong: Record<string, number> };
   sphere: Reg;
   cylinder: Reg;
   J0: Reg;
@@ -58,8 +63,11 @@ export interface EyeMetrics {
   rejection: { n: number } & Record<string, { fraction: number; mae_if_used: number | null } | number>;
 }
 export interface ModelResult {
+  /** Against the model's target: in simulation, the meridian as the camera saw it. */
   frame: Reg;
   eye: EyeMetrics;
+  /** Whether the app allows for the eyes focusing on the light with this model's readings. */
+  focus_model?: boolean;
   train_seconds?: number;
   training_history?: { epoch: number; loss: number }[];
   conformal_scale?: number;
@@ -76,6 +84,11 @@ export interface ValidationReport {
   generated_at: string;
   eyeref_ml_version: string;
   simulated: boolean;
+  /**
+   * What the models learned per frame: "optical", the meridian as the camera saw it (simulation), or
+   * "clinical", the eye's own refraction (a real study). Reports made before it was recorded learned clinical.
+   */
+  target?: "optical" | "clinical";
   warning: string;
   dataset: {
     simulated: boolean;
@@ -87,6 +100,7 @@ export interface ValidationReport {
   };
   gating: Record<string, number | boolean>;
   experiments: Record<string, Experiment>;
+  /** Frame errors against the target, on the devices seen in training and on the held-out one. */
   cross_device_degradation: Record<
     string,
     { in_distribution_mae: number; unseen_device_mae: number; degradation_d: number }

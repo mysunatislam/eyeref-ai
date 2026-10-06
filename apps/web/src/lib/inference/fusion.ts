@@ -487,20 +487,31 @@ export function fuseEye(
   return gateEye(m, ageGroup, cfg, focus, d);
 }
 
+/**
+ * Whether a report allows for the eyes focusing on the light, unless told otherwise. It does for readings of
+ * the eye as the camera saw it: the physics, and a learned model whose target was what the camera saw
+ * ("optical", as the simulator gives). A model that learned clinical refractions has also learned how its
+ * training eyes focused, so its readings are not corrected a second time; a model that does not say what it
+ * learned is taken to be one of those. Twin of eyeref.inference.fusion.focus_model_for.
+ */
+export function focusModelFor(estimatorKind: string, learnedTarget?: "optical" | "clinical"): boolean {
+  return estimatorKind !== "ml" || learnedTarget === "optical";
+}
+
 export interface ReportInput {
   frames: FrameRecord[];
   ageGroup: AgeGroup;
   deviceId: string;
   calibrationVersion: string;
-  estimator: { name: string; version: string; kind: string };
+  /** `learnedTarget`: what a learned model learned for each frame (see focusModelFor) */
+  estimator: { name: string; version: string; kind: string; learnedTarget?: "optical" | "clinical" };
   extractorVersion: string;
   gating?: GatingConfig;
   symptomsReported?: boolean;
   id?: string;
   /**
    * Allow for the eyes focusing on the light. A stage 1 capture turns it off: through a trial lens the
-   * point is the eye as the camera saw it. It defaults to on, except for a learned estimator: that predicts
-   * each meridian's own refraction, having learned from clinical refractions how its training eyes focused.
+   * point is the eye as the camera saw it. It defaults to focusModelFor the estimator.
    */
   focusModel?: boolean;
 }
@@ -529,7 +540,7 @@ export function buildReport(input: ReportInput): AssessmentReport {
   const d = workingDistance(frames);
   // the eyes focus together, so the model reads both eyes at once
   const focus =
-    (input.focusModel ?? input.estimator.kind !== "ml")
+    (input.focusModel ?? focusModelFor(input.estimator.kind, input.estimator.learnedTarget))
       ? focusPosterior({ OD: mOD.reading, OS: mOS.reading }, ageGroup, d, mOD.t, focusConfig(cfg))
       : null;
   const od = gateEye(mOD, ageGroup, cfg, focus, d);

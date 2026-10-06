@@ -8,7 +8,9 @@ the format of the simulated dataset (eyeref_ml.datasets.synthetic), so the train
 
 * Each eye's target at a visit is one reference, as recorded: the best available (cycloplegic, then subjective,
   autorefractor, retinoscopy, trial lens) or the method chosen. The target is its M, J0 and J45, and its power
-  along each frame's meridian, P(θ) = M + J0 cos 2θ + J45 sin 2θ.
+  along each frame's meridian, P(θ) = M + J0 cos 2θ + J45 sin 2θ. That is the eye's own refraction, not what
+  the camera saw of an eye focused on the light, so the manifest's target is ``clinical``
+  (eyeref_ml.datasets.targets).
 * Every frame keeps its quality grade, so training uses only those that passed, as the app does, and the
   evaluation still sees the rest.
 * A frame that cannot be trained on is left out, and the manifest counts it under the first reason that applies:
@@ -184,7 +186,7 @@ def convert(export: pd.DataFrame, reference: str = "best", extractor_version: Op
     eye_methods = frames.drop_duplicates(["session_id", "eye"])["gt_method"].value_counts()
     left_out = reason.value_counts()
     manifest = {
-        "simulated": bool(df["simulated"].iloc[0]),
+        "simulated": bool(df["simulated"].iloc[0]), "target": "clinical",
         "source": "research server capture export (GET /api/dataset/export)",
         "created_at": datetime.now(UTC).isoformat(), "eyeref_ml_version": __version__,
         "reference": reference, "reference_methods": {m: int(eye_methods[m]) for m in methods if m in eye_methods},
