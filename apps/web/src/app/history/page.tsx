@@ -13,6 +13,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs } from "@/components/ui/tabs";
 import { formatDiopters } from "@/lib/optics/powerVector";
+import { hasInduced } from "@/lib/research/stage1";
 import { clearAssessments, exportJson } from "@/lib/storage/db";
 import { useAssessments } from "@/lib/storage/hooks";
 import { AGE_LABEL, formatDateTime } from "@/lib/utils";
@@ -21,10 +22,12 @@ export default function HistoryPage() {
   const { items, unreadable } = useAssessments();
   const [kind, setKind] = useState<"real" | "sim">("real");
   const [who, setWho] = useState<string>("all");
+  // a stage 1 capture's values include its trial lens, so it is no part of anyone's trend
   const shown = useMemo(
-    () => (items ?? []).filter((a) => (kind === "sim") === a.report.simulated),
+    () => (items ?? []).filter((a) => (kind === "sim") === a.report.simulated && !hasInduced(a)),
     [items, kind],
   );
+  const induced = useMemo(() => (items ?? []).filter(hasInduced).length, [items]);
   const people = useMemo(() => [...new Set(shown.map((a) => a.profile.label))], [shown]);
   const filtered = shown.filter((a) => who === "all" || a.profile.label === who);
 
@@ -150,6 +153,15 @@ export default function HistoryPage() {
               </Link>
             ))}
           </Card>
+          {induced > 0 && (
+            <p className="text-muted text-xs">
+              {induced === 1 ? "One capture is" : `${induced} captures are`} not shown: they were taken
+              through a stage 1 trial lens, so their values include the lens. They are on the{" "}
+              <Link className={buttonVariants({ variant: "ghost", size: "sm" })} href="/validation/induced">
+                stage 1 page
+              </Link>
+            </p>
+          )}
           <p className="text-muted text-xs">
             For research use, link repeated measurements to the same pseudonymous code in{" "}
             <Link className={buttonVariants({ variant: "ghost", size: "sm" })} href="/dataset">

@@ -83,7 +83,18 @@ function Research() {
             <FlaskConical className="size-3" /> Simulated data
           </Badge>
         )}
+        {a.induced && (
+          <Badge tone="accent">
+            Stage 1 · {a.induced.lensD === 0 ? "no lens" : `${formatDiopters(a.induced.lensD)} lens`}
+          </Badge>
+        )}
       </div>
+      {a.induced && (
+        <p className="text-ink-2 text-xs">
+          Every number below includes the trial lens this capture was taken through, so none of it is this
+          person&apos;s refraction.
+        </p>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">

@@ -47,9 +47,14 @@ export default function ValidationPage() {
         title="Model comparison and validation"
         description="Subject-level splits (no person in both train and test), leave-one-device-out, conformal uncertainty, gating and rejection analysis."
         actions={
-          <Link href="/validation/study" className={buttonVariants({ variant: "secondary", size: "sm" })}>
-            Open a study report
-          </Link>
+          <>
+            <Link href="/validation/induced" className={buttonVariants({ variant: "secondary", size: "sm" })}>
+              Stage 1: induced defocus
+            </Link>
+            <Link href="/validation/study" className={buttonVariants({ variant: "secondary", size: "sm" })}>
+              Open a study report
+            </Link>
+          </>
         }
       />
       {r.simulated && (

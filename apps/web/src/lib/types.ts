@@ -247,8 +247,27 @@ export interface StoredAssessment {
   visionTests: VisionTestResult[];
   simTruth?: Record<EyeSide, { sph: number; cyl: number; axis: number | null; se: number }>;
   groundTruth?: GroundTruthEntry[];
+  /**
+   * Set on a stage 1 capture, taken through a trial lens added over the person's correction. Its values
+   * include the lens, so they are the experiment's measurement and never the person's refraction.
+   */
+  induced?: InducedDefocus;
   /** set once the record is stored on a research server (Dataset collection) */
   upload?: UploadReceipt;
+}
+
+/** The trial lens a stage 1 capture was taken through (docs/RESEARCH_PROTOCOL.md, stage 1). */
+export interface InducedDefocus {
+  /** the participant's stage 1 code */
+  code: string;
+  /** the lens added over the correction, in front of both eyes (D) */
+  lensD: number;
+  /** the trial frame's distance from the cornea (mm) */
+  vertexMm: number;
+  /** the spherical equivalent of a correction held in the same frame (D): 0 for contact lenses or none */
+  correctionInFrameD: number;
+  /** the distance from the eyes to the light they look at (m) */
+  workingDistanceM: number;
 }
 
 /** Where and when a record was stored on the research server, and what went with it. */

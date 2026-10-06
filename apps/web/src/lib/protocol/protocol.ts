@@ -29,6 +29,7 @@ import type {
   DeviceProfile,
   EyeSide,
   FrameRecord,
+  InducedDefocus,
   StoredAssessment,
   SubjectProfile,
 } from "../types";
@@ -155,6 +156,8 @@ export function finalizeAssessment(args: {
   settings: Settings;
   estimator: PhotorefractionEstimator;
   subject?: VirtualSubject;
+  /** set when the capture was taken through a stage 1 trial lens */
+  induced?: InducedDefocus;
 }): StoredAssessment {
   const device = activeDevice(args.settings);
   const report = buildReport({
@@ -175,5 +178,6 @@ export function finalizeAssessment(args: {
     frames: args.frames,
     visionTests: [],
     simTruth: args.subject ? subjectTruth(args.subject) : undefined,
+    induced: args.induced,
   };
 }

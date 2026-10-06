@@ -7,15 +7,25 @@ import { Field, Input, Select } from "@/components/ui/field";
 import { Switch } from "@/components/ui/switch";
 import { DEVICE_PROFILES } from "@/lib/devices";
 import { SIM_PRESETS } from "@/lib/protocol/protocol";
+import type { InducedDefocus } from "@/lib/types";
 import { useSettings } from "@/lib/settings";
 import type { AgeGroup, SubjectProfile } from "@/lib/types";
 import { AGE_LABEL } from "@/lib/utils";
 
-export function ProfileStep({ onNext }: { onNext: (p: SubjectProfile, presetId: string) => void }) {
+/** The profile step. On a stage 1 capture the participant's code and the lens are already settled. */
+export function ProfileStep({
+  onNext,
+  induced,
+}: {
+  onNext: (p: SubjectProfile, presetId: string) => void;
+  induced?: InducedDefocus | null;
+}) {
   const [s, set] = useSettings();
-  const [label, setLabel] = useState("");
+  const [label, setLabel] = useState(induced?.code ?? "");
   const [age, setAge] = useState<AgeGroup>("adult_18_39");
-  const [corr, setCorr] = useState<SubjectProfile["wearsCorrection"]>("none");
+  const [corr, setCorr] = useState<SubjectProfile["wearsCorrection"]>(
+    induced ? (induced.correctionInFrameD === 0 ? "contacts" : "glasses") : "none",
+  );
   const [symptoms, setSymptoms] = useState(false);
   const [consent, setConsent] = useState(false);
   const [preset, setPreset] = useState("random");
@@ -35,12 +45,16 @@ export function ProfileStep({ onNext }: { onNext: (p: SubjectProfile, presetId: 
           </div>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
-          <Field label="Nickname or study code" hint="Free text, kept locally only">
+          <Field
+            label="Nickname or study code"
+            hint={induced ? "The participant's stage 1 code" : "Free text, kept locally only"}
+          >
             <Input
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               placeholder="e.g. P-014"
               maxLength={40}
+              readOnly={!!induced}
             />
           </Field>
           <Field label="Age group" hint="Sets accommodation model and screening thresholds">
@@ -63,7 +77,7 @@ export function ProfileStep({ onNext }: { onNext: (p: SubjectProfile, presetId: 
               <option value="unknown">Prefer not to say</option>
             </Select>
           </Field>
-          {s.simulationMode ? (
+          {s.simulationMode && !induced ? (
             <Field
               label="Virtual subject (Simulation Mode)"
               hint={SIM_PRESETS.find((p) => p.id === preset)?.description}
@@ -77,15 +91,26 @@ export function ProfileStep({ onNext }: { onNext: (p: SubjectProfile, presetId: 
               </Select>
             </Field>
           ) : (
-            <Field label="Device profile" hint={device?.notes}>
-              <Select value={s.deviceId} onChange={(e) => set({ deviceId: e.target.value })}>
-                {devices.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.model}
-                    {d.calibrationVersion === "uncalibrated" ? " (uncalibrated)" : ""}
-                  </option>
-                ))}
-              </Select>
+            <Field
+              label={s.simulationMode ? "Virtual participant (Simulation Mode)" : "Device profile"}
+              hint={
+                s.simulationMode
+                  ? "Built from the participant's code: near-emmetropic under their correction, as stage 1 asks."
+                  : device?.notes
+              }
+            >
+              {s.simulationMode ? (
+                <Input value={`stage1|${induced!.code}`} readOnly />
+              ) : (
+                <Select value={s.deviceId} onChange={(e) => set({ deviceId: e.target.value })}>
+                  {devices.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.model}
+                      {d.calibrationVersion === "uncalibrated" ? " (uncalibrated)" : ""}
+                    </option>
+                  ))}
+                </Select>
+              )}
             </Field>
           )}
           <div className="space-y-4 sm:col-span-2">
@@ -150,6 +175,7 @@ export function ProfileStep({ onNext }: { onNext: (p: SubjectProfile, presetId: 
                 wearsCorrection: corr,
                 symptoms,
                 consentImages: consent,
+                datasetCode: induced ? induced.code : undefined,
               },
               preset,
             )

@@ -1,5 +1,14 @@
 "use client";
-import { AlertTriangle, Download, FileText, FlaskConical, Microscope, RotateCcw, Trash2 } from "lucide-react";
+import {
+  AlertTriangle,
+  Download,
+  FileText,
+  FlaskConical,
+  Glasses,
+  Microscope,
+  RotateCcw,
+  Trash2,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -7,8 +16,9 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Stat } from "@/components/ui/stat";
 import { formatDiopters } from "@/lib/optics/powerVector";
+import { inducedChangeD } from "@/lib/research/stage1";
 import { deleteAssessment, exportJson } from "@/lib/storage/db";
-import type { StoredAssessment } from "@/lib/types";
+import type { InducedDefocus, StoredAssessment } from "@/lib/types";
 import { AGE_LABEL, cn, formatDateTime, probability } from "@/lib/utils";
 import { AiExplainPanel } from "./AiExplainPanel";
 import { EyeResultCard } from "./EyeResultCard";
@@ -21,6 +31,37 @@ export function download(blob: Blob, name: string) {
   a.download = name;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/**
+ * A capture taken through a stage 1 trial lens measured the eye and the lens together, so its numbers are
+ * the experiment's and not the person's refraction. This says so above the result itself.
+ */
+function InducedResultCard({ induced }: { induced: InducedDefocus }) {
+  return (
+    <Card className="border-accent/50">
+      <CardContent className="flex gap-3 pt-5">
+        <Glasses className="text-accent mt-0.5 size-5 shrink-0" aria-hidden />
+        <div className="space-y-1 text-sm">
+          <p className="font-medium">
+            Stage 1 capture · participant {induced.code} ·{" "}
+            {induced.lensD === 0 ? "no added lens" : `${formatDiopters(induced.lensD)} trial lens`}
+          </p>
+          <p className="text-ink-2">
+            {induced.lensD === 0
+              ? "Taken with the trial frame empty, over their usual correction."
+              : `Taken through a ${formatDiopters(induced.lensD)} lens over their usual correction, which makes each eye ${formatDiopters(inducedChangeD(induced))} at the cornea.`}{" "}
+            What the app released below includes that lens, so it is not this person&apos;s refraction, and it
+            is no basis for advice. The{" "}
+            <Link href="/validation/induced" className="underline">
+              stage 1 page
+            </Link>{" "}
+            compares it with the change the lens makes.
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 export function ReportView({ a }: { a: StoredAssessment }) {
@@ -45,12 +86,14 @@ export function ReportView({ a }: { a: StoredAssessment }) {
           </h1>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link
-            href={`/report?id=${encodeURIComponent(a.id)}`}
-            className={buttonVariants({ variant: "secondary", size: "sm" })}
-          >
-            <FileText /> Referral report
-          </Link>
+          {!a.induced && (
+            <Link
+              href={`/report?id=${encodeURIComponent(a.id)}`}
+              className={buttonVariants({ variant: "secondary", size: "sm" })}
+            >
+              <FileText /> Referral report
+            </Link>
+          )}
           <Link
             href={`/research?id=${encodeURIComponent(a.id)}`}
             className={buttonVariants({ variant: "secondary", size: "sm" })}
@@ -80,6 +123,8 @@ export function ReportView({ a }: { a: StoredAssessment }) {
           </Button>
         </div>
       </div>
+
+      {a.induced && <InducedResultCard induced={a.induced} />}
 
       <Card className={cn(urgent ? "border-warn/50" : "border-line")}>
         <CardContent className="flex gap-3 pt-5">
@@ -134,7 +179,14 @@ export function ReportView({ a }: { a: StoredAssessment }) {
 
       <SimTruthCard a={a} />
 
-      <AiExplainPanel report={r} />
+      {a.induced ? (
+        <p className="text-muted text-xs">
+          A plain-language explanation is not offered for a stage 1 capture: it would describe the eye plus
+          its trial lens as the person&apos;s sight.
+        </p>
+      ) : (
+        <AiExplainPanel report={r} />
+      )}
 
       <Card>
         <CardHeader>

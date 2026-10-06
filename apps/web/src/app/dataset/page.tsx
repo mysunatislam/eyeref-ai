@@ -1,10 +1,11 @@
 "use client";
 import { CloudCheck, CloudUpload, Download, FlaskConical, Loader2, Plus, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { download } from "@/components/results/ReportView";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Stat } from "@/components/ui/stat";
@@ -14,6 +15,7 @@ import { agreement, normalizeGt, pairRows, toCsv } from "@/lib/dataset";
 import { DEVICE_PROFILES } from "@/lib/devices";
 import { formatAxis, formatDiopters, sphericalEquivalent } from "@/lib/optics/powerVector";
 import { PROTOCOL_VERSION } from "@/lib/protocol/protocol";
+import { hasInduced } from "@/lib/research/stage1";
 import { useSettings } from "@/lib/settings";
 import { saveAssessment } from "@/lib/storage/db";
 import { useAssessments } from "@/lib/storage/hooks";
@@ -216,7 +218,13 @@ export default function DatasetPage() {
   const { items, reload } = useAssessments();
   const [incSim, setIncSim] = useState(false);
   const [selId, setSelId] = useState<string | null>(null);
-  const list = useMemo(() => (items ?? []).filter((a) => incSim || !a.report.simulated), [items, incSim]);
+  // a stage 1 capture's values include its trial lens, which the server does not record: it is not
+  // dataset material, and pairing it with a reference refraction would pair the lens with the eye
+  const list = useMemo(
+    () => (items ?? []).filter((a) => (incSim || !a.report.simulated) && !hasInduced(a)),
+    [items, incSim],
+  );
+  const induced = useMemo(() => (items ?? []).filter(hasInduced).length, [items]);
   const sel = list.find((a) => a.id === selId) ?? list[0] ?? null;
   const rows = useMemo(() => pairRows(list), [list]);
   const agrRel = agreement(rows, "predSe");
@@ -252,6 +260,16 @@ export default function DatasetPage() {
           description="For trying the workflow. Simulated rows are flagged in every export."
         />
       </div>
+      {induced > 0 && (
+        <p className="text-muted mb-4 text-xs">
+          {induced === 1 ? "One capture is" : `${induced} captures are`} left out: taken through a stage 1
+          trial lens, so the values include the lens. The server does not record the lens, so they stay on
+          this device, on the{" "}
+          <Link className={buttonVariants({ variant: "ghost", size: "sm" })} href="/validation/induced">
+            stage 1 page
+          </Link>
+        </p>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-4">
         <Stat label="Assessments" value={list.length} />

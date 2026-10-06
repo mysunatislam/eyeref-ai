@@ -2,7 +2,7 @@
 PY ?= .venv/bin/python
 PIP ?= .venv/bin/pip
 
-.PHONY: setup setup-py setup-web backend web test test-py test-web lint typecheck data ml-train dataset ml-train-dev study schemas docker check
+.PHONY: setup setup-py setup-web backend web test test-py test-web lint typecheck data ml-train dataset ml-train-dev study stage1 schemas docker check
 
 setup: setup-py setup-web
 setup-py:
@@ -40,6 +40,9 @@ ml-train-dev:       ## the same models trained on it, kept out of the web app; H
 
 study:              ## validation study report: make study EXPORT=eyeref_eyes.csv (GET /api/dataset/export?level=eye)
 	cd ml && ../$(PY) -m eyeref_ml.evaluation.study $(abspath $(EXPORT)) --one-eye --out $(abspath study.json)
+
+stage1:             ## stage 1 report from the app's file: make stage1 DATA=eyeref-stage1-....json
+	cd backend && ../$(PY) -m eyeref.research.stage1 $(abspath $(DATA))
 
 schemas:            ## JSON Schemas for the shared contracts
 	$(PY) scripts/export_schemas.py

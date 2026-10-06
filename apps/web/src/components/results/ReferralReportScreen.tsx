@@ -10,6 +10,23 @@ import type { StoredAssessment } from "@/lib/types";
 import { ReferralReport } from "./ReferralReport";
 
 function Toolbar({ a }: { a: StoredAssessment }) {
+  // a stage 1 capture measured the eye and a trial lens together: on paper, with no sight of the lens, it
+  // would read as the person's refraction
+  if (a.induced)
+    return (
+      <div className="space-y-4">
+        <Link
+          href={`/results?id=${encodeURIComponent(a.id)}`}
+          className={buttonVariants({ variant: "ghost", size: "sm" })}
+        >
+          <ArrowLeft /> Back to results
+        </Link>
+        <p className="border-warn/40 bg-warn-soft text-ink-2 rounded-xl border px-3 py-2 text-sm">
+          This capture was taken through a stage 1 trial lens, so its values include the lens and are not this
+          person&apos;s refraction. There is no referral report for it.
+        </p>
+      </div>
+    );
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2 print:hidden">
