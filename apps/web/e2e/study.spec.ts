@@ -44,6 +44,15 @@ test("a study report opens from a file, keeps its simulated label, and is never 
   await expect(page.getByText(/Expected calibration error 0\.18/)).toBeVisible();
   await page.getByRole("combobox", { name: "Subgroup" }).selectOption("distance_band");
   await expect(page.getByRole("cell", { name: "1.4 to 1.6 m" })).toBeVisible();
+  await expect(page.getByRole("columnheader", { name: "Frames used" })).toBeVisible();
+
+  // the gate: what the eyes it held back would have shown, and why frames were not used
+  await expect(page.getByRole("heading", { name: "Does the gate hold back the right eyes?" })).toBeVisible();
+  await expect(page.getByRole("row", { name: /^Held back, with a number/ })).toContainText("7");
+  await expect(page.getByRole("heading", { name: "Error as more eyes are released" })).toBeVisible();
+  await expect(page.getByText("the app's gate")).toBeVisible(); // the gate's point on the curve
+  await expect(page.getByRole("heading", { name: "Frame quality" })).toBeVisible();
+  await expect(page.getByRole("row", { name: /^Pupil too small/ })).toContainText("38");
 
   const serious = await seriousViolations(page);
   expect(serious, serious.join("\n")).toEqual([]);

@@ -6,6 +6,7 @@ import {
   Legend,
   Line,
   LineChart,
+  ReferenceDot,
   ReferenceLine,
   ResponsiveContainer,
   Scatter,
@@ -15,6 +16,7 @@ import {
   YAxis,
   ZAxis,
 } from "recharts";
+import { pct } from "@/lib/utils";
 import type { EyeMetrics, ValidationReport } from "@/lib/validationReport";
 import { MODEL_LABEL } from "@/lib/validationReport";
 
@@ -84,6 +86,60 @@ export function RocChart({ roc }: { roc: { fpr: number; tpr: number }[] }) {
             stroke="var(--line)"
             strokeDasharray="4 4"
           />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+/**
+ * Selective prediction: releasing eyes from the most certain, the MAE of those released so far against the
+ * share of eyes released. The dot is where the product's own gate stopped.
+ */
+export function RiskCoverageChart({
+  curve,
+  gate,
+}: {
+  curve: { coverage: number; mae: number }[];
+  gate: { coverage: number; mae: number } | null;
+}) {
+  return (
+    <div className="h-56 w-full">
+      <ResponsiveContainer>
+        <LineChart data={curve} margin={{ top: 16, right: 16, bottom: 12, left: -8 }}>
+          <CartesianGrid stroke="var(--line)" strokeDasharray="3 3" />
+          <XAxis
+            type="number"
+            dataKey="coverage"
+            domain={[0, 1]}
+            tick={tick}
+            tickFormatter={(v: number) => pct(v)}
+            label={{ value: "share of eyes released", fontSize: 10, fill: "var(--muted)", dy: 14 }}
+          />
+          <YAxis type="number" unit=" D" tick={tick} domain={[0, "auto"]} />
+          <Tooltip
+            contentStyle={tip}
+            labelFormatter={(v) => (typeof v === "number" ? `${pct(v)} released` : String(v))}
+            formatter={(v) => (typeof v === "number" ? `${v.toFixed(2)} D` : String(v))}
+          />
+          <Line
+            dataKey="mae"
+            name="MAE"
+            stroke="var(--accent)"
+            dot={false}
+            strokeWidth={2}
+            isAnimationActive={false}
+          />
+          {gate && (
+            <ReferenceDot
+              x={gate.coverage}
+              y={gate.mae}
+              r={5}
+              fill="var(--warn)"
+              stroke="var(--surface)"
+              label={{ value: "the app's gate", position: "top", fontSize: 10, fill: "var(--warn)" }}
+            />
+          )}
         </LineChart>
       </ResponsiveContainer>
     </div>

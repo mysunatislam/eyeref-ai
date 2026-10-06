@@ -15,8 +15,9 @@ import csv
 import io
 import json
 import os
+import re
 import statistics
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from datetime import UTC, datetime
 from typing import Any, Literal, Optional, TypeVar
 
@@ -199,6 +200,25 @@ def reference_columns(refs: dict[tuple[str, str], m.GroundTruth], eye: str) -> d
     return out
 
 
+GRADES = ("excellent", "acceptable", "poor", "reject")
+# a failure reason becomes part of a column name, so only a plain identifier is kept as it is
+_REASON = re.compile(r"[a-z][a-z0-9_]{0,39}")
+
+
+def frame_quality_columns(captures: Sequence[m.Capture]) -> dict[str, int]:
+    """How one eye's frames at a visit were graded, and why those not used failed. A frame rejected outright
+    counts once for each hard failure it had; one not used for its overall score alone counts as low_score."""
+    out = {f"frames_{g}": sum(c.quality_grade == g for c in captures) for g in GRADES}
+    for c in captures:
+        failed = (c.quality_json or {}).get("hard_failures") or []
+        reasons = {r if isinstance(r, str) and _REASON.fullmatch(r) else "other" for r in failed}
+        if not reasons and c.quality_grade in ("poor", "reject"):
+            reasons = {"low_score"}
+        for reason in reasons:
+            out[f"frames_failed_{reason}"] = out.get(f"frames_failed_{reason}", 0) + 1
+    return out
+
+
 def result_columns(p: m.Prediction) -> dict[str, Any]:
     """What the product released for one eye. Sphere, cylinder and axis are empty unless its gate released them."""
     eye = p.report_json.get("eyes", {}).get(p.eye, {})
@@ -206,7 +226,8 @@ def result_columns(p: m.Prediction) -> dict[str, Any]:
     return {
         "prediction_id": p.id, "predicted_at": utc(p.created_at).isoformat(), "output_level": p.output_level,
         "pred_se": p.se, "pred_se_ci_low": p.se_ci_low, "pred_se_ci_high": p.se_ci_high,
-        "pred_m": p.m, "pred_j0": p.j0, "pred_j45": p.j45, "pred_sph": p.sphere, "pred_cyl": p.cylinder,
+        "pred_m": p.m, "pred_m_sd": (eye.get("power_vector_sd") or {}).get("M"), "pred_j0": p.j0, "pred_j45": p.j45,
+        "pred_sph": p.sphere, "pred_cyl": p.cylinder,
         "pred_axis": p.axis, "pred_class": p.refractive_class, "confidence": p.confidence,
         "p_myopia": probs.get("myopia"), "p_emmetropia": probs.get("emmetropia"), "p_hyperopia": probs.get("hyperopia"),
         "p_astigmatism": eye.get("astigmatism_probability"), "astigmatism_status": eye.get("astigmatism_status"),
@@ -687,7 +708,8 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
                     "device_id": ses.device_id, "protocol_version": ses.protocol_version, "cycloplegia": ses.cycloplegia,
                     "condition_label": ses.condition_label, "simulated": ses.simulated, "eye": eye,
                     "n_captures": len(captures), "pupil_mm": median_of(c.pupil_diameter_mm for c in captures),
-                    "distance_m": median_of(c.working_distance_m for c in captures), **reference_columns(refs, eye),
+                    "distance_m": median_of(c.working_distance_m for c in captures), **frame_quality_columns(captures),
+                    **reference_columns(refs, eye),
                 }
                 results = sorted((p for p in ses.predictions if p.eye == eye), key=lambda p: (utc(p.created_at), p.id))
                 # an eye photographed without a result still gets a row: the protocol reports every eye that entered it

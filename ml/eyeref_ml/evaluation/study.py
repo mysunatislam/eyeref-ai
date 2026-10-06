@@ -11,7 +11,9 @@ confidence interval from a bootstrap over subjects:
 * calibration of the class probabilities: a reliability table and the expected calibration error;
 * repeatability, from the same eye measured more than once on the same day;
 * release and agreement by device, age, refractive range, pupil size, distance, iris colour, pigmentation
-  and sex.
+  and sex;
+* the quality gate: how the eyes it held back would have fared had they been released, the selective-prediction
+  curve, and how the frames were graded and why those not used failed.
 
     python -m eyeref_ml.evaluation.study eyeref_eyes.csv --reference autorefractor --out study.json
 """
@@ -32,7 +34,7 @@ import numpy as np
 import pandas as pd
 from eyeref.optics.classification import thresholds_for_age
 from eyeref.optics.power_vector import PowerVector, SphCylAxis, from_power_vector, to_corneal_plane, to_power_vector
-from scipy.stats import rankdata
+from scipy.stats import rankdata, spearmanr
 
 from .. import __version__
 from .metrics import axis_metrics, dioptric_metrics
@@ -42,8 +44,9 @@ REFERENCE_PRIORITY = ("cycloplegic", "subjective", "autorefractor", "retinoscopy
 #: The protocol's four groups. Only the first two are screened; the others are referred.
 OUTCOMES = ("quantitative", "screening", "repeat", "protocol_failure")
 SCREENED = ("quantitative", "screening")
-NUMERIC = ("pred_se", "pred_se_ci_low", "pred_se_ci_high", "pred_j0", "pred_j45", "pred_sph", "pred_cyl", "pred_axis",
-           "p_myopia", "p_hyperopia", "p_astigmatism", "p_anisometropia", "n_usable_frames", "pupil_mm", "distance_m")
+NUMERIC = ("pred_se", "pred_se_ci_low", "pred_se_ci_high", "pred_m", "pred_m_sd", "pred_j0", "pred_j45", "pred_sph",
+           "pred_cyl", "pred_axis", "p_myopia", "p_hyperopia", "p_astigmatism", "p_anisometropia", "n_usable_frames",
+           "pupil_mm", "distance_m")
 #: The product refers for astigmatism at this probability ("astigmatism likely"); for the rest at 0.5.
 ASTIGMATISM_REFERRAL = 0.7
 #: Subgroups the protocol reports, and the bands some of them are cut into.
@@ -62,6 +65,14 @@ CORNEAL_PLANE_ABOVE_D = 4.0
 DEFAULT_VERTEX_MM = 12.0
 #: Bland and Altman's coefficient of repeatability, as a multiple of the within-subject SD (1.96 x sqrt 2).
 COR_PER_SW = 2.77
+#: Frame quality grades, best first. Only the first two are used (eyeref.types.QualityAssessment.usable).
+GRADES = ("excellent", "acceptable", "poor", "reject")
+USED_GRADES = ("excellent", "acceptable")
+FAILED = "frames_failed_"
+#: An SE within this of the reference is close (the protocol's ±0.50 D).
+CLOSE_D = 0.5
+#: The selective-prediction curve is thinned to at most this many points.
+MAX_CURVE_POINTS = 400
 #: What the web app's study page checks before reading a file (apps/web/src/lib/studyReport.ts).
 REPORT_KIND, REPORT_FORMAT = "eyeref-study-report", 1
 
@@ -130,6 +141,13 @@ def _compared(row: pd.Series) -> dict[str, Any]:
             "cmp_pred_axis": nan if rx is None or rx.axis is None else rx.axis}
 
 
+def _as_released(row: pd.Series) -> pd.Series:
+    """An eye as if the gate had released its M, as the gate analysis compares the eyes it held back."""
+    out = row.copy()
+    out["pred_se"] = out["pred_m"]
+    return out
+
+
 def prepare(export: pd.DataFrame, reference: str = "autorefractor", model_version: Optional[str] = None,
             one_eye: bool = False, seed: int = 0) -> tuple[pd.DataFrame, dict[str, Any]]:
     """One row per eye per visit: its outcome, the reference chosen, and the values compared.
@@ -148,6 +166,8 @@ def prepare(export: pd.DataFrame, reference: str = "autorefractor", model_versio
             df[col] = None  # a column no row had
     for col in NUMERIC:
         df[col] = pd.to_numeric(df[col], errors="coerce").astype(float)
+    for col in [f"frames_{g}" for g in GRADES] + [c for c in df if c.startswith(FAILED)]:
+        df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0.0) if col in df else 0.0  # none, in an older export
     df["simulated"] = df["simulated"].map(_bool)
     if df["simulated"].nunique() > 1:
         raise StudyError("the export mixes simulated and real data; analyse them separately")
@@ -194,6 +214,12 @@ def prepare(export: pd.DataFrame, reference: str = "autorefractor", model_versio
         for side in ("ref", "pred"):
             df[f"cmp_{side}_{col}"] = cmp[f"cmp_{side}_{col}"] if len(cmp) else np.nan
     df["corneal_plane"] = cmp["corneal_plane"].reindex(df.index, fill_value=False) if "corneal_plane" in cmp else False
+    # every eye given a number, released or held back, compared as a released one is: what the gate is judged on
+    df["pred_m"] = df["pred_m"].fillna(df["pred_se"])
+    number = df["ref_method"].notna() & df["pred_m"].notna()
+    held = pd.DataFrame([_compared(_as_released(r)) for _, r in df[number].iterrows()], index=df.index[number])
+    for side in ("ref", "pred"):
+        df[f"gate_{side}_m"] = held[f"cmp_{side}_m"] if len(held) else np.nan
     info = {"simulated": bool(df["simulated"].iloc[0]), "reference": reference, "model_versions": versions,
             "eyes_per_subject": f"one, chosen at random (seed {seed})" if one_eye else "both",
             "eyes_left_out_other_model_versions": left_out}
@@ -346,9 +372,13 @@ def study_metrics(eyes: pd.DataFrame) -> dict[str, float]:
                 b["eyes"] for b in table)
 
     out.update({f"repeatability/{k}": v for k, v in _repeats(eyes).items() if not k.startswith("n_")})
+    out.update(_gate(eyes))
+    out.update(_frames(eyes))
 
     released = (eyes["outcome"] == "quantitative").to_numpy()
     pred_m, ref_m = eyes["cmp_pred_m"].to_numpy(float), eyes["cmp_ref_m"].to_numpy(float)
+    graded = eyes[[f"frames_{g}" for g in GRADES]].to_numpy(float).sum(axis=1)
+    used = eyes[[f"frames_{g}" for g in USED_GRADES]].to_numpy(float).sum(axis=1)
     for col in SUBGROUPS:
         values = eyes[col].to_numpy(object)
         present = set(eyes[col].dropna().unique())
@@ -359,7 +389,75 @@ def study_metrics(eyes: pd.DataFrame) -> dict[str, float]:
             out[f"subgroups/{col}/{value}/released"] = float(released[g].mean())
             out.update({f"subgroups/{col}/{value}/{k}": stats[k] for k in ("bias", "loa_low", "loa_high", "mae")
                         if k in stats})
+            if graded[g].sum():
+                out[f"subgroups/{col}/{value}/frames_used"] = float(used[g].sum() / graded[g].sum())
     return {k: float(v) for k, v in out.items()}
+
+
+def _gate_errors(eyes: pd.DataFrame) -> tuple[pd.DataFrame, np.ndarray]:
+    """The eyes with a reference, and each one's absolute SE error had its M been released (NaN without one)."""
+    ref = eyes[eyes["ref_se"].notna()]
+    return ref, (ref["gate_pred_m"] - ref["gate_ref_m"]).abs().to_numpy(float)
+
+
+def _gate(eyes: pd.DataFrame) -> dict[str, float]:
+    """Over the eyes with a reference: those released, those the gate held back although the product had a
+    number for them, and every eye with a number (no gate). Each as a share of the eyes with a reference,
+    with the SE MAE and the share within 0.50 D they had, or would have had. And whether the product's
+    uncertainty (the SD of M) ranks its error: their Spearman correlation."""
+    ref, err = _gate_errors(eyes)
+    if ref.empty:
+        return {}
+    number = np.isfinite(err)
+    released = number & (ref["outcome"] == "quantitative").to_numpy()
+    out: dict[str, float] = {}
+    for name, sel in (("released", released), ("held_back", number & ~released), ("no_gate", number)):
+        out[f"gate/{name}/share"] = float(sel.mean())
+        if sel.any():
+            out[f"gate/{name}/mae"] = float(err[sel].mean())
+            out[f"gate/{name}/within_0_50"] = float((err[sel] <= CLOSE_D + 1e-9).mean())
+    sd = ref["pred_m_sd"].to_numpy(float)
+    ok = number & np.isfinite(sd)
+    if ok.sum() >= 3 and np.ptp(sd[ok]) > 0 and np.ptp(err[ok]) > 0:
+        out["gate/uncertainty_rank/spearman"] = float(spearmanr(sd[ok], err[ok]).statistic)
+    return out
+
+
+def risk_coverage(eyes: pd.DataFrame) -> list[dict[str, float]]:
+    """The selective-prediction curve: releasing eyes in order of the product's uncertainty (the SD of M),
+    most certain first, the SE MAE and share within 0.50 D of those released so far, against the share of
+    the eyes with a reference released. Eyes of equal uncertainty are released together."""
+    ref, err = _gate_errors(eyes)
+    sd = ref["pred_m_sd"].to_numpy(float)
+    ok = np.isfinite(err) & np.isfinite(sd)
+    order = np.argsort(sd[ok], kind="stable")
+    e, s = err[ok][order], sd[ok][order]
+    if not e.size:
+        return []
+    k = np.arange(1, e.size + 1)
+    mae, close = np.cumsum(e) / k, np.cumsum(e <= CLOSE_D + 1e-9) / k
+    ends = np.flatnonzero(np.r_[s[1:] != s[:-1], True])  # the last eye of each run of equal uncertainty
+    if ends.size > MAX_CURVE_POINTS:
+        ends = ends[np.unique(np.linspace(0, ends.size - 1, MAX_CURVE_POINTS).round().astype(int))]
+    return [{"coverage": round(float(k[i]) / len(ref), 4), "sd_up_to": round(float(s[i]), 4),
+             "mae": round(float(mae[i]), 4), "within_0_50": round(float(close[i]), 4)} for i in ends]
+
+
+def _failure_columns(eyes: pd.DataFrame) -> list[str]:
+    """The export's frames_failed_<reason> columns, the most frequent reason first."""
+    cols = [c for c in eyes if c.startswith(FAILED)]
+    return sorted(cols, key=lambda c: (-float(eyes[c].sum()), c))
+
+
+def _frames(eyes: pd.DataFrame) -> dict[str, float]:
+    """How the frames were graded, the share used, and the share not used for each reason, of all graded frames."""
+    graded = float(eyes[[f"frames_{g}" for g in GRADES]].to_numpy(float).sum())
+    if not graded:
+        return {}
+    out = {f"frames/graded/{g}": float(eyes[f"frames_{g}"].sum()) / graded for g in GRADES}
+    out["frames/used"] = sum(float(eyes[f"frames_{g}"].sum()) for g in USED_GRADES) / graded
+    out.update({f"frames/failed/{c.removeprefix(FAILED)}": float(eyes[c].sum()) / graded for c in _failure_columns(eyes)})
+    return out
 
 
 def study_counts(eyes: pd.DataFrame) -> dict[str, Any]:
@@ -371,8 +469,20 @@ def study_counts(eyes: pd.DataFrame) -> dict[str, Any]:
         "eyes_compared_at_cornea": int(eyes["corneal_plane"].astype(bool).sum()),
         "repeatability_eyes": int(rep["n_eyes"]), "repeatability_measurements": int(rep["n_measurements"]),
         "screening_tables": {name: cross_table(*screen) for name, screen in _screens(eyes).items()},
+        "gate": _gate_counts(eyes),
+        "frames": {**{g: int(eyes[f"frames_{g}"].sum()) for g in GRADES},
+                   "failed": {c.removeprefix(FAILED): int(eyes[c].sum()) for c in _failure_columns(eyes)}},
         "subgroups": {col: {str(k): int(v) for k, v in eyes[col].value_counts().items()} for col in SUBGROUPS},
     }
+
+
+def _gate_counts(eyes: pd.DataFrame) -> dict[str, int]:
+    ref, err = _gate_errors(eyes)
+    number = np.isfinite(err)
+    released = number & (ref["outcome"] == "quantitative").to_numpy()
+    return {"released": int(released.sum()), "held_back": int((number & ~released).sum()),
+            "no_number": int((~number).sum()),
+            "with_uncertainty": int((number & np.isfinite(ref["pred_m_sd"].to_numpy(float))).sum())}
 
 
 def _probabilities(eyes: pd.DataFrame) -> dict[str, tuple[np.ndarray, np.ndarray]]:
@@ -458,6 +568,7 @@ def study_report(export: pd.DataFrame, reference: str = "autorefractor", model_v
         "roc_curves": {name: roc_curve(truth, _scores(p, screened))
                        for name, (truth, p, screened, _) in _screens(eyes).items()},
         "calibration_tables": {name: calibration(truth, p) for name, (truth, p) in _probabilities(eyes).items()},
+        "risk_coverage": risk_coverage(eyes),
         # each eye given a number, as compared (released minus reference), in order of the mean
         "bland_altman_se": [{"mean": round(m, 3), "diff": round(d, 3)} for m, d in differences],
     }
@@ -477,6 +588,12 @@ def _fmt(m: dict[str, Any] | None, unit: str = "", pct: bool = False, signed: bo
 
 def _count(k: int, noun: str) -> str:
     return f"{k} {noun}{'' if k == 1 else 's'}"
+
+
+def _share(m: dict[str, Any] | None) -> str:
+    """A share without its interval, to one decimal below 10%."""
+    v = (m or {}).get("value")
+    return "n/a" if v is None else f"{100 * v:.1f}%" if v < 0.1 else f"{100 * v:.0f}%"
 
 
 def summary(report: dict[str, Any]) -> str:
@@ -510,6 +627,22 @@ def summary(report: dict[str, Any]) -> str:
     if r:
         lines.append(f"Repeatability over {_count(n['repeatability_eyes'], 'eye')}: ICC {_fmt(r.get('icc'))}, "
                      f"Sw {_fmt(r.get('sw'), ' D')}, coefficient of repeatability {_fmt(r.get('cor'), ' D')}")
+    gate, held = m.get("gate", {}), n.get("gate", {})
+    if gate:
+        rank = gate.get("uncertainty_rank", {}).get("spearman")
+        lines.append(
+            f"Gate, over the {_count(n['eyes_with_reference'], 'eye')} with a reference: released {held['released']} "
+            f"({_fmt(gate['released'].get('share'), pct=True)}), SE MAE {_fmt(gate['released'].get('mae'), ' D')}; "
+            f"held back {held['held_back']} with a number, which would have had MAE "
+            f"{_fmt(gate['held_back'].get('mae'), ' D')}; releasing every eye with a number "
+            f"({_fmt(gate['no_gate'].get('share'), pct=True)}) would give MAE {_fmt(gate['no_gate'].get('mae'), ' D')}"
+            + (f"; uncertainty ranks error with Spearman {_fmt(rank)}" if rank else ""))
+    frames, graded = m.get("frames", {}), sum(n.get("frames", {}).get(g, 0) for g in GRADES)
+    if frames:
+        grades = ", ".join(f"{g} {_share(frames['graded'].get(g))}" for g in GRADES)
+        reasons = ", ".join(f"{r.replace('_', ' ')} {_share(v)}" for r, v in frames.get("failed", {}).items())
+        lines.append(f"Frames: {graded} graded, {_fmt(frames.get('used'), pct=True)} used ({grades})"
+                     + (f"; not used, by reason (a frame can have several): {reasons}" if reasons else ""))
     cal = m.get("calibration", {})
     if cal:
         lines.append("Calibration of the class probabilities, expected calibration error: " + ", ".join(

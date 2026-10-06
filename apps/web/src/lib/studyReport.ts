@@ -2,6 +2,7 @@
  * The validation study report that `make study` writes (ml/eyeref_ml/evaluation/study.py), as JSON.
  * Snake_case as written. shared/fixtures/study_report.sample.json is a made-up, simulated example.
  */
+import { HARD_FAILURE_TEXT } from "./cv/quality";
 
 /** A statistic with its 95% bootstrap interval. Either is null when it could not be computed. */
 export interface Estimate {
@@ -26,6 +27,16 @@ export interface RocPoint {
   sensitivity: number;
   specificity: number;
 }
+/** Releasing eyes from the most certain: the error of those released so far, at each share released. */
+export interface RiskCoveragePoint {
+  coverage: number;
+  sd_up_to: number;
+  mae: number;
+  within_0_50: number;
+}
+export const GRADES = ["excellent", "acceptable", "poor", "reject"] as const;
+export type Grade = (typeof GRADES)[number];
+
 export interface CalibrationBin {
   from: number;
   to: number;
@@ -57,6 +68,10 @@ export interface StudyReport {
     repeatability_measurements: number;
     screening_tables: Record<string, CrossTable>;
     subgroups: Record<string, Record<string, number>>;
+    /** Eyes with a reference: released, held back although the product had a number, and without one. */
+    gate?: { released: number; held_back: number; no_number: number; with_uncertainty: number };
+    /** Frames by grade, and frames not used by reason (a frame can have several). */
+    frames?: Record<Grade, number> & { failed: Record<string, number> };
   };
   bootstrap: { replicates: number; seed: number; resampled: string; interval: string };
   metrics: {
@@ -66,11 +81,21 @@ export interface StudyReport {
     calibration?: Record<string, { ece: Estimate }>;
     repeatability?: Estimates;
     subgroups?: Record<string, Record<string, Estimates>>;
+    /** Shares are of the eyes with a reference. MAE and within_0_50 are what those eyes had, or would have had. */
+    gate?: {
+      released?: Estimates;
+      held_back?: Estimates;
+      no_gate?: Estimates;
+      uncertainty_rank?: { spearman: Estimate };
+    };
+    frames?: { graded: Record<Grade, Estimate>; used: Estimate; failed?: Estimates };
   };
   roc_curves: Record<string, RocPoint[]>;
   calibration_tables: Record<string, CalibrationBin[]>;
   /** Each eye given a number: the mean of the released and reference SE, and their difference. */
   bland_altman_se: { mean: number; diff: number }[];
+  /** The selective-prediction curve. Reports written before the gate analysis have none. */
+  risk_coverage?: RiskCoveragePoint[];
 }
 
 export class StudyReportError extends Error {}
@@ -129,3 +154,10 @@ export const rocPoints = (curve: RocPoint[]) => [
   { fpr: 0, tpr: 0 },
   ...curve.map((p) => ({ fpr: 1 - p.specificity, tpr: p.sensitivity })),
 ];
+
+/** Why frames were not used: the quality check's hard failures, and a score too low overall. */
+export const FRAME_FAILURE_LABEL: Record<string, string> = {
+  ...HARD_FAILURE_TEXT,
+  low_score: "Overall quality too low, with no single failure",
+  other: "Other reasons",
+};

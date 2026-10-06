@@ -6,7 +6,14 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { parseStudyReport, rocPoints, SCREENING_LABEL, StudyReportError } from "../studyReport";
+import {
+  FRAME_FAILURE_LABEL,
+  GRADES,
+  parseStudyReport,
+  rocPoints,
+  SCREENING_LABEL,
+  StudyReportError,
+} from "../studyReport";
 
 const SAMPLE = readFileSync(
   resolve(__dirname, "../../../../../shared/fixtures/study_report.sample.json"),
@@ -36,6 +43,29 @@ describe("study report", () => {
         expect(pts[i]!.tpr).toBeGreaterThanOrEqual(pts[i - 1]!.tpr);
       }
     }
+  });
+
+  it("judges the gate over every eye with a reference, and counts every graded frame", () => {
+    const r = parseStudyReport(SAMPLE);
+    const n = r.n.gate!;
+    expect(n.released + n.held_back + n.no_number).toBe(r.n.eyes_with_reference);
+    const g = r.metrics.gate!;
+    expect(g.released!.share!.value! + g.held_back!.share!.value!).toBeCloseTo(g.no_gate!.share!.value!, 5);
+    // the curve ends with every eye that had a number released, at the no-gate error
+    const curve = r.risk_coverage!;
+    expect(curve.at(-1)!.coverage).toBeCloseTo(g.no_gate!.share!.value!, 3);
+    expect(curve.at(-1)!.mae).toBeCloseTo(g.no_gate!.mae!.value!, 3);
+    for (let i = 1; i < curve.length; i++) expect(curve[i]!.coverage).toBeGreaterThan(curve[i - 1]!.coverage);
+
+    const f = r.metrics.frames!;
+    expect(GRADES.reduce((a, k) => a + f.graded[k].value!, 0)).toBeCloseTo(1, 5);
+    for (const reason of Object.keys(f.failed ?? {})) expect(FRAME_FAILURE_LABEL[reason]).toBeTruthy();
+  });
+
+  it("still opens a report written before the gate analysis", () => {
+    const { risk_coverage: _, ...older } = JSON.parse(SAMPLE) as Record<string, unknown>;
+    const r = parseStudyReport(JSON.stringify(older));
+    expect(r.risk_coverage).toBeUndefined();
   });
 
   it("says in plain words why a file is not a report it can show", () => {

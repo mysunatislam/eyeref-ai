@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select } from "@/components/ui/field";
 import { Stat } from "@/components/ui/stat";
 import {
+  FRAME_FAILURE_LABEL,
+  GRADES,
   OUTCOMES,
   rocPoints,
   SCREENING_LABEL,
@@ -15,7 +17,7 @@ import {
   type StudyReport,
 } from "@/lib/studyReport";
 import { AGE_LABEL, cn, formatDateTime, pct, plural, UI_LOCALE } from "@/lib/utils";
-import { BlandAltman, ReliabilityChart, RocChart } from "./Charts";
+import { BlandAltman, ReliabilityChart, RiskCoverageChart, RocChart } from "./Charts";
 
 const OUTCOME_LABEL: Record<string, string> = {
   quantitative: "Given a number",
@@ -80,6 +82,7 @@ export function StudyReportView({ r }: { r: StudyReport }) {
   const se = m.agreement?.se;
   const n = r.n;
   const ece = shown(m.calibration?.[prob]?.ece, num(2));
+  const framesUsed = subgroups.some((k) => Object.values(m.subgroups![k]!).some((s) => s.frames_used));
 
   return (
     <>
@@ -384,6 +387,8 @@ export function StudyReportView({ r }: { r: StudyReport }) {
         </Card>
       </div>
 
+      <GateSection r={r} />
+
       {sub && (
         <Card className="mt-4">
           <CardHeader>
@@ -411,7 +416,15 @@ export function StudyReportView({ r }: { r: StudyReport }) {
             <table className="num w-full min-w-[640px] text-xs">
               <thead className="text-muted text-left text-[10px] tracking-wider uppercase">
                 <tr>
-                  {["Group", "Eyes", "Given a number", "Bias", "Limits of agreement", "MAE"].map((h) => (
+                  {[
+                    "Group",
+                    "Eyes",
+                    "Given a number",
+                    "Bias",
+                    "Limits of agreement",
+                    "MAE",
+                    ...(framesUsed ? ["Frames used"] : []),
+                  ].map((h) => (
                     <th key={h} className="py-1.5 pr-3">
                       {h}
                     </th>
@@ -431,6 +444,7 @@ export function StudyReportView({ r }: { r: StudyReport }) {
                         : "—"}
                     </td>
                     <EstimateCell e={s.mae} f={(v) => dioptres(v)} />
+                    {framesUsed && <EstimateCell e={s.frames_used} f={percent} />}
                   </tr>
                 ))}
               </tbody>
@@ -443,6 +457,159 @@ export function StudyReportView({ r }: { r: StudyReport }) {
         Report generated {formatDateTime(r.generated_at)} by eyeref-ml v{r.eyeref_ml_version}. Results
         describe this study&apos;s sample.
       </p>
+    </>
+  );
+}
+
+const GATE_ROWS = [
+  { key: "released", label: "Released" },
+  { key: "held_back", label: "Held back, with a number" },
+  { key: "no_gate", label: "Every eye with a number (no gate)" },
+] as const;
+
+/** Whether the quality gate held back the eyes it should have, and how the frames were graded. */
+function GateSection({ r }: { r: StudyReport }) {
+  const gate = r.metrics.gate;
+  const counts = r.n.gate;
+  const frames = r.metrics.frames;
+  const graded = r.n.frames;
+  if (!gate || !counts) return null; // a report from before the gate analysis
+  const eyes = {
+    released: counts.released,
+    held_back: counts.held_back,
+    no_gate: counts.released + counts.held_back,
+  };
+  const released = gate.released;
+  const rank = shown(gate.uncertainty_rank?.spearman, num(2));
+  const total = graded ? GRADES.reduce((a, g) => a + graded[g], 0) : 0;
+  return (
+    <>
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <Card className="min-w-0">
+          <CardHeader>
+            <div>
+              <CardTitle>Does the gate hold back the right eyes?</CardTitle>
+              <CardDescription>
+                Over the {plural(r.n.eyes_with_reference, "eye")} with a reference. The app gives a number
+                only when its 95% interval is narrow enough. For an eye it held back, the number it had but
+                did not show is compared with the reference too.
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="overflow-x-auto" tabIndex={0} role="region" aria-label="Gate table">
+            <table className="num w-full min-w-[480px] text-xs">
+              <thead className="text-muted text-left text-[10px] tracking-wider uppercase">
+                <tr>
+                  {["Eyes", "Count", "Share", "MAE", "Within ±0.50 D"].map((h) => (
+                    <th key={h} className="py-1.5 pr-3">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {GATE_ROWS.map(({ key, label }) => (
+                  <tr key={key} className="border-line border-t">
+                    <th scope="row" className="py-1.5 pr-3 text-left align-top font-medium">
+                      {label}
+                    </th>
+                    <td className="py-1.5 pr-3 align-top">{eyes[key]}</td>
+                    <EstimateCell e={gate[key]?.share} f={percent} />
+                    <EstimateCell e={gate[key]?.mae} f={(v) => dioptres(v)} />
+                    <EstimateCell e={gate[key]?.within_0_50} f={percent} />
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="text-muted mt-2 text-xs">
+              {plural(counts.no_number, "eye")} with a reference had no number at all.{" "}
+              {rank.value !== "—" &&
+                `The app's uncertainty against its error: Spearman ${rank.value}${rank.ci ? ` (95% CI ${rank.ci})` : ""}. Above 0, the eyes it was less sure about were further off.`}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="min-w-0">
+          <CardHeader>
+            <div>
+              <CardTitle>Error as more eyes are released</CardTitle>
+              <CardDescription>
+                Releasing eyes from the one the app was most sure about (the SD of its M) to the least: the
+                MAE of those released so far. The dot is the app&apos;s own gate.
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {r.risk_coverage?.length ? (
+              <RiskCoverageChart
+                curve={r.risk_coverage}
+                gate={
+                  released?.share?.value != null && released.mae?.value != null
+                    ? { coverage: released.share.value, mae: released.mae.value }
+                    : null
+                }
+              />
+            ) : (
+              <p className="text-muted text-xs">No eye with a reference came with its uncertainty.</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {frames && graded && (
+        <Card className="mt-4">
+          <CardHeader>
+            <div>
+              <CardTitle>Frame quality</CardTitle>
+              <CardDescription>
+                {plural(total, "frame")} graded by the quality check; only excellent and acceptable frames are
+                used. {pct(frames.used.value)} were used.
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="grid gap-6 lg:grid-cols-2">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {GRADES.map((g) => (
+                <EstimateStat
+                  key={g}
+                  label={`${g[0]!.toUpperCase()}${g.slice(1)} (${graded[g]})`}
+                  e={frames.graded[g]}
+                  f={percent}
+                />
+              ))}
+            </div>
+            <div
+              className="min-w-0 overflow-x-auto"
+              tabIndex={0}
+              role="region"
+              aria-label="Why frames were not used"
+            >
+              <table className="num w-full min-w-[300px] text-xs">
+                <thead className="text-muted text-left text-[10px] tracking-wider uppercase">
+                  <tr>
+                    {["Why frames were not used", "Frames", "Of all graded"].map((h) => (
+                      <th key={h} className="py-1.5 pr-3">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(frames.failed ?? {}).map(([reason, e]) => (
+                    <tr key={reason} className="border-line border-t">
+                      <th scope="row" className="py-1.5 pr-3 text-left align-top font-medium">
+                        {FRAME_FAILURE_LABEL[reason] ?? reason.replaceAll("_", " ")}
+                      </th>
+                      <td className="py-1.5 pr-3 align-top">{graded.failed[reason] ?? "—"}</td>
+                      <EstimateCell e={e} f={(v) => pct(v, v < 0.1 ? 1 : 0)} />
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="text-muted mt-2 text-xs">A frame can fail for more than one reason.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </>
   );
 }

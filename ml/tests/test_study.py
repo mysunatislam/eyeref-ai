@@ -11,12 +11,14 @@ import pandas as pd
 import pytest
 from eyeref.optics.power_vector import SphCylAxis, to_corneal_plane
 from eyeref_ml.evaluation.study import (
+    MAX_CURVE_POINTS,
     StudyError,
     _auc,
     calibration,
     main,
     prepare,
     repeatability,
+    risk_coverage,
     roc_curve,
     study_metrics,
     study_report,
@@ -29,7 +31,9 @@ WEB_FIXTURE = Path(__file__).resolve().parents[2] / "shared" / "fixtures" / "stu
 
 
 def _eye(subject, eye="OD", visit=None, day="2026-09-01", outcome="quantitative", pred=-1.0, ref=-1.0, **extra):
-    """One row of the eye-level export: a released SE `pred` against an autorefractor SE `ref`."""
+    """One row of the eye-level export: a released SE `pred` against an autorefractor SE `ref`. A screened eye
+    also has `pred` as its M, released or not; a repeat or a protocol failure has none unless given."""
+    number = outcome in ("quantitative", "screening")
     row = {
         "subject_id": subject, "subject_code": f"SITE1-{subject}", "age_group": "adult_18_39", "eye": eye,
         "session_id": visit or f"{subject}-{day}", "session_started_at": f"{day}T10:00:00+00:00", "simulated": False,
@@ -37,6 +41,7 @@ def _eye(subject, eye="OD", visit=None, day="2026-09-01", outcome="quantitative"
         "output_level": None if outcome == "protocol_failure" else outcome,
         "model_name": "physics", "model_version": "1.0.0", "predicted_at": f"{day}T10:05:00+00:00",
         "pred_se": pred if outcome == "quantitative" else None, "pred_j0": 0.0, "pred_j45": 0.0,
+        "pred_m": pred if number else None, "pred_m_sd": (0.3 if outcome == "quantitative" else 0.8) if number else None,
         "pred_se_ci_low": pred - 0.5, "pred_se_ci_high": pred + 0.5,
         "p_myopia": 0.9 if pred <= -0.5 else 0.1, "p_hyperopia": 0.9 if pred >= 0.5 else 0.1, "p_anisometropia": 0.1,
         "gt_autorefractor_sph": ref, "gt_autorefractor_cyl": 0.0, "gt_autorefractor_axis": None,
@@ -252,6 +257,69 @@ def test_one_study_is_one_frozen_model_without_simulated_data_mixed_in():
     assert eyes["pred_se"].tolist() == [-2.0]  # the same eye's result stored twice counts once, the later
 
 
+def test_the_gate_is_judged_by_what_the_eyes_it_held_back_would_have_shown():
+    rows = [_eye(f"r{i}", pred=-2.0 + e, ref=-2.0, pred_m_sd=0.2 + 0.01 * i) for i, e in enumerate((0.25, -0.25, 0.5, 0.0))]
+    rows += [_eye("h1", outcome="screening", pred=-0.5, ref=-2.0, pred_m_sd=0.9),  # 1.5 D out, never shown
+             _eye("h2", outcome="screening", pred=-3.0, ref=-2.0, pred_m_sd=0.7),
+             _eye("h3", outcome="repeat", ref=-2.0, pred_m=0.0, pred_m_sd=1.2),  # a number, too unsure for anything
+             _eye("n1", outcome="repeat", ref=-2.0),  # no number at all
+             _eye("n2", outcome="protocol_failure", ref=-2.0),
+             _eye("x1", outcome="screening", pred=-3.0, gt_autorefractor_sph=None)]  # no reference: not judged
+    m = _metrics(rows)
+    assert [m["gate/released/share"], m["gate/held_back/share"], m["gate/no_gate/share"]] == pytest.approx(
+        [4 / 9, 3 / 9, 7 / 9])
+    assert m["gate/released/mae"] == pytest.approx(0.25) == m["agreement/se/mae"]
+    assert m["gate/held_back/mae"] == pytest.approx((1.5 + 1.0 + 2.0) / 3)
+    assert m["gate/no_gate/mae"] == pytest.approx((1.0 + 4.5) / 7)
+    assert (m["gate/released/within_0_50"], m["gate/held_back/within_0_50"]) == (1.0, 0.0)
+    # unsure eyes erred more. Ranks of the SDs 1 to 7 against the errors' 2.5, 2.5, 4, 1, 5, 6, 7, by hand:
+    assert m["gate/uncertainty_rank/spearman"] == pytest.approx(21.5 / math.sqrt(28 * 27.5))
+    n = study_report(pd.DataFrame(rows), n_boot=0)["n"]["gate"]
+    assert n == {"released": 4, "held_back": 3, "no_number": 2, "with_uncertainty": 7}
+
+    # a held-back high myope is compared at the cornea, as a released one would be
+    eyes, _ = prepare(pd.DataFrame([_eye("s1", outcome="screening", pred=-9.0, ref=-8.0)]))
+    at_cornea = to_corneal_plane(SphCylAxis(-9.0, 0.0, None), 12.0).sph - to_corneal_plane(SphCylAxis(-8.0, 0.0, None), 12.0).sph
+    assert eyes["gate_pred_m"].iloc[0] - eyes["gate_ref_m"].iloc[0] == pytest.approx(at_cornea)
+
+
+def test_the_selective_prediction_curve_releases_the_most_certain_eyes_first():
+    rows = [_eye("a", pred=-2.0, ref=-2.0, pred_m_sd=0.1),
+            _eye("b", outcome="screening", pred=-3.0, ref=-2.0, pred_m_sd=0.4),
+            _eye("c", pred=-1.5, ref=-2.0, pred_m_sd=0.2), _eye("d", pred=-1.0, ref=-2.0, pred_m_sd=0.2),  # tied
+            _eye("e", outcome="repeat", ref=-2.0)]  # no number: never released, but counted
+    eyes, _ = prepare(pd.DataFrame(rows))
+    assert risk_coverage(eyes) == [
+        {"coverage": 0.2, "sd_up_to": 0.1, "mae": 0.0, "within_0_50": 1.0},
+        {"coverage": 0.6, "sd_up_to": 0.2, "mae": 0.5, "within_0_50": pytest.approx(2 / 3, abs=1e-4)},  # together
+        {"coverage": 0.8, "sd_up_to": 0.4, "mae": 0.625, "within_0_50": 0.5}]
+
+    many = [_eye(f"s{i}", pred=-2.0 + i / 1000, ref=-2.0, pred_m_sd=0.1 + i / 1000) for i in range(1000)]
+    curve = risk_coverage(prepare(pd.DataFrame(many))[0])
+    assert len(curve) == MAX_CURVE_POINTS and curve[0]["coverage"] == 0.001 and curve[-1]["coverage"] == 1.0
+
+
+def test_frames_are_counted_by_grade_and_by_why_they_were_not_used():
+    frames = {"frames_excellent": 10, "frames_acceptable": 5, "frames_poor": 2, "frames_reject": 3}
+    rows = [_eye("s1", device_id="phone-a", **frames, frames_failed_pupil_too_small=2, frames_failed_low_score=3),
+            _eye("s2", device_id="phone-b", frames_excellent=0, frames_acceptable=2, frames_poor=0, frames_reject=8,
+                 frames_failed_motion=8, frames_failed_pupil_too_small=3)]
+    m = _metrics(rows)
+    assert [m[f"frames/graded/{g}"] for g in ("excellent", "acceptable", "poor", "reject")] == pytest.approx(
+        [10 / 30, 7 / 30, 2 / 30, 11 / 30])
+    assert m["frames/used"] == pytest.approx(17 / 30)
+    assert [(k, v) for k, v in m.items() if k.startswith("frames/failed/")] == [  # the most frequent reason first
+        ("frames/failed/motion", pytest.approx(8 / 30)), ("frames/failed/pupil_too_small", pytest.approx(5 / 30)),
+        ("frames/failed/low_score", pytest.approx(3 / 30))]
+    assert (m["subgroups/device_id/phone-a/frames_used"], m["subgroups/device_id/phone-b/frames_used"]) == (0.75, 0.2)
+    n = study_report(pd.DataFrame(rows), n_boot=0)["n"]["frames"]
+    assert n == {"excellent": 10, "acceptable": 7, "poor": 2, "reject": 11,
+                 "failed": {"motion": 8, "pupil_too_small": 5, "low_score": 3}}
+
+    older = _metrics([_eye("s1")])  # an export from before frames were counted
+    assert not any(k.startswith("frames/") or k.endswith("/frames_used") for k in older)
+
+
 def test_the_command_line_writes_the_report_and_a_summary(tmp_path, capsys):
     rng = np.random.default_rng(0)
     rows = [_eye(f"s{i}", e, pred=r + rng.normal(0, 0.4), ref=r)
@@ -276,6 +344,8 @@ def test_the_command_line_writes_the_report_and_a_summary(tmp_path, capsys):
     assert sum(b["eyes"] for b in report["calibration_tables"]["myopia"]) == 60
     text = capsys.readouterr().out
     assert "60 eyes" in text and "limits of agreement" in text and "Repeatability" not in text
+    assert "Gate, over the 60 eyes with a reference: released 60 (100% [100% to 100%])" in text
+    assert "Frames:" not in text  # none counted in this export
     assert "Outcomes: quantitative 60 (100% [100% to 100%]), screening 0 (0% [0% to 0%])" in text
     assert f"Myopia (SE -0.50 D or less): {myopes} of 60 eyes with it, 0 referred unscreened" in text
 
@@ -290,9 +360,11 @@ def test_the_research_servers_export_is_analysed_as_it_comes(tmp_path, monkeypat
     from fastapi.testclient import TestClient
 
     client = TestClient(api.create_app(f"sqlite:///{tmp_path / 'study.db'}", data_dir=str(tmp_path)))
+    frames = []
     for i, sid in enumerate(("SIM-C", "SIM-A")):
         subject = make_subject(sid, "adult_18_39")
         rep, recs, _ = run_simulated_assessment(subject)
+        frames += recs
         record = {
             "client_ref": sid, "session": {"device_id": "simulated-phone", "simulated": True},
             "subject": {"code": f"SITE1-{i}", "age_group": "adult_18_39", "consent_research": True},
@@ -311,11 +383,41 @@ def test_the_research_servers_export_is_analysed_as_it_comes(tmp_path, monkeypat
     assert report["label"].startswith("SIMULATED")
     assert report["n"]["eyes"] == 4 and report["n"]["eyes_compared"] == 4
     assert report["metrics"]["agreement"]["se"]["mae"]["value"] < 1.0
+    assert report["n"]["gate"]["with_uncertainty"] == 4 and len(report["risk_coverage"]) >= 1
+    counted = report["n"]["frames"]
+    assert {g: counted[g] for g in ("excellent", "acceptable", "poor", "reject")} == {
+        g: sum(r.quality.grade == g for r in frames) for g in ("excellent", "acceptable", "poor", "reject")}
+
+
+#: Frame grades (excellent, acceptable, poor, reject) of a made-up eye, by its outcome.
+_GRADE_ODDS = {"quantitative": [0.55, 0.3, 0.08, 0.07], "screening": [0.3, 0.3, 0.2, 0.2],
+               "repeat": [0.05, 0.15, 0.3, 0.5], "protocol_failure": [0.0, 0.0, 0.3, 0.7]}
+_REASONS = ["pupil_too_small", "distance_out_of_range", "motion", "image_blurred", "gaze_off_axis", "low_score"]
+
+
+def _gate_and_frames(rng, outcome, pred, ref):
+    """What a made-up eye's gate and frames add: held-back eyes are less sure, and further off, than released ones,
+    and an eye's uncertainty grows, loosely, with its error."""
+    out = {}
+    if outcome in ("screening", "repeat") and (outcome == "screening" or rng.random() < 0.6):
+        out["pred_m"] = pred + float(rng.normal(0, 0.9 if outcome == "screening" else 1.4))
+    if outcome == "quantitative" or "pred_m" in out:
+        least, spread = {"quantitative": (0.18, 0.12), "screening": (0.45, 0.3)}.get(outcome, (0.8, 0.4))
+        out["pred_m_sd"] = least + 0.3 * abs(out.get("pred_m", pred) - ref) + float(rng.uniform(0, spread))
+    grades = rng.multinomial(20, _GRADE_ODDS[outcome])
+    if outcome != "protocol_failure" and grades[:2].sum() == 0:
+        grades[1], grades[3] = 1, grades[3] - 1  # a screened eye had a usable frame
+    out.update({f"frames_{g}": int(k) for g, k in zip(("excellent", "acceptable", "poor", "reject"), grades, strict=True)})
+    why = rng.choice(_REASONS, size=int(grades[3]), p=[0.3, 0.2, 0.2, 0.1, 0.05, 0.15])
+    for reason, k in zip(*np.unique(np.r_[why, ["low_score"] * int(grades[2])], return_counts=True), strict=True):
+        out[f"frames_failed_{reason}"] = int(k)
+    return out
 
 
 def _made_up_study():
     """A small made-up study, marked simulated, with something in every part of the report."""
     rng = np.random.default_rng(7)
+    more = np.random.default_rng(8)  # for the gate and the frames, leaving the rest as it was
     rows = []
     for i in range(16):
         se = round(float(rng.normal(-1.5, 2.5)) * 4) / 4
@@ -324,9 +426,11 @@ def _made_up_study():
             for eye in ("OD", "OS"):
                 ref = se + (1.25 if eye == "OS" and i % 4 == 0 else 0.0)  # a few anisometropes
                 cyl = -0.25 * int(rng.integers(0, 7))
+                kind = "protocol_failure" if i == 15 else outcome[i % 8]
+                pred = ref + float(rng.normal(0, 0.35))
                 rows.append(_eye(
-                    f"s{i:02d}", eye, visit=f"s{i:02d}-{visit}", outcome="protocol_failure" if i == 15 else outcome[i % 8],
-                    pred=ref + float(rng.normal(0, 0.35)), ref=ref, simulated=True,
+                    f"s{i:02d}", eye, visit=f"s{i:02d}-{visit}", outcome=kind, pred=pred, ref=ref, simulated=True,
+                    **_gate_and_frames(more, kind, pred, ref),
                     gt_autorefractor_sph=ref - cyl / 2, gt_autorefractor_cyl=cyl, gt_autorefractor_axis=90.0,
                     p_astigmatism=float(np.clip(-cyl / 1.5 + rng.normal(0, 0.15), 0.01, 0.99)),
                     p_anisometropia=0.8 if i % 4 == 0 else 0.1, device_id=f"phone-{'ab'[i % 2]}",
