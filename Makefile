@@ -2,7 +2,7 @@
 PY ?= .venv/bin/python
 PIP ?= .venv/bin/pip
 
-.PHONY: setup setup-py setup-web backend web test test-py test-web lint typecheck data ml-train study schemas docker check
+.PHONY: setup setup-py setup-web backend web test test-py test-web lint typecheck data ml-train dataset ml-train-dev study schemas docker check
 
 setup: setup-py setup-web
 setup-py:
@@ -33,6 +33,10 @@ data:               ## simulated dataset (SIMULATED DATA)
 	cd ml && ../$(PY) -m eyeref_ml.datasets.synthetic --subjects 240 --out data/synthetic --seed 0
 ml-train:           ## baselines + hybrid models, validation report, ONNX export
 	cd ml && ../$(PY) -m eyeref_ml.training.run_experiments --data data/synthetic --out reports/latest --artifacts artifacts --epochs 12 --holdout-device sim-D --publish-web
+dataset:            ## training data from the research server: make dataset EXPORT=eyeref_dataset.csv (GET /api/dataset/export)
+	cd ml && ../$(PY) -m eyeref_ml.datasets.from_export $(abspath $(EXPORT)) --out data/development
+ml-train-dev:       ## the same models trained on it, kept out of the web app; HOLDOUT=<device id> also tests an unseen phone
+	cd ml && ../$(PY) -m eyeref_ml.training.run_experiments --data data/development --out reports/development --artifacts artifacts/development --epochs 12 $(if $(HOLDOUT),--holdout-device $(HOLDOUT))
 
 study:              ## validation study report: make study EXPORT=eyeref_eyes.csv (GET /api/dataset/export?level=eye)
 	cd ml && ../$(PY) -m eyeref_ml.evaluation.study $(abspath $(EXPORT)) --one-eye --out $(abspath study.json)

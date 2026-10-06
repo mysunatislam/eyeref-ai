@@ -25,7 +25,7 @@ import cv2
 import numpy as np
 import pandas as pd
 from eyeref.calibration.device_profiles import BUILTIN_PROFILES
-from eyeref.cv.features import extract_features
+from eyeref.cv.features import EXTRACTOR_VERSION, extract_features
 from eyeref.cv.quality import assess_quality
 from eyeref.optics.power_vector import to_power_vector
 from eyeref.simulation.cohort import SKIN_PALETTE, SessionConfig, make_subject, simulate_session
@@ -113,7 +113,7 @@ def generate(n_subjects: int, out_dir: Path, seed: int = 0, with_images: bool = 
         np.savez_compressed(out_dir / "crops.npz", crops=np.stack(crops))
     (out_dir / "MANIFEST.json").write_text(json.dumps({
         "simulated": True, "n_subjects": n_subjects, "n_frames": len(df), "seed": seed,
-        "devices": [d.profile.id for d in devices],
+        "devices": [d.profile.id for d in devices], "extractor_version": EXTRACTOR_VERSION,
         "warning": "SIMULATED DATA - not evidence of clinical performance",
     }, indent=2))
     return df

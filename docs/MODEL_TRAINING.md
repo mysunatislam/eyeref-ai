@@ -10,7 +10,8 @@ make ml-train   # python -m eyeref_ml.training.run_experiments --data data/synth
 
 The dataset and every model above are **SIMULATED**. `MANIFEST.json` and the report both say so, and
 each exported ONNX sidecar carries `"trained_on_simulated": true`. A sidecar with that flag makes the
-serving estimator refuse real frames (`backend/tests/test_inference.py`).
+serving estimator refuse real frames (`backend/tests/test_inference.py`). To train on a study's data,
+see [Training on real data](#training-on-real-data).
 
 ## Ladder of models (simplest first)
 
@@ -44,12 +45,14 @@ Each export writes `<name>.onnx` and `<name>.json`. The sidecar records:
 - the framework version and the export time;
 - the ordered `feature_names` and their normalisation statistics;
 - the `conformal_scale`;
-- `trained_on_simulated` and the dataset manifest (subjects, frames, seed, devices);
+- `trained_on_simulated`, the feature extractor version, and the dataset manifest (subjects, frames,
+  devices, and the seed of a simulated dataset);
 - a metrics summary.
 
 Every prediction stores the model name and version, the extractor version and the calibration version.
-To change any input feature, bump `EXTRACTOR_VERSION` in both implementations. Do not mix extractor
-versions in training.
+To change any input feature, bump `EXTRACTOR_VERSION` in both implementations. Training never mixes
+extractor versions: the dataset converter refuses to, and a model refuses features from any extractor
+other than the one it was trained on.
 
 ## Simulated results and what they teach (SIMULATED DATA)
 
@@ -71,13 +74,71 @@ These are SE mean absolute errors across all test eyes:
    (for example, 0.14 vs 0.17 D for the random forest). In this simulation, children were never
    released as quantitative, because the accommodation uncertainty is too wide.
 
-## Moving to real data
+## Training on real data
 
-1. Collect paired data (docs/RESEARCH_PROTOCOL.md) and export the CSV from the API.
-2. Map the export into the synthetic table format. The columns are the same: `f_*` features, metadata,
-   and `gt_*` labels.
-3. Train baselines 0–4 first. Fit the hybrid only if the tree models leave structured residuals.
-4. Retrain with `trained_on_simulated=false` only on real data.
-   - Pre-training on simulation followed by fine-tuning is allowed.
-   - The flag must then describe the final training data honestly.
-   - The validation must be on held-out real subjects.
+Collect paired data first (RESEARCH_PROTOCOL.md). Then export the frames from the research server with an
+analysis or admin token, `GET /api/dataset/export`, and turn them into a training dataset:
+
+```bash
+make dataset EXPORT=eyeref_dataset.csv  # python -m eyeref_ml.datasets.from_export eyeref_dataset.csv --out data/development
+make ml-train-dev                       # the experiments above on it; add HOLDOUT=<device id> to test an unseen phone
+```
+
+The dataset has the simulated dataset's columns, so every model above trains on it unchanged. The
+dataset, the report and the ONNX files go to `ml/data/development`, `ml/reports/development` and
+`ml/artifacts/development`, which git ignores. The report lists study eyes, so `--publish-web` refuses
+to put it in the web app.
+
+**Targets.**
+
+- Each eye's target at a visit is one reference refraction measured at that visit. By default it is the
+  best one available: cycloplegic, then subjective, autorefractor, retinoscopy, trial lens. `--reference`
+  chooses one method instead.
+- The reference is used as recorded, usually at the spectacle plane. The study treats the app's numbers
+  as being at that plane: it compares them with the reference directly, and beyond 4 D it converts both
+  to the cornea alike.
+- Each frame's target is that refraction's power along the frame's meridian,
+  P(θ) = M + J0·cos 2θ + J45·sin 2θ.
+
+**Frames.** Every frame keeps its quality grade. Training uses only the frames that passed, as the app
+does, and the evaluation still counts the rest.
+
+**What is left out.** `MANIFEST.json` counts each frame left out under the first of these reasons that
+applies:
+
+- its subject is listed with `--exclude-subjects` (see below);
+- it was photographed under cycloplegia, which the app never sees (`--with-cycloplegia` keeps those);
+- its session has a condition label, such as a lens held in front of the eye, so the reference may not
+  describe the eye as photographed (`--condition <label>` keeps one label);
+- its features come from another extractor version than the one chosen;
+- it has no features, no quality assessment, no meridian, or no light-source geometry;
+- no reference was measured for its eye at that visit.
+
+**What is refused.**
+
+- An export that mixes simulated and real data.
+- An export with features from more than one extractor version, until `--extractor-version` chooses one.
+  A model's inputs must all come from one extractor.
+
+**Train on a development cohort, never on the validation study's subjects.** `--exclude-subjects`
+takes another export, such as the validation study's eye export, and leaves out every subject in it,
+matched by id or by study code. A model is validated only on subjects it never saw
+(VALIDATION_PROTOCOL.md).
+
+**What the model records.** The sidecar of each model trained this way records:
+
+- `trained_on_simulated: false` and the dataset manifest;
+- the extractor version, so the server refuses features from any other extractor
+  (`backend/tests/test_inference.py`);
+- a version of its own, `0.1.0+<UTC time>`, so the results of two models trained on real data are never
+  mixed up in one study. The study analysis refuses results from more than one version.
+
+**The image branch.** The CNN needs eye crops. The server keeps them only with consent and does not
+export them, so only the feature models train on real data for now.
+
+**Order of work.**
+
+1. Train baselines 0–4 first. Fit the hybrid only if the tree models leave structured residuals.
+2. Pre-training on simulation followed by fine-tuning is allowed, but `trained_on_simulated` must then
+   describe the final training data honestly.
+3. Validate on held-out real subjects (VALIDATION_PROTOCOL.md).
