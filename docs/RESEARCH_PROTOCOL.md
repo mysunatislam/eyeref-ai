@@ -18,6 +18,10 @@ sign convention and the device geometry must be right before any person is measu
 
 ## Stage 0: bench (1–2 days, no people)
 
+The app runs this stage: **Calibration → Open the bench** (docs/DEVICE_CALIBRATION.md section 3). It
+guides each step, checks every criterion below, and saves the gain on go. Keep the run's file with the
+study records; `python -m eyeref.research.bench_run` gives the same report from it.
+
 1. Put the model eye on the mount at 1.0 m.
 2. Place lenses from −4 to +4 D in 0.5 D steps in front of it. Capture 5 frames at each step at 0°,
    then repeat at 90°.
@@ -31,10 +35,13 @@ sign convention and the device geometry must be right before any person is measu
 
 **Go/no-go:**
 
-- the crescent side is correct in 100% of non-dead-zone steps;
-- the width slope matches the model;
+- the crescent side is correct in 100% of non-dead-zone steps (more than 0.25 D outside the predicted
+  dead zone, on both sides of it);
+- the width slope matches the model (0.8 to 1.2);
 - the measured dead-zone edges are within 0.25 D of prediction;
-- ICC(1,1) of repeated frames is at least 0.9.
+- ICC(1,1) of repeated frames is at least 0.9;
+- the gain fit has r of at least 0.9 in magnitude and a residual SD of at most 0.35 of a half-width;
+- every step has a usable frame.
 
 ## Stage 1: the first experiment, induced defocus in adults (n ≈ 10 people, 20 eyes)
 

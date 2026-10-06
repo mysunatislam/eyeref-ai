@@ -1,0 +1,5664 @@
+{
+ "kind": "eyeref-bench-run",
+ "version": 1,
+ "simulated": true,
+ "created_at": "2026-01-01T00:00:00.000Z",
+ "device": {
+  "id": "simulated-phone",
+  "manufacturer": "simulation",
+  "model": "SIMULATED phone (renderer geometry)",
+  "camera": "rear",
+  "hfov_deg": 68,
+  "flash_offset_mm": [
+   0,
+   -9.4
+  ],
+  "aperture_diameter_mm": 2.8,
+  "gradient_gain": 5.78,
+  "gradient_rel_sd": 0.25,
+  "calibration_version": "sim-bench-1",
+  "simulated": true,
+  "notes": "SIMULATED. Gradient gain fitted on simulated bench data only."
+ },
+ "setup": {
+  "working_distance_m": 1,
+  "pupil_mm": 6,
+  "eye_refraction_d": 0,
+  "vertex_mm": 0,
+  "lenses_d": [
+   -4,
+   -3,
+   -2,
+   -1,
+   0,
+   1,
+   2,
+   3,
+   4
+  ],
+  "rotations_deg": [
+   0,
+   90
+  ],
+  "frames_per_step": 2
+ },
+ "extractor_version": "pr-features-1.0.0",
+ "frames": [
+  {
+   "lens_d": -4,
+   "refraction_d": 4,
+   "rotation_deg": 0,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 0,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 0,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.49010268897733,
+      "cy": 79.07246300493134,
+      "r": 26.473164571537634
+     },
+     "iris": {
+      "cx": 78.90369670952876,
+      "cy": 80.43569495231839,
+      "r": 52
+     },
+     "glint": [
+      79.5,
+      80.5
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5090993186834161,
+     "pupil_ellipse_eccentricity": 0.09763571386557572,
+     "reflex_mean_luma": 0.3542472466303343,
+     "reflex_mean_rgb": [
+      177.47343453510436,
+      57.36954459203036,
+      31.513757115749527
+     ],
+     "reflex_red_chroma": 0.6614213899145542,
+     "reflex_entropy": 3.482095821769739,
+     "crescent_present": true,
+     "crescent_area_fraction": 0.7258652094717668,
+     "crescent_width_norm": 0.6814601660927777,
+     "crescent_width_mm": 4.088760996556666,
+     "crescent_side": -1,
+     "crescent_centroid_offset_norm": -0.1901147775244537,
+     "crescent_orientation_deg": 89.85876021607675,
+     "crescent_contrast": 1.8237541720565646,
+     "crescent_separability": 0.8719463767411243,
+     "gradient_along_source": -0.34552495876498684,
+     "gradient_perpendicular": 0.0005231678921673475,
+     "dominant_gradient_deg": 90.06519676327252,
+     "asymmetry_index": -0.2842067738619694,
+     "profile_along_source": [
+      0.7912854154904684,
+      0.8453159133593241,
+      0.844008723894755,
+      0.8300653696060181,
+      0.8270152608553568,
+      0.8300653696060181,
+      0.8187363942464193,
+      0.8026143908500671,
+      0.800000011920929,
+      0.95686274766922,
+      1,
+      1,
+      0.9477124214172363,
+      0.8021786610285441,
+      0.7320261597633362,
+      0.645315925280253,
+      0.4910675485928853,
+      0.40653595328330994,
+      0.39084967970848083,
+      0.3821350832780202,
+      0.3686274588108063
+     ],
+     "profile_perpendicular": [
+      0.7751634120941162,
+      0.785620927810669,
+      0.7777777910232544,
+      0.7808278997739156,
+      0.7799564401308695,
+      0.7769063313802084,
+      0.7777777910232544,
+      0.7782135208447775,
+      0.8653594851493835,
+      0.9877995649973551,
+      1,
+      0.9869281053543091,
+      0.8714597026507059,
+      0.7821350892384847,
+      0.7882353067398071,
+      0.7908496856689453,
+      0.7943355242411295,
+      0.7847494681676229,
+      0.7808278997739156,
+      0.7790849804878235,
+      0.7708061138788859
+     ],
+     "profile_poly_coeffs": [
+      1.2520973183145632,
+      -0.2748339973995936,
+      -0.6421776427635683,
+      -0.1820061982594014
+     ],
+     "radial_profile": [
+      null,
+      0.7986666786670685,
+      0.7861591822960797,
+      0.770020021711077,
+      0.7343299156761799,
+      0.7036662692359338,
+      0.6809843505922313,
+      0.6046535061829685
+     ],
+     "glint_offset_norm": [
+      0.0003738620290719017,
+      0.053923927047371825
+     ],
+     "source_angle_image_deg": 270,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9567,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.6814804265304735,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": -4,
+   "refraction_d": 4,
+   "rotation_deg": 0,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 0,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 1,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.50925002174276,
+      "cy": 79.07288231038613,
+      "r": 26.525024532545153
+     },
+     "iris": {
+      "cx": 79.44406394088683,
+      "cy": 79.10904068119525,
+      "r": 52
+     },
+     "glint": [
+      79.47826086956522,
+      80.6086956521739
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5100966256258683,
+     "pupil_ellipse_eccentricity": 0.06854820939484334,
+     "reflex_mean_luma": 0.353336472980657,
+     "reflex_mean_rgb": [
+      177.0593779453346,
+      57.18143261074458,
+      31.5311027332705
+     ],
+     "reflex_red_chroma": 0.6610934481544387,
+     "reflex_entropy": 3.534616378179006,
+     "crescent_present": true,
+     "crescent_area_fraction": 0.7224988682661838,
+     "crescent_width_norm": 0.6786261334724037,
+     "crescent_width_mm": 4.0717568008344225,
+     "crescent_side": -1,
+     "crescent_centroid_offset_norm": -0.18827258522749948,
+     "crescent_orientation_deg": 90.70993577988094,
+     "crescent_contrast": 1.8264979079460593,
+     "crescent_separability": 0.8702035762420246,
+     "gradient_along_source": -0.3501995072726064,
+     "gradient_perpendicular": 0.00021716952057491412,
+     "dominant_gradient_deg": 90.08572126652263,
+     "asymmetry_index": -0.28857939037349517,
+     "profile_along_source": [
+      0.801307201385498,
+      0.842265804608663,
+      0.8248366117477417,
+      0.8366013169288635,
+      0.8322440187136332,
+      0.8117647171020508,
+      0.815250555674235,
+      0.8187363942464193,
+      0.8161220153172811,
+      0.9464052319526672,
+      1,
+      1,
+      0.9442265828450521,
+      0.7982570926348368,
+      0.7398692965507507,
+      0.6540305217107137,
+      0.5041394465499454,
+      0.40130719542503357,
+      0.3943355182806651,
+      0.3773420552412669,
+      0.3633987009525299
+     ],
+     "profile_perpendicular": [
+      0.7620915174484253,
+      0.7795207103093466,
+      0.7877995769182841,
+      0.772549033164978,
+      0.771677573521932,
+      0.7830065488815308,
+      0.7786492506663004,
+      0.7821350892384847,
+      0.8705882430076599,
+      0.9843137264251709,
+      1,
+      0.9869281053543091,
+      0.8732026219367981,
+      0.785620927810669,
+      0.7799564401308695,
+      0.7808278997739156,
+      0.7834422787030538,
+      0.7795207103093466,
+      0.7838780085245768,
+      0.7938997944196066,
+      0.7690631945927938
+     ],
+     "profile_poly_coeffs": [
+      1.2576536773315405,
+      -0.2598299110732379,
+      -0.6502147578536999,
+      -0.20908758772309127
+     ],
+     "radial_profile": [
+      null,
+      0.8039215803146362,
+      0.7854018035651631,
+      0.7703401497432164,
+      0.7304566685894602,
+      0.7050632373782424,
+      0.6794615520152035,
+      0.600214056917566
+     ],
+     "glint_offset_norm": [
+      -0.0011682987188010845,
+      0.0579005436885983
+     ],
+     "source_angle_image_deg": 270,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9646,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.7317726072718446,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": -3,
+   "refraction_d": 3,
+   "rotation_deg": 0,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 0,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 2,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.4653754911567,
+      "cy": 79.0687647235755,
+      "r": 26.472191522464385
+     },
+     "iris": {
+      "cx": 79.4936430206687,
+      "cy": 79.77847842513825,
+      "r": 52
+     },
+     "glint": [
+      79.47826086956522,
+      80.6086956521739
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5090806062012382,
+     "pupil_ellipse_eccentricity": 0.0940275474303369,
+     "reflex_mean_luma": 0.3406838414440223,
+     "reflex_mean_rgb": [
+      170.61990521327013,
+      55.20616113744076,
+      30.28957345971564
+     ],
+     "reflex_red_chroma": 0.661253013147562,
+     "reflex_entropy": 3.5580696415291726,
+     "crescent_present": true,
+     "crescent_area_fraction": 0.6586253982703687,
+     "crescent_width_norm": 0.6259283706555396,
+     "crescent_width_mm": 3.755570223933238,
+     "crescent_side": -1,
+     "crescent_centroid_offset_norm": -0.25238054170797414,
+     "crescent_orientation_deg": 89.50453562345524,
+     "crescent_contrast": 1.8695674898823291,
+     "crescent_separability": 0.8946820790720118,
+     "gradient_along_source": -0.4258950463603604,
+     "gradient_perpendicular": -0.002388825869278334,
+     "dominant_gradient_deg": 89.62293708474891,
+     "asymmetry_index": -0.38005209841008913,
+     "profile_along_source": [
+      0.7982570926348368,
+      0.8549019694328308,
+      0.8392156958580017,
+      0.8357298572858175,
+      0.8326797485351562,
+      0.8169934749603271,
+      0.8056644996007284,
+      0.8078431487083435,
+      0.8261438012123108,
+      0.943790853023529,
+      1,
+      1,
+      0.942919393380483,
+      0.7712418437004089,
+      0.5442265967528025,
+      0.43834423025449115,
+      0.4091503322124481,
+      0.3904139498869578,
+      0.39259259899457294,
+      0.3808278938134511,
+      0.3764705955982208
+     ],
+     "profile_perpendicular": [
+      0.7555555701255798,
+      0.7821350892384847,
+      0.7790849804878235,
+      0.7769063313802084,
+      0.7799564401308695,
+      0.7934640645980835,
+      0.7873638470967611,
+      0.7764706015586853,
+      0.8705882430076599,
+      0.984749456246694,
+      1,
+      0.9830065369606018,
+      0.8649237553278605,
+      0.7912854154904684,
+      0.786056657632192,
+      0.7838780085245768,
+      0.7904139558474222,
+      0.7799564401308695,
+      0.7834422787030538,
+      0.7921568751335144,
+      0.7747276822725931
+     ],
+     "profile_poly_coeffs": [
+      1.2460716430362822,
+      -0.5168270854500806,
+      -0.5993557937330012,
+      0.14119974042334682
+     ],
+     "radial_profile": [
+      null,
+      0.8026666784286499,
+      0.7730050294898277,
+      0.7166184636413074,
+      0.6923790959517161,
+      0.6743980597492327,
+      0.6609895728478719,
+      0.5874956795883554
+     ],
+     "glint_offset_norm": [
+      0.0004867514802307835,
+      0.058171645037080465
+     ],
+     "source_angle_image_deg": 270,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.964,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.7274633415011015,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": -3,
+   "refraction_d": 3,
+   "rotation_deg": 0,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 0,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 3,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.5023503480173,
+      "cy": 79.07226100214577,
+      "r": 26.48005249896444
+     },
+     "iris": {
+      "cx": 80.10776129783196,
+      "cy": 79.7963803671829,
+      "r": 52
+     },
+     "glint": [
+      79.6086956521739,
+      80.52173913043478
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5092317788262393,
+     "pupil_ellipse_eccentricity": 0.10469235904485305,
+     "reflex_mean_luma": 0.34053217269187286,
+     "reflex_mean_rgb": [
+      170.5490288962577,
+      55.153955471340595,
+      30.405021316911416
+     ],
+     "reflex_red_chroma": 0.6608528451634944,
+     "reflex_entropy": 3.544770740402646,
+     "crescent_present": true,
+     "crescent_area_fraction": 0.6587807097361238,
+     "crescent_width_norm": 0.6260544193716773,
+     "crescent_width_mm": 3.7563265162300636,
+     "crescent_side": -1,
+     "crescent_centroid_offset_norm": -0.25289112982962825,
+     "crescent_orientation_deg": 90.30373063485473,
+     "crescent_contrast": 1.8757557769527158,
+     "crescent_separability": 0.8930621441073952,
+     "gradient_along_source": -0.42762355386763135,
+     "gradient_perpendicular": -0.00016638194814156236,
+     "dominant_gradient_deg": 89.97859296840835,
+     "asymmetry_index": -0.38382360673879795,
+     "profile_along_source": [
+      0.8030501206715902,
+      0.8518518606821696,
+      0.8366013169288635,
+      0.829629639784495,
+      0.8165577451388041,
+      0.8178649346033732,
+      0.8074074188868204,
+      0.801307201385498,
+      0.8039215803146362,
+      0.9546840985616049,
+      1,
+      1,
+      0.9411764740943909,
+      0.7699346542358398,
+      0.5342048108577728,
+      0.43529412150382996,
+      0.40697168310483295,
+      0.38910676042238873,
+      0.3812636236349742,
+      0.37559913595517475,
+      0.36819172898928326
+     ],
+     "profile_perpendicular": [
+      0.7742919524510702,
+      0.7873638470967611,
+      0.7847494681676229,
+      0.785620927810669,
+      0.7965141733487447,
+      0.7838780085245768,
+      0.7843137383460999,
+      0.7851851979891459,
+      0.8740740815798441,
+      0.984749456246694,
+      1,
+      0.9869281053543091,
+      0.8705882430076599,
+      0.7877995769182841,
+      0.7899782260258993,
+      0.7969499031702677,
+      0.7821350892384847,
+      0.7747276822725931,
+      0.7847494681676229,
+      0.7873638470967611,
+      0.7773420612017313
+     ],
+     "profile_poly_coeffs": [
+      1.2412821438902162,
+      -0.5069506124021054,
+      -0.6015816441925259,
+      0.11731541201203734
+     ],
+     "radial_profile": [
+      null,
+      0.8011534143896664,
+      0.7734948231893427,
+      0.7150755514864062,
+      0.6929050679073522,
+      0.6729881639281908,
+      0.6614524751304253,
+      0.5873955217115069
+     ],
+     "glint_offset_norm": [
+      0.004016053373034807,
+      0.05473849148696744
+     ],
+     "source_angle_image_deg": 270,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9589,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.6951679042785858,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": -2,
+   "refraction_d": 2,
+   "rotation_deg": 0,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 0,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 4,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.51779373417483,
+      "cy": 79.11144314789239,
+      "r": 26.454125121417025
+     },
+     "iris": {
+      "cx": 79.29872362356163,
+      "cy": 79.50318860000263,
+      "r": 52
+     },
+     "glint": [
+      79.52941176470588,
+      80.3529411764706
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5087331754118659,
+     "pupil_ellipse_eccentricity": 0.09572703832188004,
+     "reflex_mean_luma": 0.3189432047556663,
+     "reflex_mean_rgb": [
+      159.5567593028733,
+      51.737635421573245,
+      28.53556288271314
+     ],
+     "reflex_red_chroma": 0.6603469777882127,
+     "reflex_entropy": 3.5565683359603524,
+     "crescent_present": true,
+     "crescent_area_fraction": 0.5383211678832117,
+     "crescent_width_norm": 0.5301155936676358,
+     "crescent_width_mm": 3.180693562005815,
+     "crescent_side": -1,
+     "crescent_centroid_offset_norm": -0.36338899959930715,
+     "crescent_orientation_deg": 90.0605945676478,
+     "crescent_contrast": 1.8872038386040513,
+     "crescent_separability": 0.9189098880478114,
+     "gradient_along_source": -0.525287282505861,
+     "gradient_perpendicular": 0.0004923322723682489,
+     "dominant_gradient_deg": 90.15354686703574,
+     "asymmetry_index": -0.5482166971870561,
+     "profile_along_source": [
+      0.8087146083513895,
+      0.8474945624669393,
+      0.8331154783566793,
+      0.8313725590705872,
+      0.8230936924616495,
+      0.8300653696060181,
+      0.8069716890652975,
+      0.8039215803146362,
+      0.8169934749603271,
+      0.9525054494539896,
+      1,
+      1,
+      0.7620915174484253,
+      0.4766884644826253,
+      0.4187363882859548,
+      0.4143790900707245,
+      0.40261438488960266,
+      0.3991285463174184,
+      0.39084967970848083,
+      0.37429194649060565,
+      0.3799564341704051
+     ],
+     "profile_perpendicular": [
+      0.7555555701255798,
+      0.7782135208447775,
+      0.7773420612017313,
+      0.7764706015586853,
+      0.771677573521932,
+      0.7699346542358398,
+      0.7638344367345175,
+      0.7647058963775635,
+      0.8553376992543539,
+      0.9773420492808024,
+      1,
+      0.98562091588974,
+      0.8610021869341532,
+      0.7655773560206095,
+      0.7712418437004089,
+      0.7777777910232544,
+      0.7834422787030538,
+      0.7777777910232544,
+      0.7708061138788859,
+      0.7769063313802084,
+      0.7586056788762411
+     ],
+     "profile_poly_coeffs": [
+      1.2398805091501939,
+      -0.7819599776384751,
+      -0.49172871846697014,
+      0.5018717859181054
+     ],
+     "radial_profile": [
+      null,
+      0.7651037357855535,
+      0.6615367188703182,
+      0.6437989289377942,
+      0.6406991838624603,
+      0.6353661768392628,
+      0.6290248925776759,
+      0.5668828284411919
+     ],
+     "glint_offset_norm": [
+      0.00043917651699801395,
+      0.046930224412263806
+     ],
+     "source_angle_image_deg": 270,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9587,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.6938612775236384,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": -2,
+   "refraction_d": 2,
+   "rotation_deg": 0,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 0,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 5,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.52757789907191,
+      "cy": 79.10791248578057,
+      "r": 26.475669124894413
+     },
+     "iris": {
+      "cx": 79.71875474859942,
+      "cy": 78.85632228744466,
+      "r": 52
+     },
+     "glint": [
+      79.52380952380952,
+      80.61904761904762
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5091474831710464,
+     "pupil_ellipse_eccentricity": 0.08741458724563667,
+     "reflex_mean_luma": 0.3189913228449952,
+     "reflex_mean_rgb": [
+      159.65737240075615,
+      51.698960302457465,
+      28.578449905482042
+     ],
+     "reflex_red_chroma": 0.660315734818437,
+     "reflex_entropy": 3.543331968815087,
+     "crescent_present": true,
+     "crescent_area_fraction": 0.5325443786982249,
+     "crescent_width_norm": 0.5255714470636499,
+     "crescent_width_mm": 3.1534286823818993,
+     "crescent_side": -1,
+     "crescent_centroid_offset_norm": -0.364865159492198,
+     "crescent_orientation_deg": 90.15343112046844,
+     "crescent_contrast": 1.8907778337928458,
+     "crescent_separability": 0.9205072744223654,
+     "gradient_along_source": -0.5269269478086663,
+     "gradient_perpendicular": 0.0025321352616460772,
+     "dominant_gradient_deg": 90.29617102999111,
+     "asymmetry_index": -0.5532903685231072,
+     "profile_along_source": [
+      0.800000011920929,
+      0.8483660221099854,
+      0.8474945624669393,
+      0.8387799660364786,
+      0.8305010994275411,
+      0.8122004469235738,
+      0.8222222328186035,
+      0.8043573101361593,
+      0.8065359592437744,
+      0.9503268003463745,
+      1,
+      1,
+      0.7533769210179647,
+      0.4749455451965332,
+      0.42135076721509296,
+      0.4143790900707245,
+      0.40130719542503357,
+      0.3952069779237111,
+      0.39128540953000385,
+      0.37342048684755963,
+      0.3747276763121287
+     ],
+     "profile_perpendicular": [
+      0.7564270297686259,
+      0.7795207103093466,
+      0.7703703840573629,
+      0.7803921699523926,
+      0.7699346542358398,
+      0.7838780085245768,
+      0.7638344367345175,
+      0.7782135208447775,
+      0.8644880255063375,
+      0.9860566457112631,
+      1,
+      0.9873638351758321,
+      0.8610021869341532,
+      0.7777777910232544,
+      0.7699346542358398,
+      0.7638344367345175,
+      0.772113303343455,
+      0.7686274647712708,
+      0.772549033164978,
+      0.7655773560206095,
+      0.757734219233195
+     ],
+     "profile_poly_coeffs": [
+      1.2378053447112738,
+      -0.7912514768190254,
+      -0.49018684624296793,
+      0.5118677098976859
+     ],
+     "radial_profile": [
+      0.8627451062202454,
+      0.7912854149385735,
+      0.6648078991498562,
+      0.6448156316093947,
+      0.6427760672216353,
+      0.6381864123769946,
+      0.6274596464554996,
+      0.565008150023434
+     ],
+     "glint_offset_norm": [
+      -0.00014233352307809862,
+      0.057076371748662015
+     ],
+     "source_angle_image_deg": 270,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9621,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.715166717007934,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": -1,
+   "refraction_d": 1,
+   "rotation_deg": 0,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 0,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 6,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.48756807349463,
+      "cy": 79.10336762828976,
+      "r": 26.43781890524994
+     },
+     "iris": {
+      "cx": 79.96943257726967,
+      "cy": 79.97841819021941,
+      "r": 52
+     },
+     "glint": [
+      79.5,
+      80.5
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5084195943317297,
+     "pupil_ellipse_eccentricity": 0.09478343971561265,
+     "reflex_mean_luma": 0.27487646306386104,
+     "reflex_mean_rgb": [
+      137.22551789077212,
+      44.70856873822976,
+      24.72928436911488
+     ],
+     "reflex_red_chroma": 0.6585549351859228,
+     "reflex_entropy": 3.5591746384598193,
+     "crescent_present": true,
+     "crescent_area_fraction": 0.2897623400365631,
+     "crescent_width_norm": 0.3316419624172178,
+     "crescent_width_mm": 1.9898517745033066,
+     "crescent_side": -1,
+     "crescent_centroid_offset_norm": -0.5876854526914885,
+     "crescent_orientation_deg": 89.55864090385501,
+     "crescent_contrast": 1.8336980680795019,
+     "crescent_separability": 0.8943336181324765,
+     "gradient_along_source": -0.5479955004822235,
+     "gradient_perpendicular": -0.0035171669767822306,
+     "dominant_gradient_deg": 89.62622577858474,
+     "asymmetry_index": -0.4751722025579241,
+     "profile_along_source": [
+      0.8047930399576823,
+      0.8400871555010477,
+      0.8588235378265381,
+      0.8470588326454163,
+      0.8235294222831726,
+      0.8104575276374817,
+      0.6849673390388489,
+      0.5468409856160482,
+      0.49847496549288434,
+      0.7045751810073853,
+      0.970370372136434,
+      1,
+      0.7076252864466773,
+      0.4588235384888119,
+      0.4117647111415863,
+      0.40130719542503357,
+      0.3960784375667572,
+      0.40392157435417175,
+      0.38779957095781964,
+      0.379520704348882,
+      0.3760348657766978
+     ],
+     "profile_perpendicular": [
+      0.4488017459710439,
+      0.45228758454322815,
+      0.45054466525713605,
+      0.45054466525713605,
+      0.4431372582912445,
+      0.4435729881127675,
+      0.43790850043296814,
+      0.44967320561408997,
+      0.5407407548692491,
+      0.8056644996007284,
+      0.970370372136434,
+      0.8108932574590048,
+      0.5420479476451874,
+      0.4488017459710439,
+      0.4405228793621063,
+      0.43790850043296814,
+      0.4387799600760142,
+      0.450108935435613,
+      0.45054466525713605,
+      0.450108935435613,
+      0.44095860918362934
+     ],
+     "profile_poly_coeffs": [
+      1.2474582393124514,
+      -0.6244335566558425,
+      -0.2337575628828908,
+      0.13737897283399536
+     ],
+     "radial_profile": [
+      0.5313725769519806,
+      0.4813180925945441,
+      0.47542713765512434,
+      0.5215040830427727,
+      0.5532788027398634,
+      0.5594737188934346,
+      0.5686186264092857,
+      0.5235332899545071
+     ],
+     "glint_offset_norm": [
+      0.0004702326825796775,
+      0.05282706477094829
+     ],
+     "source_angle_image_deg": 270,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9628,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.7197783801896811,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": -1,
+   "refraction_d": 1,
+   "rotation_deg": 0,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 0,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 7,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.49385828374277,
+      "cy": 79.07186105816072,
+      "r": 26.393003633805098
+     },
+     "iris": {
+      "cx": 79.15985559304791,
+      "cy": 78.79698456416155,
+      "r": 52
+     },
+     "glint": [
+      79.5,
+      80.5
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5075577621885595,
+     "pupil_ellipse_eccentricity": 0.12616370822914064,
+     "reflex_mean_luma": 0.27464040935687395,
+     "reflex_mean_rgb": [
+      137.2055765595463,
+      44.620510396975426,
+      24.706994328922494
+     ],
+     "reflex_red_chroma": 0.6593324951616262,
+     "reflex_entropy": 3.5443997482401,
+     "crescent_present": true,
+     "crescent_area_fraction": 0.29357798165137616,
+     "crescent_width_norm": 0.33482079654183794,
+     "crescent_width_mm": 2.0089247792510276,
+     "crescent_side": -1,
+     "crescent_centroid_offset_norm": -0.5895259696108178,
+     "crescent_orientation_deg": 89.6724386294029,
+     "crescent_contrast": 1.8334703190784862,
+     "crescent_separability": 0.8973610216559177,
+     "gradient_along_source": -0.5466734127945599,
+     "gradient_perpendicular": 0.001319270346914995,
+     "dominant_gradient_deg": 90.13611473196943,
+     "asymmetry_index": -0.47374139322459496,
+     "profile_along_source": [
+      0.7991285522778829,
+      0.8549019694328308,
+      0.842265804608663,
+      0.8244008819262186,
+      0.8204793135325114,
+      0.8139433662096659,
+      0.6749455531438192,
+      0.5389978455172645,
+      0.48540306091308594,
+      0.7071895599365234,
+      0.9747276703516642,
+      1,
+      0.7111111250188615,
+      0.45490197009510464,
+      0.4148148198922475,
+      0.41699346899986267,
+      0.4061002234617869,
+      0.38736384113629657,
+      0.3965141673882802,
+      0.3904139498869578,
+      0.3629629711310069
+     ],
+     "profile_perpendicular": [
+      0.43529412150382996,
+      0.4400871495405833,
+      0.4457516372203827,
+      0.4457516372203827,
+      0.4470588266849518,
+      0.4448801775773366,
+      0.4405228793621063,
+      0.4387799600760142,
+      0.537690646118588,
+      0.8074074188868204,
+      0.9747276703516642,
+      0.8074074188868204,
+      0.5294117795096503,
+      0.45359477400779724,
+      0.44793028632799786,
+      0.4331154723962148,
+      0.45185185472170514,
+      0.4474945565064748,
+      0.4448801775773366,
+      0.4435729881127675,
+      0.43790850043296814
+     ],
+     "profile_poly_coeffs": [
+      1.245863455408154,
+      -0.5838037053973785,
+      -0.23832851993401738,
+      0.0795896718681788
+     ],
+     "radial_profile": [
+      0.5254902243614197,
+      0.4767429269850254,
+      0.47513633507948655,
+      0.5208963664210573,
+      0.552690309807909,
+      0.5583537657124301,
+      0.5665084049439751,
+      0.5269930832638237
+     ],
+     "glint_offset_norm": [
+      0.00023270243669295976,
+      0.05411051207563462
+     ],
+     "source_angle_image_deg": 270,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9626,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.7184023677538657,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": 0,
+   "refraction_d": 0,
+   "rotation_deg": 0,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 0,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 8,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.50669732196157,
+      "cy": 79.49916227605968,
+      "r": 26.287011204663244
+     },
+     "iris": {
+      "cx": 78.79832891933762,
+      "cy": 78.92126682250061,
+      "r": 52
+     },
+     "glint": [
+      79.5,
+      80.5
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.505519446243524,
+     "pupil_ellipse_eccentricity": 0,
+     "reflex_mean_luma": 0.2246709659243218,
+     "reflex_mean_rgb": [
+      112.07400379506642,
+      36.571631878557874,
+      20.293168880455408
+     ],
+     "reflex_red_chroma": 0.6580844305780852,
+     "reflex_entropy": 2.324301822710772,
+     "crescent_present": false,
+     "crescent_area_fraction": 0,
+     "crescent_width_norm": 0,
+     "crescent_width_mm": 0,
+     "crescent_side": 0,
+     "crescent_centroid_offset_norm": 0,
+     "crescent_orientation_deg": null,
+     "crescent_contrast": 1.152093775144145,
+     "crescent_separability": 0.6712960846703605,
+     "gradient_along_source": -0.12794580705246886,
+     "gradient_perpendicular": 0.00022387046203862934,
+     "dominant_gradient_deg": 90.10026960107552,
+     "asymmetry_index": -0.11147058262574341,
+     "profile_along_source": [
+      0.4901960856384701,
+      0.4915032751030392,
+      0.4906318187713623,
+      0.48801743653085494,
+      0.48409586813714767,
+      0.4758169949054718,
+      0.47058823704719543,
+      0.46710240178638035,
+      0.486274520556132,
+      0.7093682057327695,
+      0.9790849685668945,
+      0.98562091588974,
+      0.7220043705569373,
+      0.43921568989753723,
+      0.42222222685813904,
+      0.4117647111415863,
+      0.4087146023909251,
+      0.4000000059604645,
+      0.40435730417569477,
+      0.3960784375667572,
+      0.393028328816096
+     ],
+     "profile_perpendicular": [
+      0.4461873670419057,
+      0.44793028632799786,
+      0.43572985132535297,
+      0.44095860918362934,
+      0.4435729881127675,
+      0.45664488275845844,
+      0.45315904418627423,
+      0.45141612490018207,
+      0.5337690744135115,
+      0.8108932574590048,
+      0.9790849685668945,
+      0.8091503381729126,
+      0.5298475093311734,
+      0.43703704078992206,
+      0.4435729881127675,
+      0.4488017459710439,
+      0.4444444477558136,
+      0.4474945565064748,
+      0.4562091529369354,
+      0.4440087179342906,
+      0.43616558114687604
+     ],
+     "profile_poly_coeffs": [
+      1.4151630835457367,
+      -0.003964343074147655,
+      -0.7462928391210777,
+      -0.20439586503231366
+     ],
+     "radial_profile": [
+      null,
+      0.475232205892864,
+      0.44614846259355545,
+      0.44511494605705654,
+      0.4447320298353831,
+      0.4431576839803408,
+      0.4450445685874332,
+      0.4187586902398763
+     ],
+     "glint_offset_norm": [
+      -0.0002547768519374122,
+      0.03807346967474095
+     ],
+     "source_angle_image_deg": 270,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9612,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.7097417458528554,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": 0,
+   "refraction_d": 0,
+   "rotation_deg": 0,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 0,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 9,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.49955339255001,
+      "cy": 79.3639151187166,
+      "r": 26.218241776944513
+     },
+     "iris": {
+      "cx": 78.59385797460175,
+      "cy": 80.01124193750992,
+      "r": 52
+     },
+     "glint": [
+      79.5,
+      80.5
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.504196957248933,
+     "pupil_ellipse_eccentricity": 0.05696656388647857,
+     "reflex_mean_luma": 0.2248993396402546,
+     "reflex_mean_rgb": [
+      112.09282296650717,
+      36.670334928229664,
+      20.24641148325359
+     ],
+     "reflex_red_chroma": 0.6579018011903078,
+     "reflex_entropy": 2.3135142631834884,
+     "crescent_present": false,
+     "crescent_area_fraction": 0,
+     "crescent_width_norm": 0,
+     "crescent_width_mm": 0,
+     "crescent_side": 0,
+     "crescent_centroid_offset_norm": 0,
+     "crescent_orientation_deg": null,
+     "crescent_contrast": 1.147837562856448,
+     "crescent_separability": 0.6685868327179638,
+     "gradient_along_source": -0.12474111731414105,
+     "gradient_perpendicular": -0.0019092262889562914,
+     "dominant_gradient_deg": 89.12574796824492,
+     "asymmetry_index": -0.1098946342308561,
+     "profile_along_source": [
+      0.49803922904862297,
+      0.4915032717916701,
+      0.488888896173901,
+      0.48235294222831726,
+      0.4745098087522719,
+      0.46928104758262634,
+      0.46840958793958026,
+      0.4614379107952118,
+      0.49716776940557694,
+      0.7080610195795695,
+      0.9751634001731873,
+      0.986492375532786,
+      0.7145969635910459,
+      0.47233116295602584,
+      0.4230936865011851,
+      0.4143790900707245,
+      0.40566449364026386,
+      0.4104575216770172,
+      0.40217865506807965,
+      0.3952069779237111,
+      0.38736384113629657
+     ],
+     "profile_perpendicular": [
+      0.43529412150382996,
+      0.4440087179342906,
+      0.4453159073988597,
+      0.4435729881127675,
+      0.4400871495405833,
+      0.4592592649989658,
+      0.45228758785459733,
+      0.4474945565064748,
+      0.5346405406792959,
+      0.8104575276374817,
+      0.9751634001731873,
+      0.8095860679944357,
+      0.5298475060198042,
+      0.4461873670419057,
+      0.4413943390051524,
+      0.43703704078992206,
+      0.45577342642678154,
+      0.4474945565064748,
+      0.4422657986481984,
+      0.4422657986481984,
+      0.42352941632270813
+     ],
+     "profile_poly_coeffs": [
+      1.4182679778171632,
+      0.04021540854942997,
+      -0.7534484718511996,
+      -0.2782886560672291
+     ],
+     "radial_profile": [
+      null,
+      0.4771786576343907,
+      0.4463437171543346,
+      0.44504776609759045,
+      0.4438261833746691,
+      0.4433654988253558,
+      0.4432079191277693,
+      0.4205566155574014
+     ],
+     "glint_offset_norm": [
+      0.000017034225780162758,
+      0.04333184852549617
+     ],
+     "source_angle_image_deg": 270,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9602,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.703469848422567,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": 1,
+   "refraction_d": -1,
+   "rotation_deg": 0,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 0,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 10,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.5124446236609,
+      "cy": 79.54983295075093,
+      "r": 26.207275294992222
+     },
+     "iris": {
+      "cx": 79.5037293158571,
+      "cy": 79.04151351112702,
+      "r": 52
+     },
+     "glint": [
+      79.5,
+      80.5
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.503986063365235,
+     "pupil_ellipse_eccentricity": 0.018287464356912846,
+     "reflex_mean_luma": 0.22464631581990913,
+     "reflex_mean_rgb": [
+      112.15023923444976,
+      36.546411483253586,
+      20.167942583732057
+     ],
+     "reflex_red_chroma": 0.658893471043646,
+     "reflex_entropy": 1.6273128361746647,
+     "crescent_present": false,
+     "crescent_area_fraction": 0,
+     "crescent_width_norm": 0,
+     "crescent_width_mm": 0,
+     "crescent_side": 0,
+     "crescent_centroid_offset_norm": 0,
+     "crescent_orientation_deg": null,
+     "crescent_contrast": 1.0853618421941593,
+     "crescent_separability": 0.5140326649081034,
+     "gradient_along_source": -0.003808906185257427,
+     "gradient_perpendicular": 0.0006236399911140492,
+     "dominant_gradient_deg": 99.30741069161712,
+     "asymmetry_index": -0.0019181491511283259,
+     "profile_along_source": [
+      0.43224401275316876,
+      0.4422657986481984,
+      0.4400871495405833,
+      0.4422657986481984,
+      0.4427015284697215,
+      0.43921568989753723,
+      0.4440087179342906,
+      0.44662309686342877,
+      0.4827886786725786,
+      0.7002178794807858,
+      1,
+      0.9860566457112631,
+      0.716775612698661,
+      0.4627451002597809,
+      0.45141612490018207,
+      0.43921568989753723,
+      0.4422657986481984,
+      0.4422657986481984,
+      0.44095860918362934,
+      0.4483660161495209,
+      0.4422657986481984
+     ],
+     "profile_perpendicular": [
+      0.4400871495405833,
+      0.43703704078992206,
+      0.4400871495405833,
+      0.4422657986481984,
+      0.4405228793621063,
+      0.4440087179342906,
+      0.44923747579256695,
+      0.4453159073988597,
+      0.5620915194352468,
+      0.8697167833646139,
+      1,
+      0.8675381342569987,
+      0.5516340037186941,
+      0.45315904418627423,
+      0.4435729881127675,
+      0.4448801775773366,
+      0.43834423025449115,
+      0.4331154723962148,
+      0.44662309686342877,
+      0.4431372582912445,
+      0.43703704078992206
+     ],
+     "profile_poly_coeffs": [
+      1.4147115386944247,
+      0.1588403817404262,
+      -0.7587823627544602,
+      -0.23700001913382066
+     ],
+     "radial_profile": [
+      null,
+      0.474509811737168,
+      0.44761245986994574,
+      0.4434376337426774,
+      0.4436078464984894,
+      0.4447307187995055,
+      0.44411540692949186,
+      0.4206551744277219
+     ],
+     "glint_offset_norm": [
+      -0.0004748537770836274,
+      0.03625585027645494
+     ],
+     "source_angle_image_deg": 270,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.958,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.6893863113946193,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": 1,
+   "refraction_d": -1,
+   "rotation_deg": 0,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 0,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 11,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.54405684480713,
+      "cy": 79.46956327303502,
+      "r": 26.14794261713528
+     },
+     "iris": {
+      "cx": 79.8621499260741,
+      "cy": 79.87849402193928,
+      "r": 52
+     },
+     "glint": [
+      79.5,
+      80.5
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5028450503295245,
+     "pupil_ellipse_eccentricity": 0.059479510244298296,
+     "reflex_mean_luma": 0.2245758585775404,
+     "reflex_mean_rgb": [
+      112.18015414258188,
+      36.4990366088632,
+      20.17581888246628
+     ],
+     "reflex_red_chroma": 0.659103046808399,
+     "reflex_entropy": 1.5866149308540973,
+     "crescent_present": false,
+     "crescent_area_fraction": 0,
+     "crescent_width_norm": 0,
+     "crescent_width_mm": 0,
+     "crescent_side": 0,
+     "crescent_centroid_offset_norm": 0,
+     "crescent_orientation_deg": null,
+     "crescent_contrast": 1.0823807285809521,
+     "crescent_separability": 0.5350310026409049,
+     "gradient_along_source": 0.0019072141424872717,
+     "gradient_perpendicular": -0.0013936642914355814,
+     "dominant_gradient_deg": 306.16422539920256,
+     "asymmetry_index": 0.001178715103855785,
+     "profile_along_source": [
+      0.43529412150382996,
+      0.43703704078992206,
+      0.4400871495405833,
+      0.43485839168230694,
+      0.4427015284697215,
+      0.4461873670419057,
+      0.4413943390051524,
+      0.44662309686342877,
+      0.48366013831562465,
+      0.7045751776960161,
+      0.9742919405301412,
+      0.9891067544619242,
+      0.7307189702987671,
+      0.44793028632799786,
+      0.4418300688266754,
+      0.43834423025449115,
+      0.45141612490018207,
+      0.44923747579256695,
+      0.4413943390051524,
+      0.45141612490018207,
+      0.43921568989753723
+     ],
+     "profile_perpendicular": [
+      0.4413943390051524,
+      0.4453159073988597,
+      0.4444444477558136,
+      0.4470588266849518,
+      0.4422657986481984,
+      0.45098039507865906,
+      0.43921568989753723,
+      0.4470588266849518,
+      0.5302832391526964,
+      0.7982570926348368,
+      0.9742919405301412,
+      0.8135076363881429,
+      0.5355119970109727,
+      0.45185185472170514,
+      0.4453159073988597,
+      0.4440087179342906,
+      0.4418300688266754,
+      0.43616558114687604,
+      0.44095860918362934,
+      0.4448801775773366,
+      0.43703704078992206
+     ],
+     "profile_poly_coeffs": [
+      1.4098870398628673,
+      0.16242684424600254,
+      -0.7499583691123446,
+      -0.2384625749376154
+     ],
+     "radial_profile": [
+      null,
+      0.48007957702097687,
+      0.44455911349831967,
+      0.4447324725530915,
+      0.4439481589753749,
+      0.4432937038388658,
+      0.44326231969787755,
+      0.4223289362021855
+     ],
+     "glint_offset_norm": [
+      -0.0016849067420799295,
+      0.03940794662329237
+     ],
+     "source_angle_image_deg": 270,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9588,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.6947636825302848,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": 2,
+   "refraction_d": -2,
+   "rotation_deg": 0,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 0,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 12,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.5687583416392,
+      "cy": 79.6327287088851,
+      "r": 26.232490369529625
+     },
+     "iris": {
+      "cx": 79.67974288945355,
+      "cy": 80.08506316950759,
+      "r": 52
+     },
+     "glint": [
+      79.5,
+      80.5
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5044709686448005,
+     "pupil_ellipse_eccentricity": 0.05410310312112517,
+     "reflex_mean_luma": 0.22435464361639879,
+     "reflex_mean_rgb": [
+      111.9618320610687,
+      36.51335877862596,
+      20.17986641221374
+     ],
+     "reflex_red_chroma": 0.658568317767318,
+     "reflex_entropy": 2.2768825387534664,
+     "crescent_present": false,
+     "crescent_area_fraction": 0,
+     "crescent_width_norm": 0,
+     "crescent_width_mm": 0,
+     "crescent_side": 0,
+     "crescent_centroid_offset_norm": 0,
+     "crescent_orientation_deg": null,
+     "crescent_contrast": 1.1438425185661647,
+     "crescent_separability": 0.6561218044581696,
+     "gradient_along_source": 0.1214771543416443,
+     "gradient_perpendicular": 0.005629056322145557,
+     "dominant_gradient_deg": 267.4192921226282,
+     "asymmetry_index": 0.10937989112207921,
+     "profile_along_source": [
+      0.3860566516717275,
+      0.40392157435417175,
+      0.4004357357819875,
+      0.39956427613894147,
+      0.4100217918554942,
+      0.42047930757204693,
+      0.41525054971377057,
+      0.4331154723962148,
+      0.47363835242059493,
+      0.7002178794807858,
+      1,
+      0.9843137264251709,
+      0.7328976194063822,
+      0.464488019545873,
+      0.45533769329388935,
+      0.4583878020445506,
+      0.48104575276374817,
+      0.4919390082359314,
+      0.48366013500425553,
+      0.48104575276374817,
+      0.4897603591283162
+     ],
+     "profile_perpendicular": [
+      0.4374727706114451,
+      0.4448801775773366,
+      0.4440087179342906,
+      0.4427015284697215,
+      0.43485839168230694,
+      0.45185185472170514,
+      0.43529412150382996,
+      0.43529412150382996,
+      0.5525054600503709,
+      0.8662309447924296,
+      1,
+      0.8675381342569987,
+      0.5529411931832632,
+      0.45098039507865906,
+      0.44662309686342877,
+      0.4326797425746918,
+      0.43965141971906024,
+      0.4387799600760142,
+      0.4413943390051524,
+      0.44923747579256695,
+      0.4413943390051524
+     ],
+     "profile_poly_coeffs": [
+      1.4125370003948778,
+      0.28934632032958957,
+      -0.7517229626056927,
+      -0.2520594223000928
+     ],
+     "radial_profile": [
+      null,
+      0.47589064651811624,
+      0.4438481858947821,
+      0.4424363823647195,
+      0.4450849705934525,
+      0.4438588277498881,
+      0.4428016297720574,
+      0.42009412312507627
+     ],
+     "glint_offset_norm": [
+      -0.0026211137665778862,
+      0.0330609590968261
+     ],
+     "source_angle_image_deg": 270,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9579,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.6886039944940963,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": 2,
+   "refraction_d": -2,
+   "rotation_deg": 0,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 0,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 13,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.42245214819026,
+      "cy": 79.64818499335567,
+      "r": 26.176225000931332
+     },
+     "iris": {
+      "cx": 79.49178965303854,
+      "cy": 78.99383055932002,
+      "r": 52
+     },
+     "glint": [
+      79.5,
+      80.5
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5033889423256025,
+     "pupil_ellipse_eccentricity": 0.07193094788185932,
+     "reflex_mean_luma": 0.22447951268556302,
+     "reflex_mean_rgb": [
+      112.1268549545237,
+      36.4590713259933,
+      20.305887984681664
+     ],
+     "reflex_red_chroma": 0.6585910052360674,
+     "reflex_entropy": 2.2957966324695165,
+     "crescent_present": false,
+     "crescent_area_fraction": 0,
+     "crescent_width_norm": 0,
+     "crescent_width_mm": 0,
+     "crescent_side": 0,
+     "crescent_centroid_offset_norm": 0,
+     "crescent_orientation_deg": null,
+     "crescent_contrast": 1.1456831288958336,
+     "crescent_separability": 0.6806393280567132,
+     "gradient_along_source": 0.12256473048665477,
+     "gradient_perpendicular": 0.00021322184977074288,
+     "dominant_gradient_deg": 269.75346282183483,
+     "asymmetry_index": 0.10897216403745369,
+     "profile_along_source": [
+      0.3777777850627899,
+      0.38736384113629657,
+      0.3956427077452342,
+      0.4030501147111257,
+      0.4061002234617869,
+      0.41830065846443176,
+      0.42091503739356995,
+      0.4344226618607839,
+      0.4662309487660726,
+      0.6919390161832174,
+      1,
+      0.9899782141049703,
+      0.7385621070861816,
+      0.4766884611712562,
+      0.47276688946617973,
+      0.46928104758262634,
+      0.4753812717066871,
+      0.48322440518273246,
+      0.4793028367890252,
+      0.4923747380574544,
+      0.49978215495745343
+     ],
+     "profile_perpendicular": [
+      0.4374727706114451,
+      0.4427015284697215,
+      0.4474945565064748,
+      0.4422657986481984,
+      0.4453159073988597,
+      0.44662309686342877,
+      0.4440087179342906,
+      0.45795207222302753,
+      0.5551198422908783,
+      0.8614379167556763,
+      1,
+      0.8732026219367981,
+      0.5555555688010322,
+      0.45141612490018207,
+      0.44967320561408997,
+      0.4474945565064748,
+      0.4405228793621063,
+      0.4418300688266754,
+      0.43965141971906024,
+      0.44095860918362934,
+      0.4461873670419057
+     ],
+     "profile_poly_coeffs": [
+      1.416500927127837,
+      0.2997275644786023,
+      -0.7660375201373201,
+      -0.2395289679201141
+     ],
+     "radial_profile": [
+      null,
+      0.4757423051765987,
+      0.44407205093045565,
+      0.4444332273732951,
+      0.4443176642907503,
+      0.4445892996079213,
+      0.44377769486482777,
+      0.4208992890205728
+     ],
+     "glint_offset_norm": [
+      0.0029625299983852145,
+      0.03254155274926093
+     ],
+     "source_angle_image_deg": 270,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9625,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.7182021303335968,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": 3,
+   "refraction_d": -3,
+   "rotation_deg": 0,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 0,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 14,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.48098588503136,
+      "cy": 79.9488554928021,
+      "r": 26.311146102245655
+     },
+     "iris": {
+      "cx": 79.26494007630495,
+      "cy": 79.97100958570519,
+      "r": 52
+     },
+     "glint": [
+      79.5,
+      80.5
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5059835788893395,
+     "pupil_ellipse_eccentricity": 0.1061118344586383,
+     "reflex_mean_luma": 0.2748935914551155,
+     "reflex_mean_rgb": [
+      137.3390232337601,
+      44.66998577524893,
+      24.668563300142246
+     ],
+     "reflex_red_chroma": 0.6595522285977378,
+     "reflex_entropy": 3.551404521627077,
+     "crescent_present": true,
+     "crescent_area_fraction": 0.28716060745513117,
+     "crescent_width_norm": 0.32947004490571397,
+     "crescent_width_mm": 1.9768202694342838,
+     "crescent_side": 1,
+     "crescent_centroid_offset_norm": 0.5920223114685766,
+     "crescent_orientation_deg": 270.3646682942193,
+     "crescent_contrast": 1.832064249001977,
+     "crescent_separability": 0.8933942885074191,
+     "gradient_along_source": 0.5472741994099823,
+     "gradient_perpendicular": -0.00027158557407443124,
+     "dominant_gradient_deg": 270.07647915884684,
+     "asymmetry_index": 0.4790382927602453,
+     "profile_along_source": [
+      0.37124183773994446,
+      0.3760348657766978,
+      0.38867103060086566,
+      0.3973856270313263,
+      0.4004357357819875,
+      0.4143790900707245,
+      0.4174291988213857,
+      0.4296296338240306,
+      0.46884532769521076,
+      0.8596949974695841,
+      1,
+      0.9869281053543091,
+      0.5938998063405355,
+      0.5529412031173706,
+      0.6840958793958029,
+      0.8030501206715902,
+      0.8427015344301859,
+      0.827886720498403,
+      0.8457516431808472,
+      0.8479302922884623,
+      0.7943355242411295
+     ],
+     "profile_perpendicular": [
+      0.4457516372203827,
+      0.4453159073988597,
+      0.4470588266849518,
+      0.44967320561408997,
+      0.4444444477558136,
+      0.4413943390051524,
+      0.4435729881127675,
+      0.45141612490018207,
+      0.5538126561376784,
+      0.871023972829183,
+      1,
+      0.8666666746139526,
+      0.5494553546110789,
+      0.45315904418627423,
+      0.4444444477558136,
+      0.4405228793621063,
+      0.4448801775773366,
+      0.4448801775773366,
+      0.43529412150382996,
+      0.45403050382932025,
+      0.4470588266849518
+     ],
+     "profile_poly_coeffs": [
+      1.2529695701558168,
+      0.8045711619317564,
+      -0.258446057788711,
+      -0.4258149954806302
+     ],
+     "radial_profile": [
+      null,
+      0.4809912968840864,
+      0.47169551025418677,
+      0.5231536028285821,
+      0.5544864382372786,
+      0.5573308445730639,
+      0.5663048897218596,
+      0.5291190060744819
+     ],
+     "glint_offset_norm": [
+      0.0007226638814877884,
+      0.020947187365238484
+     ],
+     "source_angle_image_deg": 270,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9644,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.7304484902712409,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": 3,
+   "refraction_d": -3,
+   "rotation_deg": 0,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 0,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 15,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.4640381608423,
+      "cy": 79.92812714329492,
+      "r": 26.360074890990237
+     },
+     "iris": {
+      "cx": 79.24074455271753,
+      "cy": 78.52333564735913,
+      "r": 52
+     },
+     "glint": [
+      79.5,
+      80.5
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5069245171344277,
+     "pupil_ellipse_eccentricity": 0.13062522647928484,
+     "reflex_mean_luma": 0.27503115002849704,
+     "reflex_mean_rgb": [
+      137.280378250591,
+      44.77210401891253,
+      24.604255319148937
+     ],
+     "reflex_red_chroma": 0.6592347821163511,
+     "reflex_entropy": 3.5557173605605947,
+     "crescent_present": true,
+     "crescent_area_fraction": 0.2895823772372648,
+     "crescent_width_norm": 0.3314918460423564,
+     "crescent_width_mm": 1.9889510762541383,
+     "crescent_side": 1,
+     "crescent_centroid_offset_norm": 0.5864384193815848,
+     "crescent_orientation_deg": 270.0187489206269,
+     "crescent_contrast": 1.8349979233889637,
+     "crescent_separability": 0.894763560663326,
+     "gradient_along_source": 0.5492112850455766,
+     "gradient_perpendicular": 0.00013671195377709214,
+     "dominant_gradient_deg": 270.0281026243655,
+     "asymmetry_index": 0.4806645037994713,
+     "profile_along_source": [
+      0.3677559991677602,
+      0.379084974527359,
+      0.38997822006543476,
+      0.3952069779237111,
+      0.40653595328330994,
+      0.4143790900707245,
+      0.4130719006061554,
+      0.4287581741809845,
+      0.46535948250028825,
+      0.8631808360417684,
+      1,
+      0.9873638351758321,
+      0.5899782346354591,
+      0.5581699576642778,
+      0.6888889074325562,
+      0.8078431487083435,
+      0.8300653696060181,
+      0.8313725590705872,
+      0.843137264251709,
+      0.8413943449656168,
+      0.8065359592437744
+     ],
+     "profile_perpendicular": [
+      0.43834423025449115,
+      0.4418300688266754,
+      0.45098039507865906,
+      0.4453159073988597,
+      0.4422657986481984,
+      0.450108935435613,
+      0.4583878020445506,
+      0.45664488275845844,
+      0.551198273897171,
+      0.8649237553278605,
+      1,
+      0.8723311622937521,
+      0.5568627615769705,
+      0.4601307213306427,
+      0.4488017459710439,
+      0.43921568989753723,
+      0.43660131096839905,
+      0.4461873670419057,
+      0.450108935435613,
+      0.44967320561408997,
+      0.4431372582912445
+     ],
+     "profile_poly_coeffs": [
+      1.2530216886942924,
+      0.7990373302424953,
+      -0.25550226911100965,
+      -0.4128874618424798
+     ],
+     "radial_profile": [
+      null,
+      0.4770697255929311,
+      0.47437221299835114,
+      0.5203532732961592,
+      0.5535424916942915,
+      0.5604137794708642,
+      0.5661108966181878,
+      0.5275436267256737
+     ],
+     "glint_offset_norm": [
+      0.0013642540587008964,
+      0.021694659786438936
+     ],
+     "source_angle_image_deg": 270,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9643,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.7299275490964574,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": 4,
+   "refraction_d": -4,
+   "rotation_deg": 0,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 0,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 16,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.51586369539156,
+      "cy": 79.96068012910241,
+      "r": 26.38379931717302
+     },
+     "iris": {
+      "cx": 79.11872562376148,
+      "cy": 79.10488725564173,
+      "r": 52
+     },
+     "glint": [
+      79.61904761904762,
+      80.76190476190476
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5073807560994811,
+     "pupil_ellipse_eccentricity": 0.12925353721100857,
+     "reflex_mean_luma": 0.3177038283220359,
+     "reflex_mean_rgb": [
+      159.07142857142858,
+      51.492380952380955,
+      28.29904761904762
+     ],
+     "reflex_red_chroma": 0.6608939876159032,
+     "reflex_entropy": 3.5713100531484447,
+     "crescent_present": true,
+     "crescent_area_fraction": 0.5304906006419073,
+     "crescent_width_norm": 0.5239564308032212,
+     "crescent_width_mm": 3.143738584819327,
+     "crescent_side": 1,
+     "crescent_centroid_offset_norm": 0.369438264832935,
+     "crescent_orientation_deg": 269.89404899216413,
+     "crescent_contrast": 1.8832786280311609,
+     "crescent_separability": 0.9144134041862214,
+     "gradient_along_source": 0.527264916726884,
+     "gradient_perpendicular": 0.002124636666865865,
+     "dominant_gradient_deg": 269.8224472030069,
+     "asymmetry_index": 0.5513394963286151,
+     "profile_along_source": [
+      0.36819172898928326,
+      0.37385621666908264,
+      0.38997822006543476,
+      0.3952069779237111,
+      0.40435730417569477,
+      0.4130719006061554,
+      0.4187363882859548,
+      0.43398693203926086,
+      0.5228758288754357,
+      0.9581699371337891,
+      1,
+      1,
+      0.8976034919420878,
+      0.8095860679944357,
+      0.8069716890652975,
+      0.8200435837109884,
+      0.8213507731755575,
+      0.8348583976427714,
+      0.844008723894755,
+      0.8509804010391235,
+      0.8034858504931132
+     ],
+     "profile_perpendicular": [
+      0.7586056788762411,
+      0.7633987069129944,
+      0.7821350892384847,
+      0.7742919524510702,
+      0.7764706015586853,
+      0.7708061138788859,
+      0.7729847629865011,
+      0.7803921699523926,
+      0.8849673271179199,
+      0.9982570807139078,
+      1,
+      0.9934640526771545,
+      0.8762527306874593,
+      0.7690631945927938,
+      0.7616557876269022,
+      0.7681917349497477,
+      0.7782135208447775,
+      0.7782135208447775,
+      0.7812636295954386,
+      0.7712418437004089,
+      0.7664488156636556
+     ],
+     "profile_poly_coeffs": [
+      1.2136483108979088,
+      0.9017656809581345,
+      -0.4450285796817147,
+      -0.677870354913734
+     ],
+     "radial_profile": [
+      null,
+      0.6715686406408038,
+      0.6647520294960807,
+      0.6455579863654243,
+      0.6414322347744651,
+      0.6369281139535209,
+      0.6287846761243837,
+      0.5693744287367851
+     ],
+     "glint_offset_norm": [
+      0.003910881917180889,
+      0.030368053636643376
+     ],
+     "source_angle_image_deg": 270,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9589,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.6952433761358315,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": 4,
+   "refraction_d": -4,
+   "rotation_deg": 0,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 0,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 17,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.5859546914019,
+      "cy": 79.97478197933638,
+      "r": 26.450089599821954
+     },
+     "iris": {
+      "cx": 79.70470333222228,
+      "cy": 80.05426641644343,
+      "r": 52
+     },
+     "glint": [
+      79.52173913043478,
+      80.6086956521739
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5086555692273452,
+     "pupil_ellipse_eccentricity": 0.0971094025926433,
+     "reflex_mean_luma": 0.3173758360138428,
+     "reflex_mean_rgb": [
+      158.9027514231499,
+      51.435483870967744,
+      28.300759013282732
+     ],
+     "reflex_red_chroma": 0.6606875544650731,
+     "reflex_entropy": 3.5808318537244563,
+     "crescent_present": true,
+     "crescent_area_fraction": 0.5239179954441914,
+     "crescent_width_norm": 0.5187895730460999,
+     "crescent_width_mm": 3.112737438276599,
+     "crescent_side": 1,
+     "crescent_centroid_offset_norm": 0.367221595638209,
+     "crescent_orientation_deg": 269.59043248233206,
+     "crescent_contrast": 1.8811887630468709,
+     "crescent_separability": 0.9173785293339851,
+     "gradient_along_source": 0.5229213590158137,
+     "gradient_perpendicular": 0.004804690784781376,
+     "dominant_gradient_deg": 269.4612198618802,
+     "asymmetry_index": 0.5500516492589245,
+     "profile_along_source": [
+      0.37254902720451355,
+      0.393028328816096,
+      0.38954249024391174,
+      0.40479303399721783,
+      0.4091503322124481,
+      0.40217865506807965,
+      0.4156862795352936,
+      0.43529412150382996,
+      0.5394335687160492,
+      0.9490196108818054,
+      1,
+      1,
+      0.9032679796218872,
+      0.8047930399576823,
+      0.7986928224563599,
+      0.8135076363881429,
+      0.8313725590705872,
+      0.8374727765719095,
+      0.8466231028238932,
+      0.8413943449656168,
+      0.7925926049550375
+     ],
+     "profile_perpendicular": [
+      0.7559912999471029,
+      0.7764706015586853,
+      0.7747276822725931,
+      0.7738562226295471,
+      0.7769063313802084,
+      0.7812636295954386,
+      0.7747276822725931,
+      0.772113303343455,
+      0.8771241903305054,
+      0.9952069719632467,
+      1,
+      0.9934640526771545,
+      0.8723311622937521,
+      0.7851851979891459,
+      0.7699346542358398,
+      0.7747276822725931,
+      0.7594771385192871,
+      0.7694989244143168,
+      0.7712418437004089,
+      0.7699346542358398,
+      0.7603485981623331
+     ],
+     "profile_poly_coeffs": [
+      1.2150291904009214,
+      0.9065299342060725,
+      -0.44244934454225615,
+      -0.704607383977799
+     ],
+     "radial_profile": [
+      null,
+      0.6756302665690986,
+      0.6660054832003838,
+      0.6448087533477878,
+      0.6430851506236384,
+      0.6381461770503551,
+      0.6290056426700346,
+      0.5648139695834926
+     ],
+     "glint_offset_norm": [
+      -0.0024278012641418736,
+      0.023966409279830545
+     ],
+     "source_angle_image_deg": 270,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9567,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.6813374102505565,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": -4,
+   "refraction_d": 4,
+   "rotation_deg": 90,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 90,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 18,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.10170504856251,
+      "cy": 79.53478147294157,
+      "r": 26.510328609174966
+     },
+     "iris": {
+      "cx": 80.06378062023734,
+      "cy": 78.37396538096311,
+      "r": 52
+     },
+     "glint": [
+      80.6086956521739,
+      79.47826086956522
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5098140117149031,
+     "pupil_ellipse_eccentricity": 0.08484751200195056,
+     "reflex_mean_luma": 0.35403408044070567,
+     "reflex_mean_rgb": [
+      177.25471698113208,
+      57.4,
+      31.45377358490566
+     ],
+     "reflex_red_chroma": 0.6610324627667103,
+     "reflex_entropy": 3.477244245453748,
+     "crescent_present": true,
+     "crescent_area_fraction": 0.724966017217943,
+     "crescent_width_norm": 0.6807025083941691,
+     "crescent_width_mm": 4.084215050365015,
+     "crescent_side": -1,
+     "crescent_centroid_offset_norm": -0.18876435378589063,
+     "crescent_orientation_deg": 179.22255074020939,
+     "crescent_contrast": 1.8350371284647917,
+     "crescent_separability": 0.871512289215286,
+     "gradient_along_source": -0.34973410053074905,
+     "gradient_perpendicular": -0.003467605616074373,
+     "dominant_gradient_deg": 179.412976312492,
+     "asymmetry_index": -0.2875534429023036,
+     "profile_along_source": [
+      0.8161220153172811,
+      0.8427015344301859,
+      0.8352941274642944,
+      0.8453159133593241,
+      0.8257080713907877,
+      0.8113289872805277,
+      0.8100217978159586,
+      0.8065359592437744,
+      0.8139433662096659,
+      0.9586056669553121,
+      1,
+      1,
+      0.9472766915957133,
+      0.801307201385498,
+      0.7455337842305502,
+      0.6509804129600525,
+      0.5032679902182685,
+      0.4004357357819875,
+      0.38823530077934265,
+      0.37211329738299054,
+      0.3616557816664378
+     ],
+     "profile_perpendicular": [
+      0.773420492808024,
+      0.7895424962043762,
+      0.7786492506663004,
+      0.7830065488815308,
+      0.7803921699523926,
+      0.7895424962043762,
+      0.7821350892384847,
+      0.786492387453715,
+      0.8671024044354757,
+      0.9838779966036478,
+      1,
+      0.9891067544619242,
+      0.8758170008659363,
+      0.785620927810669,
+      0.7769063313802084,
+      0.7952069838841757,
+      0.786056657632192,
+      0.786492387453715,
+      0.7821350892384847,
+      0.7877995769182841,
+      0.771677573521932
+     ],
+     "profile_poly_coeffs": [
+      1.2556771386529446,
+      -0.24875011130531768,
+      -0.6442936092292553,
+      -0.24109007157176748
+     ],
+     "radial_profile": [
+      null,
+      0.8037677933188045,
+      0.7852713306282841,
+      0.772565039566585,
+      0.7336547860356628,
+      0.7049687000001288,
+      0.677772004190272,
+      0.6021327968926458
+     ],
+     "glint_offset_norm": [
+      0.05684541394518378,
+      -0.0021320219831901543
+     ],
+     "source_angle_image_deg": 0,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9625,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.7179395887878998,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": -4,
+   "refraction_d": 4,
+   "rotation_deg": 90,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 90,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 19,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.13540496359734,
+      "cy": 79.50074037063558,
+      "r": 26.515384023754528
+     },
+     "iris": {
+      "cx": 80.0099308773395,
+      "cy": 80.21478607716965,
+      "r": 52
+     },
+     "glint": [
+      80.6086956521739,
+      79.47826086956522
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5099112312260486,
+     "pupil_ellipse_eccentricity": 0.023579991806484926,
+     "reflex_mean_luma": 0.3534297991872452,
+     "reflex_mean_rgb": [
+      177.06176331918905,
+      57.21640735502122,
+      31.553512494106553
+     ],
+     "reflex_red_chroma": 0.6609440307637421,
+     "reflex_entropy": 3.4963695769986654,
+     "crescent_present": true,
+     "crescent_area_fraction": 0.720108695652174,
+     "crescent_width_norm": 0.676617905121899,
+     "crescent_width_mm": 4.059707430731394,
+     "crescent_side": -1,
+     "crescent_centroid_offset_norm": -0.19175515477414398,
+     "crescent_orientation_deg": 179.77195195607555,
+     "crescent_contrast": 1.8236701953520122,
+     "crescent_separability": 0.8729189807889391,
+     "gradient_along_source": -0.35416594786852956,
+     "gradient_perpendicular": 0.0013959817826105097,
+     "dominant_gradient_deg": 180.22695097315219,
+     "asymmetry_index": -0.2900125058486062,
+     "profile_along_source": [
+      0.8034858504931132,
+      0.8470588326454163,
+      0.844008723894755,
+      0.8418300747871399,
+      0.8252723415692648,
+      0.8244008819262186,
+      0.8191721240679423,
+      0.8104575276374817,
+      0.8087146083513895,
+      0.9472766915957133,
+      1,
+      1,
+      0.9516339898109436,
+      0.7973856329917908,
+      0.7328976194063822,
+      0.6492374936739603,
+      0.4976034959157308,
+      0.40217865506807965,
+      0.39128540953000385,
+      0.38823530077934265,
+      0.37559913595517475
+     ],
+     "profile_perpendicular": [
+      0.7638344367345175,
+      0.7838780085245768,
+      0.786492387453715,
+      0.7899782260258993,
+      0.7891067663828532,
+      0.7969499031702677,
+      0.7825708190600077,
+      0.7834422787030538,
+      0.8758170008659363,
+      0.9899782141049703,
+      1,
+      0.9799564282099406,
+      0.8705882430076599,
+      0.7895424962043762,
+      0.786492387453715,
+      0.7934640645980835,
+      0.7847494681676229,
+      0.786928117275238,
+      0.7930283347765604,
+      0.7873638470967611,
+      0.7703703840573629
+     ],
+     "profile_poly_coeffs": [
+      1.2545850513877923,
+      -0.27555652824319543,
+      -0.6317812663929447,
+      -0.18465120169905075
+     ],
+     "radial_profile": [
+      null,
+      0.803477629175726,
+      0.7865675132850121,
+      0.7704575300216675,
+      0.733714080454848,
+      0.7004786276128974,
+      0.6791878717305126,
+      0.6012995592799568
+     ],
+     "glint_offset_norm": [
+      0.05556361873758574,
+      -0.000847790891892253
+     ],
+     "source_angle_image_deg": 0,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9592,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.6968683663949791,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": -3,
+   "refraction_d": 3,
+   "rotation_deg": 90,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 90,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 20,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.09796291128028,
+      "cy": 79.49582559238115,
+      "r": 26.49539701265279
+     },
+     "iris": {
+      "cx": 79.16613751343154,
+      "cy": 79.8707306835352,
+      "r": 52
+     },
+     "glint": [
+      80.47826086956522,
+      79.3913043478261
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5095268656279383,
+     "pupil_ellipse_eccentricity": 0.10581676500854334,
+     "reflex_mean_luma": 0.3404984773828112,
+     "reflex_mean_rgb": [
+      170.5033143939394,
+      55.18323863636363,
+      30.298768939393938
+     ],
+     "reflex_red_chroma": 0.6610279625676798,
+     "reflex_entropy": 3.5310353307337086,
+     "crescent_present": true,
+     "crescent_area_fraction": 0.654843110504775,
+     "crescent_width_norm": 0.6228613281003637,
+     "crescent_width_mm": 3.737167968602182,
+     "crescent_side": -1,
+     "crescent_centroid_offset_norm": -0.25489402795552446,
+     "crescent_orientation_deg": 180.65400004235585,
+     "crescent_contrast": 1.8669453128730302,
+     "crescent_separability": 0.8955664292130308,
+     "gradient_along_source": -0.4287817613704291,
+     "gradient_perpendicular": 0.0007061047910145984,
+     "dominant_gradient_deg": 180.03865643135453,
+     "asymmetry_index": -0.3828261956971692,
+     "profile_along_source": [
+      0.8117647171020508,
+      0.8427015344301859,
+      0.8453159133593241,
+      0.8348583976427714,
+      0.827886720498403,
+      0.8261438012123108,
+      0.8161220153172811,
+      0.815250555674235,
+      0.8087146083513895,
+      0.9494553407033285,
+      1,
+      1,
+      0.9538126389185587,
+      0.7795207103093466,
+      0.5342048108577728,
+      0.43660131096839905,
+      0.40697168310483295,
+      0.3965141673882802,
+      0.38518519202868146,
+      0.3803921639919281,
+      0.3660130798816681
+     ],
+     "profile_perpendicular": [
+      0.771677573521932,
+      0.7917211453119913,
+      0.786928117275238,
+      0.785620927810669,
+      0.786492387453715,
+      0.786056657632192,
+      0.7847494681676229,
+      0.786492387453715,
+      0.871895432472229,
+      0.9891067544619242,
+      1,
+      0.9773420492808024,
+      0.8601307272911072,
+      0.7847494681676229,
+      0.7877995769182841,
+      0.7838780085245768,
+      0.7838780085245768,
+      0.7795207103093466,
+      0.7812636295954386,
+      0.785620927810669,
+      0.772113303343455
+     ],
+     "profile_poly_coeffs": [
+      1.2497191193895203,
+      -0.5146156878527823,
+      -0.6067746562712072,
+      0.12595102795999863
+     ],
+     "radial_profile": [
+      null,
+      0.8030757518375621,
+      0.7704409068030429,
+      0.7153231791017477,
+      0.6917339595509511,
+      0.6759414980335842,
+      0.6577265367633971,
+      0.5883977394955163
+     ],
+     "glint_offset_norm": [
+      0.052095764318073244,
+      -0.003944883124610104
+     ],
+     "source_angle_image_deg": 0,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9588,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.6943122942671041,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": -3,
+   "refraction_d": 3,
+   "rotation_deg": 90,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 90,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 21,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.1433914462946,
+      "cy": 79.53589239863003,
+      "r": 26.48296015825121
+     },
+     "iris": {
+      "cx": 79.37382726057776,
+      "cy": 78.9416736381022,
+      "r": 52
+     },
+     "glint": [
+      80.6086956521739,
+      79.52173913043478
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5092876953509848,
+     "pupil_ellipse_eccentricity": 0.08689721380071205,
+     "reflex_mean_luma": 0.34032191040390536,
+     "reflex_mean_rgb": [
+      170.5352913311227,
+      55.0942681193747,
+      30.278067266698248
+     ],
+     "reflex_red_chroma": 0.6612374466044934,
+     "reflex_entropy": 3.565638189605778,
+     "crescent_present": true,
+     "crescent_area_fraction": 0.6574158325750682,
+     "crescent_width_norm": 0.6249469948141049,
+     "crescent_width_mm": 3.7496819688846292,
+     "crescent_side": -1,
+     "crescent_centroid_offset_norm": -0.2546313329778423,
+     "crescent_orientation_deg": 179.48631148800723,
+     "crescent_contrast": 1.8722444301195011,
+     "crescent_separability": 0.8956238787012868,
+     "gradient_along_source": -0.43278872373598687,
+     "gradient_perpendicular": -0.0013168058689298251,
+     "dominant_gradient_deg": 179.79485991963315,
+     "asymmetry_index": -0.3847531638832573,
+     "profile_along_source": [
+      0.7960784435272217,
+      0.8483660221099854,
+      0.8413943449656168,
+      0.8400871555010477,
+      0.8305010994275411,
+      0.8261438012123108,
+      0.8087146083513895,
+      0.8069716890652975,
+      0.8126361767450968,
+      0.9481481512387594,
+      1,
+      1,
+      0.9420479337374369,
+      0.7642701665560404,
+      0.5464052458604177,
+      0.4374727706114451,
+      0.4117647111415863,
+      0.4004357357819875,
+      0.38649238149325055,
+      0.3812636236349742,
+      0.37821351488431293
+     ],
+     "profile_perpendicular": [
+      0.7664488156636556,
+      0.7808278997739156,
+      0.7843137383460999,
+      0.7969499031702677,
+      0.7821350892384847,
+      0.7899782260258993,
+      0.7799564401308695,
+      0.7825708190600077,
+      0.871023972829183,
+      0.9917211333910624,
+      1,
+      0.9812636176745096,
+      0.8701525131861368,
+      0.7917211453119913,
+      0.7760348717371622,
+      0.772549033164978,
+      0.7825708190600077,
+      0.7873638470967611,
+      0.7838780085245768,
+      0.7838780085245768,
+      0.7664488156636556
+     ],
+     "profile_poly_coeffs": [
+      1.2464492206473397,
+      -0.5209710855891874,
+      -0.5988427995142267,
+      0.15071590344020122
+     ],
+     "radial_profile": [
+      null,
+      0.8061960899829864,
+      0.7697543522407269,
+      0.7150056846131964,
+      0.6895829452753843,
+      0.6754902064800262,
+      0.6576619165511864,
+      0.5909780942503736
+     ],
+     "glint_offset_norm": [
+      0.0553300762876678,
+      -0.0005344292371649552
+     ],
+     "source_angle_image_deg": 0,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9602,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.7034737302975488,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": -2,
+   "refraction_d": 2,
+   "rotation_deg": 90,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 90,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 22,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.05054753180752,
+      "cy": 79.54099065183031,
+      "r": 26.41461680858149
+     },
+     "iris": {
+      "cx": 78.59614863636703,
+      "cy": 80.13580774868646,
+      "r": 52
+     },
+     "glint": [
+      80.4,
+      79.6
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5079734001650287,
+     "pupil_ellipse_eccentricity": 0.1157081231715088,
+     "reflex_mean_luma": 0.3190245150457935,
+     "reflex_mean_rgb": [
+      159.68266033254156,
+      51.746318289786224,
+      28.34251781472684
+     ],
+     "reflex_red_chroma": 0.6607584181704034,
+     "reflex_entropy": 3.5463364775874684,
+     "crescent_present": true,
+     "crescent_area_fraction": 0.5372997711670481,
+     "crescent_width_norm": 0.5293119701680147,
+     "crescent_width_mm": 3.175871821008088,
+     "crescent_side": -1,
+     "crescent_centroid_offset_norm": -0.3659485531335058,
+     "crescent_orientation_deg": 179.70150098300712,
+     "crescent_contrast": 1.8887878686836312,
+     "crescent_separability": 0.9189435576409046,
+     "gradient_along_source": -0.5242875339705572,
+     "gradient_perpendicular": -0.00291893956980974,
+     "dominant_gradient_deg": 179.66465625059232,
+     "asymmetry_index": -0.550909225608959,
+     "profile_along_source": [
+      0.8100217978159586,
+      0.8418300747871399,
+      0.8466231028238932,
+      0.8361655871073405,
+      0.8335512081782023,
+      0.8204793135325114,
+      0.8169934749603271,
+      0.8021786610285441,
+      0.8017429312070211,
+      0.9542483687400818,
+      1,
+      1,
+      0.7616557876269022,
+      0.4762527346611023,
+      0.4187363882859548,
+      0.4117647111415863,
+      0.40435730417569477,
+      0.3947712481021881,
+      0.3843137323856354,
+      0.37385621666908264,
+      0.365141620238622
+     ],
+     "profile_perpendicular": [
+      0.7551198403040568,
+      0.7738562226295471,
+      0.7742919524510702,
+      0.7773420612017313,
+      0.7708061138788859,
+      0.7795207103093466,
+      0.7690631945927938,
+      0.7729847629865011,
+      0.8570806185404459,
+      0.9860566457112631,
+      1,
+      0.9830065369606018,
+      0.8588235378265381,
+      0.7690631945927938,
+      0.771677573521932,
+      0.7664488156636556,
+      0.7795207103093466,
+      0.7847494681676229,
+      0.7677560051282247,
+      0.7647058963775635,
+      0.7586056788762411
+     ],
+     "profile_poly_coeffs": [
+      1.2387964763715205,
+      -0.7836611099404066,
+      -0.49566826966455185,
+      0.49007526925950035
+     ],
+     "radial_profile": [
+      null,
+      0.768137268189873,
+      0.6641898976083387,
+      0.6425952595181581,
+      0.64499968170721,
+      0.6371522523189714,
+      0.6294727761215634,
+      0.5668349697918236
+     ],
+     "glint_offset_norm": [
+      0.051087338422190404,
+      0.002233965709111117
+     ],
+     "source_angle_image_deg": 0,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9617,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.7127342496221013,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": -2,
+   "refraction_d": 2,
+   "rotation_deg": 90,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 90,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 23,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.10390069510386,
+      "cy": 79.49401306101807,
+      "r": 26.40026260943222
+     },
+     "iris": {
+      "cx": 79.89499695230718,
+      "cy": 79.46052732059741,
+      "r": 52
+     },
+     "glint": [
+      80.47368421052632,
+      79.63157894736842
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5076973578736965,
+     "pupil_ellipse_eccentricity": 0.12616370822925854,
+     "reflex_mean_luma": 0.31917867270473066,
+     "reflex_mean_rgb": [
+      159.74679334916866,
+      51.78384798099763,
+      28.325890736342043
+     ],
+     "reflex_red_chroma": 0.6608479635732474,
+     "reflex_entropy": 3.5423097403960515,
+     "crescent_present": true,
+     "crescent_area_fraction": 0.5389908256880734,
+     "crescent_width_norm": 0.5306425151794092,
+     "crescent_width_mm": 3.183855091076455,
+     "crescent_side": -1,
+     "crescent_centroid_offset_norm": -0.3676972874866328,
+     "crescent_orientation_deg": 180.4346781586372,
+     "crescent_contrast": 1.8911675011930775,
+     "crescent_separability": 0.9203656370761681,
+     "gradient_along_source": -0.5273496112472219,
+     "gradient_perpendicular": 0.0003486930577026729,
+     "dominant_gradient_deg": 180.03996652767407,
+     "asymmetry_index": -0.5527166915015927,
+     "profile_along_source": [
+      0.800435741742452,
+      0.8444444537162781,
+      0.8326797485351562,
+      0.8305010994275411,
+      0.8283224503199259,
+      0.8230936924616495,
+      0.8200435837109884,
+      0.8052287697792053,
+      0.8043573101361593,
+      0.9507625301678976,
+      1,
+      1,
+      0.7555555701255798,
+      0.4753812750180562,
+      0.4100217918554942,
+      0.4117647111415863,
+      0.40479303399721783,
+      0.38562092185020447,
+      0.3812636236349742,
+      0.38257081309954327,
+      0.37821351488431293
+     ],
+     "profile_perpendicular": [
+      0.7681917349497477,
+      0.7703703840573629,
+      0.7773420612017313,
+      0.7729847629865011,
+      0.7821350892384847,
+      0.7690631945927938,
+      0.7699346542358398,
+      0.7625272472699484,
+      0.8522875905036926,
+      0.9812636176745096,
+      1,
+      0.986492375532786,
+      0.8549019694328308,
+      0.7742919524510702,
+      0.7647058963775635,
+      0.7620915174484253,
+      0.7647058963775635,
+      0.7712418437004089,
+      0.772549033164978,
+      0.7729847629865011,
+      0.7472767035166422
+     ],
+     "profile_poly_coeffs": [
+      1.2351506566199408,
+      -0.7995040833899406,
+      -0.4924516225215042,
+      0.5328299078631574
+     ],
+     "radial_profile": [
+      0.8725490272045135,
+      0.761105767039002,
+      0.6628384795926866,
+      0.6418727592546113,
+      0.6435188938107267,
+      0.6357015625997023,
+      0.6263153316343532,
+      0.5725412509507604
+     ],
+     "glint_offset_norm": [
+      0.051885223101268016,
+      0.005210777195118113
+     ],
+     "source_angle_image_deg": 0,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9591,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.6966407060672278,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": -1,
+   "refraction_d": 1,
+   "rotation_deg": 90,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 90,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 24,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.00095552086837,
+      "cy": 79.34511532436031,
+      "r": 26.331883614053027
+     },
+     "iris": {
+      "cx": 80.45842307420853,
+      "cy": 79.91105126627879,
+      "r": 52
+     },
+     "glint": [
+      80.5,
+      79.5
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5063823771933275,
+     "pupil_ellipse_eccentricity": 0.09192516719551261,
+     "reflex_mean_luma": 0.2752822119686188,
+     "reflex_mean_rgb": [
+      137.64251893939394,
+      44.66619318181818,
+      24.761363636363637
+     ],
+     "reflex_red_chroma": 0.6597002336868283,
+     "reflex_entropy": 3.5530195446763684,
+     "crescent_present": true,
+     "crescent_area_fraction": 0.2899816176470588,
+     "crescent_width_norm": 0.3318248502017247,
+     "crescent_width_mm": 1.9909491012103482,
+     "crescent_side": -1,
+     "crescent_centroid_offset_norm": -0.5892480468089085,
+     "crescent_orientation_deg": 180.69187552351508,
+     "crescent_contrast": 1.8292087215780342,
+     "crescent_separability": 0.896304530627996,
+     "gradient_along_source": -0.5435723613574235,
+     "gradient_perpendicular": 0.003994518975813539,
+     "dominant_gradient_deg": 180.41950098162835,
+     "asymmetry_index": -0.4698580733604127,
+     "profile_along_source": [
+      0.8069716890652975,
+      0.8448801835378011,
+      0.8392156958580017,
+      0.8326797485351562,
+      0.8374727765719095,
+      0.8161220153172811,
+      0.6919390161832174,
+      0.5529411998060014,
+      0.48235294885105556,
+      0.6919390128718482,
+      0.9673202633857727,
+      1,
+      0.7006536059909396,
+      0.45446623696221244,
+      0.4139433602492015,
+      0.40827887256940204,
+      0.4113289813200633,
+      0.39259259899457294,
+      0.38823530077934265,
+      0.3777777850627899,
+      0.379084974527359
+     ],
+     "profile_perpendicular": [
+      0.43834423025449115,
+      0.4448801775773366,
+      0.4422657986481984,
+      0.4470588266849518,
+      0.44662309686342877,
+      0.4470588266849518,
+      0.43790850043296814,
+      0.4461873670419057,
+      0.5289760496881273,
+      0.8030501206715902,
+      0.9673202633857727,
+      0.8043573101361593,
+      0.5320261584387885,
+      0.45490196347236633,
+      0.45054466525713605,
+      0.44662309686342877,
+      0.43572985132535297,
+      0.4474945565064748,
+      0.45141612490018207,
+      0.4431372582912445,
+      0.43965141971906024
+     ],
+     "profile_poly_coeffs": [
+      1.2400509615395325,
+      -0.6170833207123909,
+      -0.22756421188086604,
+      0.13305947694762466
+     ],
+     "radial_profile": [
+      0.5241830249627432,
+      0.48183391944450493,
+      0.4754618690537579,
+      0.5261881105222944,
+      0.5499010105474764,
+      0.5634719032446543,
+      0.5706059878093624,
+      0.525397571170424
+     ],
+     "glint_offset_norm": [
+      0.05692887379813586,
+      0.005882020363975499
+     ],
+     "source_angle_image_deg": 0,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9639,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.7268098874307397,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": -1,
+   "refraction_d": 1,
+   "rotation_deg": 90,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 90,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 25,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.10568812673992,
+      "cy": 79.43162504627897,
+      "r": 26.443547826819746
+     },
+     "iris": {
+      "cx": 79.10193402087951,
+      "cy": 78.66866426606708,
+      "r": 52
+     },
+     "glint": [
+      80.5,
+      79.5
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5085297659003797,
+     "pupil_ellipse_eccentricity": 0.08572566597350774,
+     "reflex_mean_luma": 0.2745271797588941,
+     "reflex_mean_rgb": [
+      137.1190028222013,
+      44.61853245531515,
+      24.69096895578551
+     ],
+     "reflex_red_chroma": 0.6590262123244277,
+     "reflex_entropy": 3.555158280284296,
+     "crescent_present": true,
+     "crescent_area_fraction": 0.2867579908675799,
+     "crescent_width_norm": 0.32913361784091544,
+     "crescent_width_mm": 1.9748017070454926,
+     "crescent_side": -1,
+     "crescent_centroid_offset_norm": -0.5899704214747373,
+     "crescent_orientation_deg": 180.099063219251,
+     "crescent_contrast": 1.8389445214618982,
+     "crescent_separability": 0.8969183015566754,
+     "gradient_along_source": -0.548098821145493,
+     "gradient_perpendicular": 0.0033999737307610625,
+     "dominant_gradient_deg": 180.41396032033848,
+     "asymmetry_index": -0.4731062529075795,
+     "profile_along_source": [
+      0.7952069838841757,
+      0.842265804608663,
+      0.843572994073232,
+      0.8305010994275411,
+      0.8235294222831726,
+      0.8043573101361593,
+      0.6858387986818949,
+      0.5437908669312795,
+      0.48104575938648647,
+      0.7132897774378458,
+      0.9808278878529867,
+      1,
+      0.7119825813505385,
+      0.462309373749627,
+      0.41917211810747784,
+      0.4143790900707245,
+      0.39956427613894147,
+      0.38910676042238873,
+      0.38823530077934265,
+      0.3843137323856354,
+      0.36819172898928326
+     ],
+     "profile_perpendicular": [
+      0.4326797425746918,
+      0.4418300688266754,
+      0.45098039507865906,
+      0.44095860918362934,
+      0.4440087179342906,
+      0.44923747579256695,
+      0.4435729881127675,
+      0.4440087179342906,
+      0.5302832391526964,
+      0.7995642820994059,
+      0.9808278878529867,
+      0.800435741742452,
+      0.5315904286172655,
+      0.43965141971906024,
+      0.4453159073988597,
+      0.44095860918362934,
+      0.4453159073988597,
+      0.4457516372203827,
+      0.4483660161495209,
+      0.4453159073988597,
+      0.4244008759657542
+     ],
+     "profile_poly_coeffs": [
+      1.2520953254539604,
+      -0.5961559341920273,
+      -0.2556439106146011,
+      0.10245320737337782
+     ],
+     "radial_profile": [
+      0.5490196347236633,
+      0.47921569389956337,
+      0.47349561254183453,
+      0.5216334549602398,
+      0.5519575564184598,
+      0.5590904504060745,
+      0.5696232730083252,
+      0.5228964134346782
+     ],
+     "glint_offset_norm": [
+      0.05272786701661611,
+      0.0025856951634789906
+     ],
+     "source_angle_image_deg": 0,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9661,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.7414914026685727,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": 0,
+   "refraction_d": 0,
+   "rotation_deg": 90,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 90,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 26,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.29012119625341,
+      "cy": 79.42181590046755,
+      "r": 26.258933295969808
+     },
+     "iris": {
+      "cx": 79.73500846888528,
+      "cy": 79.81354419101781,
+      "r": 52
+     },
+     "glint": [
+      80.5,
+      79.5
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5049794864609578,
+     "pupil_ellipse_eccentricity": 0.046126806124674596,
+     "reflex_mean_luma": 0.2248397413783401,
+     "reflex_mean_rgb": [
+      112.25381679389314,
+      36.54914122137404,
+      20.314885496183205
+     ],
+     "reflex_red_chroma": 0.6585023702612816,
+     "reflex_entropy": 2.3128427384120687,
+     "crescent_present": false,
+     "crescent_area_fraction": 0,
+     "crescent_width_norm": 0,
+     "crescent_width_mm": 0,
+     "crescent_side": 0,
+     "crescent_centroid_offset_norm": 0,
+     "crescent_orientation_deg": null,
+     "crescent_contrast": 1.1505441830057803,
+     "crescent_separability": 0.6740775797797485,
+     "gradient_along_source": -0.1259393369163811,
+     "gradient_perpendicular": -0.00005377244504616312,
+     "dominant_gradient_deg": 180.01216484145664,
+     "asymmetry_index": -0.11142806962984918,
+     "profile_along_source": [
+      0.4919390016131931,
+      0.4967320395840539,
+      0.4915032817257775,
+      0.4806100262535943,
+      0.4753812650839488,
+      0.4732026159763336,
+      0.4793028367890252,
+      0.4592592616875966,
+      0.48104576269785565,
+      0.7071895599365234,
+      0.9773420492808024,
+      0.9851851860682169,
+      0.7211329142252604,
+      0.4745098153750102,
+      0.4230936865011851,
+      0.42352941632270813,
+      0.4156862795352936,
+      0.4030501147111257,
+      0.40697168310483295,
+      0.38649238149325055,
+      0.3799564341704051
+     ],
+     "profile_perpendicular": [
+      0.44095860918362934,
+      0.4427015284697215,
+      0.4444444477558136,
+      0.4470588266849518,
+      0.45664488275845844,
+      0.4326797425746918,
+      0.4400871495405833,
+      0.4488017459710439,
+      0.5272331337134043,
+      0.7986928224563599,
+      0.9773420492808024,
+      0.8047930399576823,
+      0.537690646118588,
+      0.4444444477558136,
+      0.44923747579256695,
+      0.4444444477558136,
+      0.45490196347236633,
+      0.4488017459710439,
+      0.4422657986481984,
+      0.4461873670419057,
+      0.43921568989753723
+     ],
+     "profile_poly_coeffs": [
+      1.4206329291845006,
+      0.053390338534216236,
+      -0.7647988817048209,
+      -0.30673691494666316
+     ],
+     "radial_profile": [
+      null,
+      0.4793837640966688,
+      0.44721750303499963,
+      0.4446660054184623,
+      0.44616993844509123,
+      0.44425169951794297,
+      0.44384788013411314,
+      0.4202390869018777
+     ],
+     "glint_offset_norm": [
+      0.046074941053766326,
+      0.002977428620242152
+     ],
+     "source_angle_image_deg": 0,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9612,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.709881966661696,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": 0,
+   "refraction_d": 0,
+   "rotation_deg": 90,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 90,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 27,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.38631667604183,
+      "cy": 79.53507944844442,
+      "r": 26.222503110952363
+     },
+     "iris": {
+      "cx": 79.45111504871528,
+      "cy": 79.20008359147921,
+      "r": 52
+     },
+     "glint": [
+      80.5,
+      79.5
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5042789059798531,
+     "pupil_ellipse_eccentricity": 0.06064837077914921,
+     "reflex_mean_luma": 0.22446153578581843,
+     "reflex_mean_rgb": [
+      112.01861575178998,
+      36.49785202863962,
+      20.349880668257757
+     ],
+     "reflex_red_chroma": 0.6580272369282343,
+     "reflex_entropy": 2.2942750259180715,
+     "crescent_present": false,
+     "crescent_area_fraction": 0,
+     "crescent_width_norm": 0,
+     "crescent_width_mm": 0,
+     "crescent_side": 0,
+     "crescent_centroid_offset_norm": 0,
+     "crescent_orientation_deg": null,
+     "crescent_contrast": 1.1485185284906987,
+     "crescent_separability": 0.6690127380518566,
+     "gradient_along_source": -0.12428761211623524,
+     "gradient_perpendicular": -0.0010994645262545697,
+     "dominant_gradient_deg": 179.53724967050084,
+     "asymmetry_index": -0.11027794997148889,
+     "profile_along_source": [
+      0.4919390049245622,
+      0.4858387874232398,
+      0.48453159464730156,
+      0.4932461943891313,
+      0.4867102437549167,
+      0.474509812063641,
+      0.46753812829653424,
+      0.4562091529369354,
+      0.4910675452815162,
+      0.7180828021632301,
+      0.9751634001731873,
+      0.9860566457112631,
+      0.7224401036898295,
+      0.4692810575167338,
+      0.4174291988213857,
+      0.40958606203397113,
+      0.4148148198922475,
+      0.40827887256940204,
+      0.3956427077452342,
+      0.39389978845914203,
+      0.38387800256411236
+     ],
+     "profile_perpendicular": [
+      0.43093682328859967,
+      0.4400871495405833,
+      0.44967320561408997,
+      0.44967320561408997,
+      0.4453159073988597,
+      0.44793028632799786,
+      0.44967320561408997,
+      0.4488017459710439,
+      0.5407407548692491,
+      0.8139433662096659,
+      0.9751634001731873,
+      0.8026143908500671,
+      0.5302832391526964,
+      0.43616558114687604,
+      0.4413943390051524,
+      0.4474945565064748,
+      0.44923747579256695,
+      0.450108935435613,
+      0.43965141971906024,
+      0.43965141971906024,
+      0.4344226618607839
+     ],
+     "profile_poly_coeffs": [
+      1.4234782911190533,
+      0.02286556913310349,
+      -0.7684863434027245,
+      -0.2524768078961559
+     ],
+     "radial_profile": [
+      null,
+      0.476332512120126,
+      0.4452120419158492,
+      0.4440422359949503,
+      0.4445283558924456,
+      0.443959020097945,
+      0.4427839654522973,
+      0.42007749719534093
+     ],
+     "glint_offset_norm": [
+      0.04247051928055708,
+      -0.0013377612463613036
+     ],
+     "source_angle_image_deg": 0,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9606,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.70574150635995,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": 1,
+   "refraction_d": -1,
+   "rotation_deg": 90,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 90,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 28,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.5172391342248,
+      "cy": 79.52746638867443,
+      "r": 26.262356895751232
+     },
+     "iris": {
+      "cx": 78.61151036791286,
+      "cy": 79.66703859777184,
+      "r": 52
+     },
+     "glint": [
+      80.5,
+      79.5
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5050453249182929,
+     "pupil_ellipse_eccentricity": 0.049351536348370674,
+     "reflex_mean_luma": 0.22468449950558636,
+     "reflex_mean_rgb": [
+      112.0580675868634,
+      36.56639695383151,
+      20.392194193241313
+     ],
+     "reflex_red_chroma": 0.6577982657413037,
+     "reflex_entropy": 1.65904853661962,
+     "crescent_present": false,
+     "crescent_area_fraction": 0,
+     "crescent_width_norm": 0,
+     "crescent_width_mm": 0,
+     "crescent_side": 0,
+     "crescent_centroid_offset_norm": 0,
+     "crescent_orientation_deg": null,
+     "crescent_contrast": 1.0854184951370256,
+     "crescent_separability": 0.5574271870310726,
+     "gradient_along_source": -0.00181230128721812,
+     "gradient_perpendicular": -0.0009353964110475776,
+     "dominant_gradient_deg": 152.69770814024594,
+     "asymmetry_index": -0.001777594462019088,
+     "profile_along_source": [
+      0.43572985132535297,
+      0.4575163424015045,
+      0.4440087179342906,
+      0.44662309686342877,
+      0.4483660161495209,
+      0.4405228793621063,
+      0.4431372582912445,
+      0.4387799600760142,
+      0.47973857323328656,
+      0.7032679915428162,
+      1,
+      0.9873638351758321,
+      0.7315904299418131,
+      0.4474945565064748,
+      0.4418300688266754,
+      0.4427015284697215,
+      0.4387799600760142,
+      0.4431372582912445,
+      0.43965141971906024,
+      0.43965141971906024,
+      0.4374727706114451
+     ],
+     "profile_perpendicular": [
+      0.44662309686342877,
+      0.4418300688266754,
+      0.43965141971906024,
+      0.4448801775773366,
+      0.4453159073988597,
+      0.4453159073988597,
+      0.4435729881127675,
+      0.4474945565064748,
+      0.5477124320136176,
+      0.8671024044354757,
+      1,
+      0.8657952149709066,
+      0.5577342212200165,
+      0.44923747579256695,
+      0.4453159073988597,
+      0.43616558114687604,
+      0.4435729881127675,
+      0.4427015284697215,
+      0.450108935435613,
+      0.4387799600760142,
+      0.43224401275316876
+     ],
+     "profile_poly_coeffs": [
+      1.4139235332577047,
+      0.15421861335535664,
+      -0.751881384749772,
+      -0.25488207517876965
+     ],
+     "radial_profile": [
+      null,
+      0.4712074383309013,
+      0.445673362402145,
+      0.44593116538719046,
+      0.444300656914711,
+      0.4442708366550505,
+      0.4431729089130055,
+      0.41964698533811967
+     ],
+     "glint_offset_norm": [
+      0.03742089370258302,
+      -0.001045846295648734
+     ],
+     "source_angle_image_deg": 0,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9621,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.7155636625039865,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": 1,
+   "refraction_d": -1,
+   "rotation_deg": 90,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 90,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 29,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.53182841937891,
+      "cy": 79.46379448701805,
+      "r": 26.186956871994415
+     },
+     "iris": {
+      "cx": 79.55337601331598,
+      "cy": 80.0187409556316,
+      "r": 52
+     },
+     "glint": [
+      80.5,
+      79.5
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5035953244614311,
+     "pupil_ellipse_eccentricity": 0.03334711448625333,
+     "reflex_mean_luma": 0.22477726516704175,
+     "reflex_mean_rgb": [
+      112.14546327412386,
+      36.59769563130101,
+      20.209313490158426
+     ],
+     "reflex_red_chroma": 0.6585175787893214,
+     "reflex_entropy": 1.6086641965347794,
+     "crescent_present": false,
+     "crescent_area_fraction": 0,
+     "crescent_width_norm": 0,
+     "crescent_width_mm": 0,
+     "crescent_side": 0,
+     "crescent_centroid_offset_norm": 0,
+     "crescent_orientation_deg": null,
+     "crescent_contrast": 1.0795446411889846,
+     "crescent_separability": 0.5499026005788893,
+     "gradient_along_source": 0.0010624147114398027,
+     "gradient_perpendicular": 0.0017947730789101709,
+     "dominant_gradient_deg": 300.6343849398647,
+     "asymmetry_index": 0.0029504382618671626,
+     "profile_along_source": [
+      0.43834423025449115,
+      0.4387799600760142,
+      0.44662309686342877,
+      0.4448801775773366,
+      0.44662309686342877,
+      0.4387799600760142,
+      0.43921568989753723,
+      0.4444444477558136,
+      0.48453160127003986,
+      0.6976035038630167,
+      1,
+      0.9891067544619242,
+      0.7263616720835367,
+      0.4570806125799815,
+      0.4488017459710439,
+      0.4435729881127675,
+      0.4413943390051524,
+      0.4483660161495209,
+      0.4453159073988597,
+      0.43485839168230694,
+      0.4287581741809845
+     ],
+     "profile_perpendicular": [
+      0.43660131096839905,
+      0.4344226618607839,
+      0.4418300688266754,
+      0.4474945565064748,
+      0.44662309686342877,
+      0.4461873670419057,
+      0.4470588266849518,
+      0.45315904418627423,
+      0.5555555688010322,
+      0.8736383517583212,
+      1,
+      0.8732026219367981,
+      0.5568627615769705,
+      0.4440087179342906,
+      0.44793028632799786,
+      0.4435729881127675,
+      0.43965141971906024,
+      0.43965141971906024,
+      0.44662309686342877,
+      0.450108935435613,
+      0.4291939040025075
+     ],
+     "profile_poly_coeffs": [
+      1.4179031489513707,
+      0.17619367049183346,
+      -0.7698345429954581,
+      -0.28583887760542004
+     ],
+     "radial_profile": [
+      null,
+      0.47490196909223287,
+      0.4466436017962063,
+      0.4444001362485401,
+      0.4432962407936921,
+      0.4444718234514067,
+      0.44353120580111466,
+      0.4210854246150209
+     ],
+     "glint_offset_norm": [
+      0.036971519270209585,
+      0.0013825780963755612
+     ],
+     "source_angle_image_deg": 0,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9592,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.6972737258727756,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": 2,
+   "refraction_d": -2,
+   "rotation_deg": 90,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 90,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 30,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.58184043866194,
+      "cy": 79.40962434239418,
+      "r": 26.214217678943204
+     },
+     "iris": {
+      "cx": 79.65846812317331,
+      "cy": 78.97093693818033,
+      "r": 52
+     },
+     "glint": [
+      80.5,
+      79.5
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5041195707489078,
+     "pupil_ellipse_eccentricity": 0.03629661840325151,
+     "reflex_mean_luma": 0.22461899797225954,
+     "reflex_mean_rgb": [
+      112.01860687022901,
+      36.600667938931295,
+      20.172709923664122
+     ],
+     "reflex_red_chroma": 0.6584038370438204,
+     "reflex_entropy": 2.284581178009928,
+     "crescent_present": false,
+     "crescent_area_fraction": 0,
+     "crescent_width_norm": 0,
+     "crescent_width_mm": 0,
+     "crescent_side": 0,
+     "crescent_centroid_offset_norm": 0,
+     "crescent_orientation_deg": null,
+     "crescent_contrast": 1.146464564574274,
+     "crescent_separability": 0.6753403797971889,
+     "gradient_along_source": 0.12481721765747447,
+     "gradient_perpendicular": 0.004118274393485183,
+     "dominant_gradient_deg": 358.13824157036055,
+     "asymmetry_index": 0.11038856790967742,
+     "profile_along_source": [
+      0.3821350832780202,
+      0.3860566516717275,
+      0.3969498972098033,
+      0.3986928164958954,
+      0.41525054971377057,
+      0.4148148198922475,
+      0.41699346899986267,
+      0.4291939040025075,
+      0.46840959787368774,
+      0.6901960968971252,
+      1,
+      0.9843137264251709,
+      0.7333333492279053,
+      0.4736383491092258,
+      0.46405228972435,
+      0.464488019545873,
+      0.47233115633328754,
+      0.48104575607511735,
+      0.48453159464730156,
+      0.49673203627268475,
+      0.48540305760171676
+     ],
+     "profile_perpendicular": [
+      0.43616558114687604,
+      0.4422657986481984,
+      0.43790850043296814,
+      0.43398693203926086,
+      0.44793028632799786,
+      0.4461873670419057,
+      0.4448801775773366,
+      0.44662309686342877,
+      0.5507625407642789,
+      0.8736383517583212,
+      1,
+      0.8675381342569987,
+      0.5459695127275255,
+      0.45403050382932025,
+      0.4483660161495209,
+      0.4431372582912445,
+      0.44095860918362934,
+      0.4418300688266754,
+      0.4440087179342906,
+      0.4470588266849518,
+      0.4453159073988597
+     ],
+     "profile_poly_coeffs": [
+      1.411448835030786,
+      0.29807878230730445,
+      -0.7599487571903277,
+      -0.24850359514984469
+     ],
+     "radial_profile": [
+      null,
+      0.473277319754873,
+      0.44548563936422036,
+      0.44373546376571815,
+      0.44522433048587734,
+      0.4428986452086262,
+      0.44267900887500033,
+      0.4210509856343269
+     ],
+     "glint_offset_norm": [
+      0.03502525128093285,
+      0.0034475817173980966
+     ],
+     "source_angle_image_deg": 0,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9656,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.7383898559487404,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": 2,
+   "refraction_d": -2,
+   "rotation_deg": 90,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 90,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 31,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.5995975315642,
+      "cy": 79.46484862732984,
+      "r": 26.216758031936138
+     },
+     "iris": {
+      "cx": 79.41104812956384,
+      "cy": 79.10412282135786,
+      "r": 52
+     },
+     "glint": [
+      80.5,
+      79.5
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5041684236910796,
+     "pupil_ellipse_eccentricity": 0.06142449851563326,
+     "reflex_mean_luma": 0.2247919245457444,
+     "reflex_mean_rgb": [
+      112.09942638623328,
+      36.632887189292546,
+      20.181644359464627
+     ],
+     "reflex_red_chroma": 0.6584255679102746,
+     "reflex_entropy": 2.2867084420677837,
+     "crescent_present": false,
+     "crescent_area_fraction": 0,
+     "crescent_width_norm": 0,
+     "crescent_width_mm": 0,
+     "crescent_side": 0,
+     "crescent_centroid_offset_norm": 0,
+     "crescent_orientation_deg": null,
+     "crescent_contrast": 1.1466543752706522,
+     "crescent_separability": 0.6651490780429596,
+     "gradient_along_source": 0.12501035355375684,
+     "gradient_perpendicular": -0.0015358762994778178,
+     "dominant_gradient_deg": 0.7660129721779185,
+     "asymmetry_index": 0.11085146660034986,
+     "profile_along_source": [
+      0.3816993534564972,
+      0.3947712481021881,
+      0.40479303399721783,
+      0.40348584453264874,
+      0.4030501147111257,
+      0.42135076721509296,
+      0.4287581741809845,
+      0.4387799600760142,
+      0.47363835242059493,
+      0.6928104725148942,
+      1,
+      0.986492375532786,
+      0.729411780834198,
+      0.46405228972435,
+      0.46623093883196515,
+      0.4766884545485179,
+      0.4740740756193797,
+      0.48148148589664036,
+      0.4793028367890252,
+      0.48932462599542403,
+      0.48540306091308594
+     ],
+     "profile_perpendicular": [
+      0.4387799600760142,
+      0.4440087179342906,
+      0.45315904418627423,
+      0.44793028632799786,
+      0.4374727706114451,
+      0.4457516372203827,
+      0.44095860918362934,
+      0.45315904418627423,
+      0.5629629790782928,
+      0.8775599201520284,
+      1,
+      0.8775599201520284,
+      0.5568627582656013,
+      0.4488017459710439,
+      0.4453159073988597,
+      0.4448801775773366,
+      0.4488017459710439,
+      0.4418300688266754,
+      0.43921568989753723,
+      0.4435729881127675,
+      0.4453159073988597
+     ],
+     "profile_poly_coeffs": [
+      1.4164774817914232,
+      0.2851705517451878,
+      -0.7662504148424485,
+      -0.24165656104692101
+     ],
+     "radial_profile": [
+      null,
+      0.4761904848473413,
+      0.4452241749791374,
+      0.44498172490778615,
+      0.445091441022828,
+      0.44366496368888814,
+      0.4428349166365167,
+      0.4207654201002964
+     ],
+     "glint_offset_norm": [
+      0.03434453899063218,
+      0.0013407978449256383
+     ],
+     "source_angle_image_deg": 0,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9614,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.7106997850201453,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": 3,
+   "refraction_d": -3,
+   "rotation_deg": 90,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 90,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 32,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.94279290862677,
+      "cy": 79.42888097925497,
+      "r": 26.389970669408562
+     },
+     "iris": {
+      "cx": 80.08848110666565,
+      "cy": 80.23241364778852,
+      "r": 52
+     },
+     "glint": [
+      80.5,
+      79.5
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5074994359501647,
+     "pupil_ellipse_eccentricity": 0.1172949209383172,
+     "reflex_mean_luma": 0.2743218518923678,
+     "reflex_mean_rgb": [
+      137.13685700802264,
+      44.53327041057102,
+      24.623879188296367
+     ],
+     "reflex_red_chroma": 0.6596714392648997,
+     "reflex_entropy": 3.541735515444949,
+     "crescent_present": true,
+     "crescent_area_fraction": 0.29042601923957856,
+     "crescent_width_norm": 0.33219542416043124,
+     "crescent_width_mm": 1.9931725449625874,
+     "crescent_side": 1,
+     "crescent_centroid_offset_norm": 0.586643217839559,
+     "crescent_orientation_deg": 359.5616803741835,
+     "crescent_contrast": 1.8354546373902447,
+     "crescent_separability": 0.8933912183350885,
+     "gradient_along_source": 0.5486876931856289,
+     "gradient_perpendicular": 0.001795313153232176,
+     "dominant_gradient_deg": 359.8007703184201,
+     "asymmetry_index": 0.47933072051241693,
+     "profile_along_source": [
+      0.37516340613365173,
+      0.36993464827537537,
+      0.38779957095781964,
+      0.40217865506807965,
+      0.39956427613894147,
+      0.4117647111415863,
+      0.4148148198922475,
+      0.42004357775052387,
+      0.460566457774904,
+      0.8540305097897848,
+      1,
+      0.9895424842834473,
+      0.6034858624140421,
+      0.5638344486554464,
+      0.6919390161832174,
+      0.8039215803146362,
+      0.8313725590705872,
+      0.8366013169288635,
+      0.8357298572858175,
+      0.8501089413960775,
+      0.7925926049550375
+     ],
+     "profile_perpendicular": [
+      0.4461873670419057,
+      0.4453159073988597,
+      0.4405228793621063,
+      0.4457516372203827,
+      0.43616558114687604,
+      0.43790850043296814,
+      0.44662309686342877,
+      0.45098039507865906,
+      0.5590414073732164,
+      0.8762527306874593,
+      1,
+      0.8644880255063375,
+      0.5590414106845856,
+      0.44662309686342877,
+      0.4470588266849518,
+      0.4427015284697215,
+      0.4483660161495209,
+      0.4413943390051524,
+      0.4470588266849518,
+      0.4422657986481984,
+      0.43398693203926086
+     ],
+     "profile_poly_coeffs": [
+      1.2547422619694102,
+      0.8258412008433317,
+      -0.2610446648102907,
+      -0.46039595667451605
+     ],
+     "radial_profile": [
+      null,
+      0.4803921663098865,
+      0.47311902271453726,
+      0.5212920104072302,
+      0.5504044602216274,
+      0.5604540840575569,
+      0.5679312704654222,
+      0.5247229434873747
+     ],
+     "glint_offset_norm": [
+      0.02111435053693134,
+      0.002694926100371598
+     ],
+     "source_angle_image_deg": 0,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9623,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.7168462521984114,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": 3,
+   "refraction_d": -3,
+   "rotation_deg": 90,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 90,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 33,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.92178198020697,
+      "cy": 79.53306335601287,
+      "r": 26.492290970204557
+     },
+     "iris": {
+      "cx": 79.17125131282593,
+      "cy": 79.8305498789686,
+      "r": 52
+     },
+     "glint": [
+      80.5,
+      79.5
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5094671340423953,
+     "pupil_ellipse_eccentricity": 0.08548113582106862,
+     "reflex_mean_luma": 0.274868622937733,
+     "reflex_mean_rgb": [
+      136.94156147732585,
+      44.835904628330994,
+      24.800841514726507
+     ],
+     "reflex_red_chroma": 0.6578873282506568,
+     "reflex_entropy": 3.5319933301372504,
+     "crescent_present": true,
+     "crescent_area_fraction": 0.2900590104403087,
+     "crescent_width_norm": 0.3318893933528382,
+     "crescent_width_mm": 1.991336360117029,
+     "crescent_side": 1,
+     "crescent_centroid_offset_norm": 0.5833912150845134,
+     "crescent_orientation_deg": 359.39450249831896,
+     "crescent_contrast": 1.831256962777557,
+     "crescent_separability": 0.8937790854097779,
+     "gradient_along_source": 0.5444763854386778,
+     "gradient_perpendicular": -0.002919158440685335,
+     "dominant_gradient_deg": 0.3136850208230726,
+     "asymmetry_index": 0.4778235458405715,
+     "profile_along_source": [
+      0.3677559991677602,
+      0.38387800256411236,
+      0.3956427077452342,
+      0.39259259899457294,
+      0.4113289813200633,
+      0.407407412926356,
+      0.42135076721509296,
+      0.4244008759657542,
+      0.4657952156331804,
+      0.8688453237215678,
+      1,
+      0.9843137264251709,
+      0.5886710484822592,
+      0.5568627715110779,
+      0.6823529601097107,
+      0.8113289872805277,
+      0.8196078538894653,
+      0.8226579626401266,
+      0.8318082888921102,
+      0.842265804608663,
+      0.8034858504931132
+     ],
+     "profile_perpendicular": [
+      0.4431372582912445,
+      0.45098039507865906,
+      0.44967320561408997,
+      0.4488017459710439,
+      0.4444444477558136,
+      0.4440087179342906,
+      0.4474945565064748,
+      0.44923747579256695,
+      0.5450980563958486,
+      0.8679738640785217,
+      1,
+      0.8614379167556763,
+      0.5450980563958486,
+      0.4457516372203827,
+      0.45141612490018207,
+      0.44923747579256695,
+      0.44662309686342877,
+      0.45141612490018207,
+      0.45141612490018207,
+      0.43703704078992206,
+      0.43834423025449115
+     ],
+     "profile_poly_coeffs": [
+      1.2542569612510268,
+      0.7847524950949705,
+      -0.2575305969111548,
+      -0.40084003680196884
+     ],
+     "radial_profile": [
+      null,
+      0.4738208909292479,
+      0.4742362140569576,
+      0.5235454917686885,
+      0.5520481539047984,
+      0.561293616232934,
+      0.5712214586198463,
+      0.5165517877903767
+     ],
+     "glint_offset_norm": [
+      0.021825897218301717,
+      -0.0012480368742008908
+     ],
+     "source_angle_image_deg": 0,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9623,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.7170085032976943,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": 4,
+   "refraction_d": -4,
+   "rotation_deg": 90,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 90,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 34,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.94623615519677,
+      "cy": 79.49107683900053,
+      "r": 26.437983989191334
+     },
+     "iris": {
+      "cx": 80.15420642961426,
+      "cy": 79.92445347135933,
+      "r": 52
+     },
+     "glint": [
+      80.72727272727273,
+      79.5
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5084227690229103,
+     "pupil_ellipse_eccentricity": 0.11090195406487911,
+     "reflex_mean_luma": 0.31775022571474426,
+     "reflex_mean_rgb": [
+      159.0161596958175,
+      51.52233840304182,
+      28.393536121673005
+     ],
+     "reflex_red_chroma": 0.6601856530505895,
+     "reflex_entropy": 3.5512319429027546,
+     "crescent_present": true,
+     "crescent_area_fraction": 0.5269899359560841,
+     "crescent_width_norm": 0.5212042037105671,
+     "crescent_width_mm": 3.1272252222634025,
+     "crescent_side": 1,
+     "crescent_centroid_offset_norm": 0.36858846994572003,
+     "crescent_orientation_deg": 0.07513165087789275,
+     "crescent_contrast": 1.8853545802782394,
+     "crescent_separability": 0.9176269220603834,
+     "gradient_along_source": 0.5271615783352642,
+     "gradient_perpendicular": -0.00024726410850541605,
+     "dominant_gradient_deg": 0.01655447272554511,
+     "asymmetry_index": 0.5518248347546312,
+     "profile_along_source": [
+      0.37690632541974384,
+      0.3808278938134511,
+      0.38910676042238873,
+      0.3943355182806651,
+      0.4091503322124481,
+      0.4108932514985402,
+      0.407407412926356,
+      0.43790850043296814,
+      0.5355119970109727,
+      0.955991288026174,
+      1,
+      1,
+      0.9058823585510254,
+      0.8087146083513895,
+      0.8078431487083435,
+      0.8230936924616495,
+      0.8239651521046957,
+      0.8361655871073405,
+      0.8396514256795248,
+      0.8444444537162781,
+      0.7938997944196066
+     ],
+     "profile_perpendicular": [
+      0.7620915174484253,
+      0.7795207103093466,
+      0.7790849804878235,
+      0.7612200578053793,
+      0.7620915174484253,
+      0.7708061138788859,
+      0.7703703840573629,
+      0.7712418437004089,
+      0.8806100289026896,
+      0.9986928105354309,
+      1,
+      0.9938997824986776,
+      0.8840958674748739,
+      0.7712418437004089,
+      0.7747276822725931,
+      0.7668845454851786,
+      0.7795207103093466,
+      0.7738562226295471,
+      0.7760348717371622,
+      0.7729847629865011,
+      0.7455337842305502
+     ],
+     "profile_poly_coeffs": [
+      1.2169041602642123,
+      0.914893570939293,
+      -0.4510283840040016,
+      -0.7141429364991704
+     ],
+     "radial_profile": [
+      null,
+      0.6754201831562179,
+      0.6626528368276708,
+      0.6432176248216238,
+      0.6455767685952394,
+      0.6354163575482059,
+      0.630588244398435,
+      0.5663843261003494
+     ],
+     "glint_offset_norm": [
+      0.029542213672391734,
+      0.0003375129133568097
+     ],
+     "source_angle_image_deg": 0,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9618,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.713476977828748,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  },
+  {
+   "lens_d": 4,
+   "refraction_d": -4,
+   "rotation_deg": 90,
+   "record": {
+    "metadata": {
+     "eye": "OD",
+     "timestamp": "2026-01-01T00:00:00.000Z",
+     "working_distance_m": 1,
+     "distance_source": "manual",
+     "distance_sd_m": 0.01,
+     "device_rotation_deg": 90,
+     "head_pose": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "roll_deg": 0
+     },
+     "illumination": "torch",
+     "source_angle_image_deg": null,
+     "eccentricity_mm": null,
+     "mirrored": false,
+     "age_group": "unknown",
+     "frame_index": 35,
+     "simulated": true,
+     "motion_px_per_frame": null
+    },
+    "features": {
+     "pupil": {
+      "cx": 79.91039155923346,
+      "cy": 79.51870334141788,
+      "r": 26.412750852547983
+     },
+     "iris": {
+      "cx": 79.18559193700214,
+      "cy": 79.39657656222082,
+      "r": 52
+     },
+     "glint": [
+      80.6086956521739,
+      79.52173913043478
+     ],
+     "pupil_diameter_mm": 6,
+     "pupil_to_iris_ratio": 0.5079375163951535,
+     "pupil_ellipse_eccentricity": 0.10942172358778911,
+     "reflex_mean_luma": 0.3171150856971286,
+     "reflex_mean_rgb": [
+      158.8945610687023,
+      51.329198473282446,
+      28.286259541984734
+     ],
+     "reflex_red_chroma": 0.6610109876300997,
+     "reflex_entropy": 3.5624020363063975,
+     "crescent_present": true,
+     "crescent_area_fraction": 0.5290884104443426,
+     "crescent_width_norm": 0.5228539444205604,
+     "crescent_width_mm": 3.1371236665233626,
+     "crescent_side": 1,
+     "crescent_centroid_offset_norm": 0.37213096186125777,
+     "crescent_orientation_deg": 0.08631512554597975,
+     "crescent_contrast": 1.882783384191473,
+     "crescent_separability": 0.916720447662811,
+     "gradient_along_source": 0.5270515281897546,
+     "gradient_perpendicular": -0.004275311491057023,
+     "dominant_gradient_deg": 0.47786537486553016,
+     "asymmetry_index": 0.551997465064391,
+     "profile_along_source": [
+      0.37124183773994446,
+      0.3812636236349742,
+      0.38692811131477356,
+      0.4000000059604645,
+      0.4148148198922475,
+      0.41699346899986267,
+      0.4161220093568166,
+      0.4374727706114451,
+      0.5342048075464036,
+      0.9525054494539896,
+      1,
+      1,
+      0.899782141049703,
+      0.829629639784495,
+      0.8200435837109884,
+      0.8239651521046957,
+      0.8335512081782023,
+      0.8361655871073405,
+      0.8444444537162781,
+      0.8470588326454163,
+      0.8104575276374817
+     ],
+     "profile_perpendicular": [
+      0.7673202753067017,
+      0.7751634120941162,
+      0.7712418437004089,
+      0.7760348717371622,
+      0.7786492506663004,
+      0.7686274647712708,
+      0.7633987069129944,
+      0.7738562226295471,
+      0.871895432472229,
+      0.9891067544619242,
+      1,
+      0.9952069719632467,
+      0.8745098114013672,
+      0.7673202753067017,
+      0.772113303343455,
+      0.7825708190600077,
+      0.7694989244143168,
+      0.7755991419156393,
+      0.7786492506663004,
+      0.7742919524510702,
+      0.7564270297686259
+     ],
+     "profile_poly_coeffs": [
+      1.222926953408034,
+      0.9140124013074906,
+      -0.44923254182755934,
+      -0.6975043310118877
+     ],
+     "radial_profile": [
+      null,
+      0.6767058962583542,
+      0.663667830824852,
+      0.6427210986614227,
+      0.6455505375678723,
+      0.6356617741597196,
+      0.625516702462961,
+      0.5696078554860183
+     ],
+     "glint_offset_norm": [
+      0.026438143336103243,
+      0.00011493649540153269
+     ],
+     "source_angle_image_deg": 0,
+     "extractor_version": "pr-features-1.0.0"
+    },
+    "quality": {
+     "score": 0.9597,
+     "grade": "excellent",
+     "subscores": {
+      "sharpness": 0.7003613303503032,
+      "exposure": 1,
+      "saturation": 1,
+      "glare": 1,
+      "pupil_visibility": 1,
+      "pupil_size": 1,
+      "head_pose": 1,
+      "gaze": 1,
+      "motion": 1,
+      "distance": 1,
+      "illumination": 1
+     },
+     "hard_failures": [],
+     "advisories": []
+    },
+    "estimate": null
+   }
+  }
+ ]
+}

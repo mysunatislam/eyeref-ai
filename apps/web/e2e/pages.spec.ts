@@ -10,6 +10,7 @@ const ROUTES = [
   "/validation/study",
   "/dataset",
   "/calibration",
+  "/calibration/bench",
   "/vision-test",
   "/safety",
 ];

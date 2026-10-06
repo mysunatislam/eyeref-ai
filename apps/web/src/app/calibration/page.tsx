@@ -1,11 +1,13 @@
 "use client";
+import { FlaskRound } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { DeadZoneCalculator } from "@/components/calibration/DeadZoneCalculator";
 import { ScreenCalibration } from "@/components/calibration/ScreenCalibration";
 import { ServerAccess } from "@/components/calibration/ServerAccess";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Switch } from "@/components/ui/switch";
@@ -293,14 +295,16 @@ export default function CalibrationPage() {
               </CardDescription>
             </div>
           </CardHeader>
-          <CardContent className="text-ink-2 space-y-2 text-xs">
+          <CardContent className="text-ink-2 space-y-3 text-xs">
             <p>
-              Photograph an artificial eye (or a cyclopleged volunteer) through trial lenses from −3 to +3 D
-              in 0.5 D steps at the working distance, then fit the brightness-gradient gain with{" "}
-              <code>eyeref.calibration.gradient.fit_gradient_gain</code>. The fitted gain, its residual SD and
-              a calibration version go into the device profile.
+              Photograph a model eye through trial lenses from −4 to +4 D at a measured distance. The run
+              checks the measured flash position against the photorefraction model (crescent side, crescent
+              width, dead-zone edges, repeatability), then fits the gain. On go, the gain, its residual SD and
+              a calibration version are saved into the device profile.
             </p>
-            <p>See docs/DEVICE_CALIBRATION.md for the full bench protocol and acceptance criteria.</p>
+            <Link href="/calibration/bench" className={buttonVariants({ variant: "secondary", size: "sm" })}>
+              <FlaskRound /> Open the bench
+            </Link>
           </CardContent>
         </Card>
       </div>
