@@ -174,6 +174,12 @@ class OnnxMeridionalEstimator:
     def available(self) -> bool:
         return self.session is not None
 
+    @property
+    def learned_target(self) -> str:
+        """What the model learned for each frame: ``optical``, the meridian as the camera saw it, or ``clinical``,
+        the eye's own refraction. A model exported before this was recorded learned clinical refractions."""
+        return str(self.meta.get("target", "clinical"))
+
     def _inputs(self, features: PhotorefractionFeatures, metadata: CaptureMetadata, device: DeviceProfile):
         row = model_inputs(features.numeric_vector(), metadata.working_distance_m, metadata.effective_eccentricity_mm(device))
         names: list[str] = self.meta["feature_names"]

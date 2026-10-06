@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from eyeref.calibration.device_profiles import BUILTIN_PROFILES
 from eyeref.inference.estimators import OnnxMeridionalEstimator, PhysicsHeuristicEstimator, SimulationOracleEstimator
-from eyeref.inference.fusion import GatingConfig, build_report, fuse_eye
+from eyeref.inference.fusion import GatingConfig, build_report, focus_model_for, fuse_eye
 from eyeref.optics.power_vector import SphCylAxis, circular_axis_error
 from eyeref.pipeline import unmirror
 from eyeref.simulation.cohort import SessionConfig, make_subject, run_simulated_assessment
@@ -147,6 +147,14 @@ def test_missing_onnx_model_reports_insufficient(tmp_path):
     assert out.status == "insufficient" and out.power_d is None
 
 
+def test_focusing_is_allowed_for_unless_a_model_learned_clinical_refractions(tmp_path):
+    assert focus_model_for("physics-heuristic") and focus_model_for("simulation")
+    assert focus_model_for("ml", "optical")  # it learned what the camera saw, as the physics reads it
+    assert not focus_model_for("ml", "clinical") and not focus_model_for("ml")
+    # a model that does not say what it learned is taken to have learned clinical refractions
+    assert OnnxMeridionalEstimator(tmp_path / "missing.onnx").learned_target == "clinical"
+
+
 def test_webcam_without_flash_cannot_estimate():
     est = PhysicsHeuristicEstimator()
     out = est.estimate(PhotorefractionFeatures(pupil_diameter_mm=5), CaptureMetadata(eye="OD"), BUILTIN_PROFILES["generic-webcam"])
@@ -173,11 +181,14 @@ ARTIFACT = Path(__file__).resolve().parents[2] / "ml" / "artifacts" / "meridiona
 def test_simulation_trained_onnx_model_refuses_real_eyes():
     est = OnnxMeridionalEstimator(ARTIFACT)
     assert est.available and est.meta["trained_on_simulated"] is True
+    assert est.learned_target == "optical"  # the simulator says what the camera saw
     real = _frame("OD", 0, -2.0, simulated=False)
     out = est.estimate(real.features, real.metadata, DEV)
     assert out.status == "insufficient" and "SIMULATED" in out.notes[0]
     sim = _frame("OD", 0, -2.0, simulated=True)
-    assert est.estimate(sim.features, sim.metadata, DEV).status == "quantitative"
+    # the exported model names the extractor its features came from
+    features = sim.features.model_copy(update={"extractor_version": est.meta["extractor_version"]})
+    assert est.estimate(features, sim.metadata, DEV).status == "quantitative"
 
 
 @pytest.mark.skipif(not ARTIFACT.exists(), reason="run the ML pipeline to create artifacts")

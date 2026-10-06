@@ -39,6 +39,7 @@ export default function ValidationPage() {
   const m = e.models[model] ?? e.models[models[0]!]!;
   const em = m.eye;
   const subgroups = m.subgroups ?? e.models.random_forest?.subgroups;
+  const optical = r.target === "optical";
 
   return (
     <>
@@ -94,8 +95,13 @@ export default function ValidationPage() {
           <div>
             <CardTitle>Spherical equivalent, all models</CardTitle>
             <CardDescription>
-              “All eyes” uses the ungated posterior mean for every eye. “Released” counts only eyes the gate
-              allowed a number for. Classical baselines come first on purpose.
+              “Frame MAE” scores each estimator per frame against{" "}
+              {optical
+                ? "what the camera saw, an eye focused on the light: its own job"
+                : "each eye’s own refraction, which is all a real study has"}
+              . The rest is what the app would show for each eye, against its own refraction: a number only
+              where the gate releases one, and a range where the eyes focusing on the light could hide 1 D or
+              more. Classical baselines come first on purpose.
             </CardDescription>
           </div>
         </CardHeader>
@@ -110,14 +116,13 @@ export default function ValidationPage() {
               <tr>
                 {[
                   "Model",
-                  "MAE all",
-                  "MAE released",
-                  "RMSE",
-                  "±0.25",
+                  "Frame MAE",
+                  "Number given",
+                  "MAE of numbers",
                   "±0.50",
-                  "±1.00",
-                  "Released",
-                  "CI cover",
+                  "CI held truth",
+                  "Range given",
+                  "Range held truth",
                   "Myopia sens/spec",
                   "AUC",
                 ].map((h) => (
@@ -130,9 +135,8 @@ export default function ValidationPage() {
             <tbody>
               {models.map((k) => {
                 const x = e.models[k]!.eye;
-                const best = models.every(
-                  (o) => (e.models[o]!.eye.se_all_eyes.mae ?? 9) >= (x.se_all_eyes.mae ?? 9),
-                );
+                const frame = e.models[k]!.frame;
+                const best = models.every((o) => (e.models[o]!.frame.mae ?? 9) >= (frame.mae ?? 9));
                 return (
                   <tr
                     key={k}
@@ -145,14 +149,13 @@ export default function ValidationPage() {
                     <td className="py-1.5 pr-3 font-medium">
                       {MODEL_LABEL[k] ?? k} {best && <Badge tone="ok">best</Badge>}
                     </td>
-                    <td className="pr-3">{d(x.se_all_eyes.mae)}</td>
+                    <td className="pr-3">{d(frame.mae)}</td>
+                    <td className="pr-3">{pct(x.output_levels.quantitative ?? 0)}</td>
                     <td className="pr-3">{d(x.se_released_only.mae)}</td>
-                    <td className="pr-3">{d(x.se_all_eyes.rmse)}</td>
-                    <td className="pr-3">{pct(x.se_all_eyes.within_0_25)}</td>
-                    <td className="pr-3">{pct(x.se_all_eyes.within_0_50)}</td>
-                    <td className="pr-3">{pct(x.se_all_eyes.within_1_00)}</td>
-                    <td className="pr-3">{pct(x.output_levels.quantitative)}</td>
+                    <td className="pr-3">{pct(x.se_released_only.within_0_50)}</td>
                     <td className="pr-3">{pct(x.se_ci95_coverage)}</td>
+                    <td className="pr-3">{pct(x.ranges?.fraction)}</td>
+                    <td className="pr-3">{pct(x.ranges?.coverage)}</td>
                     <td className="pr-3">
                       {pct(x.screening_myopia.sensitivity)} / {pct(x.screening_myopia.specificity)}
                     </td>
@@ -187,7 +190,8 @@ export default function ValidationPage() {
             <div>
               <CardTitle>Bland–Altman (SE)</CardTitle>
               <CardDescription>
-                Bias {d(em.bland_altman_se.mean_diff)} · 95% limits of agreement{" "}
+                Every eye’s median{m.focus_model ? ", allowing for the eyes focusing on the light" : ""},
+                gated or not. Bias {d(em.bland_altman_se.mean_diff)} · 95% limits of agreement{" "}
                 {d(em.bland_altman_se.loa_low)} to {d(em.bland_altman_se.loa_high)}
               </CardDescription>
             </div>
@@ -293,9 +297,9 @@ export default function ValidationPage() {
           <div>
             <CardTitle>Cross-device generalisation</CardTitle>
             <CardDescription>
-              Trained on three simulated phones, tested on a fourth with different flash offset, gain, noise
-              and resolution. Learned models lose more than physics; this is why every new phone needs bench
-              calibration.
+              Frame error, trained on three simulated phones and tested on a fourth with different flash
+              offset, gain, noise and resolution. Learned models lose more than physics; this is why every new
+              phone needs bench calibration.
             </CardDescription>
           </div>
         </CardHeader>
@@ -310,8 +314,8 @@ export default function ValidationPage() {
             <div>
               <CardTitle>Subgroups</CardTitle>
               <CardDescription>
-                Performance by device, age, refractive range, pupil size, distance and skin-tone index of the
-                renderer.
+                Each eye’s median against its own refraction, by device, age, refractive range, pupil size,
+                distance and skin-tone index of the renderer.
               </CardDescription>
             </div>
             <Select
@@ -328,10 +332,10 @@ export default function ValidationPage() {
             </Select>
           </CardHeader>
           <CardContent className="overflow-x-auto" tabIndex={0} role="region" aria-label="Subgroup table">
-            <table className="num w-full min-w-[520px] text-xs">
+            <table className="num w-full min-w-[600px] text-xs">
               <thead className="text-muted text-left text-[10px] tracking-wider uppercase">
                 <tr>
-                  {["Group", "n", "MAE", "Bias", "±0.50", "Released"].map((h) => (
+                  {["Group", "n", "MAE", "Bias", "±0.50", "Number given", "Range given"].map((h) => (
                     <th key={h} className="py-1 pr-3">
                       {h}
                     </th>
@@ -347,6 +351,7 @@ export default function ValidationPage() {
                     <td className="pr-3">{d(v.bias)}</td>
                     <td className="pr-3">{pct(v.within_0_50)}</td>
                     <td className="pr-3">{pct(v.fraction_quantitative)}</td>
+                    <td className="pr-3">{pct(v.fraction_range)}</td>
                   </tr>
                 ))}
               </tbody>

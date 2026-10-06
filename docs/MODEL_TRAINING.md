@@ -26,9 +26,34 @@ see [Training on real data](#training-on-real-data).
 | 6 | Hybrid CNN | crop + features | Uses pixels the features miss |
 
 Every model predicts **per-meridian power with an uncertainty**. Eye-level SE, CYL and axis always
-come from the same Bayesian fusion and gating code that the app uses
-(`evaluation/eye_level.py` calls the runtime `fuse_eye`). That way the comparison measures what a
-person would actually see.
+come from the same Bayesian fusion and gating code that the app uses: `evaluation/eye_level.py` fuses
+each session's two eyes as the runtime `build_report` does, allowing for the eyes focusing on the light
+wherever the app would. That way the comparison measures what a person would actually see.
+
+## What the models learn
+
+The person looks at the light about a metre away, and an eye that can bring it into focus does
+(PHOTOREFRACTION.md § 5). The crescent then shows the eye as it was focused, more myopic than its own
+refraction, and nothing in a frame shows by how much. So a model can learn one of two things, and the
+dataset's `MANIFEST.json` says which (`eyeref_ml/datasets/targets.py`):
+
+| Target | Each frame's label | Where it comes from | After the model, the app |
+| --- | --- | --- | --- |
+| `optical` | the meridian as the camera saw it, `gt_power_optical` | the simulator, which knows how far each eye focused | allows for focusing, as it does for the physics |
+| `clinical` | the eye's own refraction, `gt_power_meridian` | a study's reference refraction | does not allow for it again |
+
+A model that learns `optical` measures the optics, the job the physics does, and the app's focusing
+model then works out what that says about the eye's own refraction. A model that learns `clinical`
+also learns how far its training eyes focused, on average: it cannot see the focusing either, so an eye
+that focuses more than they did, such as a young hyperope, reads as they did, and its conformal interval
+only covers that eye if its training eyes were like it. The ONNX sidecar records the target, and the
+server allows for focusing after a model only when it learned `optical`
+(`eyeref.inference.fusion.focus_model_for`).
+
+The simulated dataset learns `optical`; a study's export learns `clinical`, because no reference
+refraction says how far the eye focused while it was photographed. Frames taken through a fogging lens
+(stage 1 of RESEARCH_PROTOCOL.md) or under cycloplegia are the exception, since there the eye cannot
+focus on the light; training on them as `optical` is future work.
 
 ## Uncertainty
 
@@ -47,6 +72,8 @@ Each export writes `<name>.onnx` and `<name>.json`. The sidecar records:
 - the `conformal_scale`;
 - `trained_on_simulated`, the feature extractor version, and the dataset manifest (subjects, frames,
   devices, and the seed of a simulated dataset);
+- the `target` it learned, `optical` or `clinical` (a sidecar written before targets were recorded
+  learned `clinical`);
 - a metrics summary.
 
 Every prediction stores the model name and version, the extractor version and the calibration version.
@@ -56,25 +83,33 @@ other than the one it was trained on.
 
 ## Simulated results and what they teach (SIMULATED DATA)
 
-These are SE mean absolute errors across all test eyes, from the simulator before its eyes focused on
-the light (PHOTOREFRACTION.md § 5). A rerun will move them: the frames now show the focusing, while
-the targets stay each eye's own refraction, as a clinical refraction would give them.
+Every model learned what the camera saw, and the app allowed for focusing after it. The frame error is
+against what the camera saw; the rest is per eye, against its own refraction, on the subject split. The
+README has every model, and `ml/reports/latest/validation_report.json` has everything.
 
-| Model | Subject split | Unseen device |
-| --- | --- | --- |
-| Physics only | 0.54 D | 0.69 D |
-| Random forest | 0.17 D | 0.21 D |
-| Hybrid CNN | 0.17 D | 0.41 D |
+| Model | Frame error, subject split | Frame error, unseen device | Number given | Error of the numbers | Range given |
+| --- | --- | --- | --- | --- | --- |
+| Physics only | 0.49 D | 0.59 D | 12% | 0.31 D | 8% |
+| Random forest | 0.09 D | 0.14 D | 29% | 0.22 D | 51% |
+| Hybrid CNN | 0.09 D | 0.37 D | 29% | 0.22 D | 51% |
 
 1. On simulated data, neither the hybrid NN nor the CNN beats the tree ensembles. Deep learning is
    justified only if real data shows effects that the features miss, such as fundus colour or
    aberrations.
-2. Learned models degrade on an unseen device more than physics does. Conformal coverage calibrated on
-   seen devices drops to 57–86% on the new device for the linear and NN models. Ship **per-device
-   calibration**, and recalibrate the conformal scale on each device.
-3. The gate matters. "Released" eyes, the ones that passed every gate, have lower error than all eyes
-   (for example, 0.14 vs 0.17 D for the random forest). In this simulation, children were never
-   released as quantitative, because the accommodation uncertainty is too wide.
+2. Learned models degrade on an unseen device more than physics does, the neural networks most. The
+   numbers' 95% intervals, calibrated on seen devices, held the truth on the new device for 80–84% of
+   eyes with the ridge and NN models. Ship **per-device calibration**, and recalibrate the conformal
+   scale on each device.
+3. A better estimator cannot see focusing. Measuring the optics to 0.1 D still leaves an eye that could
+   focus on the light with a range, not a number: no one under 18 got a number, and 7% of eyes aged
+   18–39 did, against every eye over 60. Ranges held the truth in every eye. Hyperopia was found in
+   about a third of hyperopic eyes; only fogging or eye drops would find the rest.
+4. The physics alone, on a phone with no measured gain, refers most eyes inside the dead zone for
+   myopia (29% specificity), since nothing places them within it. A bench-calibrated gain does.
+
+Before the simulator's eyes focused on the light, these models learned each eye's own refraction and
+gave about half of all eyes a number, with an error of 0.14–0.16 D. That was the simulator being kind:
+its eyes barely focused, so its frames showed nearly the eye's own refraction.
 
 ## Training on real data
 
@@ -101,6 +136,8 @@ to put it in the web app.
   to the cornea alike.
 - Each frame's target is that refraction's power along the frame's meridian,
   P(θ) = M + J0·cos 2θ + J45·sin 2θ.
+- That is the eye's own refraction, not what the camera saw of an eye focused on the light, so the
+  manifest's target is `clinical` (see [What the models learn](#what-the-models-learn)).
 
 **Frames.** Every frame keeps its quality grade. Training uses only the frames that passed, as the app
 does, and the evaluation still counts the rest.

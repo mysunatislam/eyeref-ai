@@ -147,8 +147,10 @@ EyeRef models this from both eyes at once (`inference/focus.ts`, twin `eyeref/in
 - **The dead zone** no longer rules out hyperopia in an eye that can focus.
 
 Two cases take the reading as it stands. A capture through a stage 1 trial lens records the eye as the
-camera saw it, focusing included. A learned estimator predicts each meridian's own refraction, having
-learned from clinical refractions how its training eyes focused, so it is not corrected a second time.
+camera saw it, focusing included. A learned estimator trained on clinical refractions predicts each
+meridian's own refraction, having learned how its training eyes focused, so it is not corrected a second
+time. One trained on what the camera saw, as the simulated models are, measures the optics as the physics
+does, and the app allows for focusing after it (MODEL_TRAINING.md, What the models learn).
 
 The simulator's eyes focus the same way, with g uniform over 0.5 to 1 (people mostly follow the light),
 plus their drift. Since the model assumes the wider 0 to 1, its intervals cover the simulated eyes with

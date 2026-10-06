@@ -5,7 +5,12 @@ Every row is one frame.  Columns:
   capture:   meridian_deg, working_distance_m, pupil_diameter_mm, quality_*, age_group, skin_idx
   features:  f_* (PhotorefractionFeatures.numeric_vector)
   truth:     gt_power_meridian (static clinical refraction in that meridian),
-             gt_sph, gt_cyl, gt_axis, gt_M, gt_J0, gt_J45 (per eye)
+             gt_power_optical (that meridian as the camera saw it: the eye focused
+             on the light by gt_focus_d, which makes it read more myopic),
+             gt_sph, gt_cyl, gt_axis, gt_M, gt_J0, gt_J45 (per eye, its own refraction)
+The models learn gt_power_optical (MANIFEST target "optical"): the crescent shows
+the eye as it was focused, and nothing in a frame shows how far that was, so the
+runtime allows for focusing (eyeref.inference.focus) after the model, not inside it.
 An optional .npz holds geometrically normalised 48x48 eye crops for the image
 branch (rotated so the light-source direction points up).
 
@@ -86,6 +91,9 @@ def generate(n_subjects: int, out_dir: Path, seed: int = 0, with_images: bool = 
                 q = assess_quality(fr.image, seg, feats, meta)
                 rx = subj.od if meta.eye == "OD" else subj.os
                 pv = to_power_vector(rx)
+                static = rx.power_in_meridian(meta.meridian_eye_deg(dev.profile) or 0.0)
+                # focusing shifts every meridian alike, so it is the rendered meridian's own shift
+                focus = rx.power_in_meridian(fr.truth_meridian_deg) - fr.truth_power_d
                 row = {
                     "subject_id": subj.subject_id, "session_id": sid, "device_id": dev.profile.id,
                     "eye": meta.eye, "frame_index": meta.frame_index, "age_group": subj.age_group,
@@ -93,7 +101,7 @@ def generate(n_subjects: int, out_dir: Path, seed: int = 0, with_images: bool = 
                     "working_distance_m": meta.working_distance_m, "eccentricity_mm": dev.profile.eccentricity_mm(),
                     "pupil_diameter_mm": feats.pupil_diameter_mm, "quality_score": q.score, "quality_grade": q.grade,
                     "quality_usable": q.usable, "hard_failures": "|".join(q.hard_failures),
-                    "gt_power_meridian": rx.power_in_meridian(meta.meridian_eye_deg(dev.profile) or 0.0),
+                    "gt_power_meridian": static, "gt_power_optical": static - focus, "gt_focus_d": focus,
                     "gt_sph": rx.sph, "gt_cyl": rx.cyl, "gt_axis": rx.axis, "gt_se": rx.spherical_equivalent,
                     "gt_M": pv.M, "gt_J0": pv.J0, "gt_J45": pv.J45, "simulated": True,
                     "crop_index": len(crops) if with_images else -1,
@@ -112,7 +120,7 @@ def generate(n_subjects: int, out_dir: Path, seed: int = 0, with_images: bool = 
     if with_images:
         np.savez_compressed(out_dir / "crops.npz", crops=np.stack(crops))
     (out_dir / "MANIFEST.json").write_text(json.dumps({
-        "simulated": True, "n_subjects": n_subjects, "n_frames": len(df), "seed": seed,
+        "simulated": True, "n_subjects": n_subjects, "n_frames": len(df), "seed": seed, "target": "optical",
         "devices": [d.profile.id for d in devices], "extractor_version": EXTRACTOR_VERSION,
         "warning": "SIMULATED DATA - not evidence of clinical performance",
     }, indent=2))

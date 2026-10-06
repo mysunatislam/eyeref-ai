@@ -509,6 +509,17 @@ def fuse_eye(
     return gate_eye(m, age_group, cfg, focus, d)
 
 
+def focus_model_for(estimator_kind: str, learned_target: Optional[str] = None) -> bool:
+    """Whether a report allows for the eyes focusing on the light, unless told otherwise.
+
+    It does for readings of the eye as the camera saw it: the physics, and a learned model whose target was what
+    the camera saw (``optical``, as the simulator gives).  A model that learned clinical refractions has also
+    learned how its training eyes focused, so its readings are not corrected a second time; a model that does not
+    say what it learned is taken to be one of those.
+    """
+    return estimator_kind != "ml" or learned_target == "optical"
+
+
 def build_report(  # noqa: C901
     frames: list[FrameRecord],
     age_group: str,
@@ -525,11 +536,11 @@ def build_report(  # noqa: C901
     """Both eyes' results.
 
     `focus_model=False` takes each reading as it stands: a capture through a stage 1 trial lens, where the
-    point is the eye as the camera saw it.  It defaults to on, except for a learned estimator: that predicts
-    each meridian's own refraction, having learned from clinical refractions how its training eyes focused.
+    point is the eye as the camera saw it.  It defaults to `focus_model_for(estimator_kind)`: on, except for a
+    learned estimator, whose caller says when its model learned what the camera saw.
     """
     if focus_model is None:
-        focus_model = estimator_kind != "ml"
+        focus_model = focus_model_for(estimator_kind)
     simulated = any(f.metadata.simulated for f in frames)
     if simulated and not all(f.metadata.simulated for f in frames):
         raise ValueError("Mixing simulated and real frames in one report is not allowed.")

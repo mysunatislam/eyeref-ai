@@ -57,7 +57,8 @@ def test_each_frames_target_is_its_eyes_reference_along_the_frames_meridian():
         "f_pupil_diameter_mm", "f_crescent_width_norm"]
     assert (frames["crop_index"] == -1).all() and not frames["simulated"].any()
     assert manifest | {"created_at": None} == {
-        "simulated": False, "source": "research server capture export (GET /api/dataset/export)", "created_at": None,
+        "simulated": False, "target": "clinical", "source": "research server capture export (GET /api/dataset/export)",
+        "created_at": None,
         "eyeref_ml_version": manifest["eyeref_ml_version"], "reference": "best",
         "reference_methods": {"autorefractor": 2}, "extractor_version": "pr-features-1.0.0", "n_subjects": 2,
         "n_sessions": 2, "n_eyes": 2, "n_frames": 6, "n_usable_frames": 6, "devices": ["phone-a"],

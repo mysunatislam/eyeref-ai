@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -104,6 +105,36 @@ def test_estimate_from_features(client):
     r = client.post("/api/estimate", json={"frames": frames, "device_id": "simulated-phone", "age_group": sim["truth"]["age_group"]})
     assert r.status_code == 200, r.text
     assert r.json()["simulated"] is True
+
+
+ARTIFACT = Path(__file__).resolve().parents[2] / "ml" / "artifacts" / "meridional_mlp.onnx"
+
+
+@pytest.mark.skipif(not ARTIFACT.exists(), reason="run the ML pipeline to create artifacts")
+def test_a_learned_model_is_allowed_for_focusing_only_when_it_learned_what_the_camera_saw(tmp_path, monkeypatch):
+    import eyeref.api.main as api
+
+    clinical = tmp_path / "clinical.onnx"
+    clinical.write_bytes(ARTIFACT.read_bytes())
+    meta = json.loads(ARTIFACT.with_suffix(".json").read_text())
+    clinical.with_suffix(".json").write_text(json.dumps({**meta, "target": "clinical"}))
+    focus = {}
+    for name, model in (("optical", ARTIFACT), ("clinical", clinical)):
+        monkeypatch.setattr(api, "MODEL_PATH", str(model))
+        app_dir = tmp_path / name
+        app_dir.mkdir()
+        client = TestClient(create_app(fresh_database(app_dir), data_dir=str(app_dir)))
+        sim = client.post("/api/simulate", json={"subject_id": "API-ML", "frames_per_meridian": 3}).json()
+        frames = [{"metadata": f["metadata"], "features": f["features"], "quality": f["quality"]} for f in sim["frames"]]
+        body = {"frames": frames, "device_id": "simulated-phone", "age_group": sim["truth"]["age_group"],
+                "estimator": "ml"}
+        r = client.post("/api/estimate", json=body)
+        assert r.status_code == 200, r.text
+        assert r.json()["provenance"]["estimator_kind"] == "ml"
+        focus[name] = r.json()["focus"]
+        if name == "clinical":  # asked for, it is allowed for all the same
+            assert client.post("/api/estimate", json={**body, "focus_model": True}).json()["focus"] is not None
+    assert focus["optical"] is not None and focus["clinical"] is None
 
 
 def _png(value: int, size: int = 8) -> bytes:
