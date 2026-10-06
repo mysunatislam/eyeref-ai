@@ -6,6 +6,7 @@
  */
 import type { FaceLandmarker } from "@mediapipe/tasks-vision";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { frameRotationDeg as frameRotation } from "../camera/orientation";
 import { useCamera } from "../camera/useCamera";
 import { isUsable } from "../cv/quality";
 import type { PhotorefractionEstimator } from "../inference/estimators";
@@ -63,12 +64,18 @@ const EMPTY: Telemetry = {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * `screenAngleDeg` is how far the screen is turned (`useScreenAngle`). The browser turns the camera's
+ * frames with it, so each frame records the frame's rotation as the device's, and the rest of the
+ * phone's turn shows as the tilt of the eyes in the frame (camera/orientation).
+ */
 export function useLiveTracker(
   ctx: LiveContext,
   estimator: PhotorefractionEstimator,
-  deviceRotationDeg: number,
+  screenAngleDeg: number | null,
 ) {
   const cam = useCamera();
+  const frameRotationDeg = frameRotation(screenAngleDeg, cam.facing);
   const overlayRef = useRef<HTMLCanvasElement | null>(null);
   const frameCanvas = useRef<HTMLCanvasElement | null>(null);
   const lmRef = useRef<FaceLandmarker | null>(null);
@@ -83,9 +90,9 @@ export function useLiveTracker(
     obs: null,
     processed: null,
   });
-  const live = useRef({ ctx, estimator, deviceRotationDeg, torchOn: cam.torchOn, showLandmarks });
+  const live = useRef({ ctx, estimator, frameRotationDeg, torchOn: cam.torchOn, showLandmarks });
   useLayoutEffect(() => {
-    live.current = { ctx, estimator, deviceRotationDeg, torchOn: cam.torchOn, showLandmarks };
+    live.current = { ctx, estimator, frameRotationDeg, torchOn: cam.torchOn, showLandmarks };
   });
 
   const nextTs = () => {
@@ -132,7 +139,7 @@ export function useLiveTracker(
         frames = 0;
         fpsT0 = now;
       }
-      const { ctx: lctx, estimator: est, deviceRotationDeg: rot, torchOn } = live.current;
+      const { ctx: lctx, estimator: est, frameRotationDeg: rot, torchOn } = live.current;
       let motion: number | null = null;
       if (obs) {
         const c = {
@@ -237,7 +244,7 @@ export function useLiveTracker(
       const video = cam.videoRef.current;
       const lm = lmRef.current;
       if (!video || !lm) throw new Error("Camera or tracker not ready");
-      const { ctx: lctx, estimator: est, deviceRotationDeg: rot } = live.current;
+      const { ctx: lctx, estimator: est, frameRotationDeg: rot } = live.current;
       busy.current = true;
       const out: LiveProcessed[][] = [];
       let torch = false;
@@ -297,6 +304,8 @@ export function useLiveTracker(
     status: cam.status,
     error: cam.error,
     facing: cam.facing,
+    /** how far the camera's frames are turned, as each frame records it */
+    frameRotationDeg,
     caps: cam.caps,
     torchOn: cam.torchOn,
     startCamera: cam.start,

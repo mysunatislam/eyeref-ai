@@ -4,7 +4,7 @@
  * operator places on the model eye, through the same extractor and with the same light pulse as an
  * assessment's burst.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef } from "react";
 import { useCamera } from "../camera/useCamera";
 import { scaleRgba } from "../cv/draw";
 import { imageDataToRgba } from "../cv/image";
@@ -43,31 +43,6 @@ export function expectedSearchRadiusPx(
 ) {
   const f = focalPxFromHfov(frameWidthPx, hfovDeg ?? device.hfovDeg);
   return Math.max(6, (f * pupilMm) / 1000 / distanceM);
-}
-
-/**
- * How far the screen is turned from the phone's natural orientation (0, 90, 180 or 270, anticlockwise
- * as you look at it). The browser turns the camera's frames with the screen, so this, and not the
- * phone's tilt, is how far the light's direction turns in a frame. Null where the browser does not say.
- */
-export function useScreenAngle(): number | null {
-  const [angle, setAngle] = useState<number | null>(null);
-  useEffect(() => {
-    const read = () => {
-      const a =
-        window.screen?.orientation?.angle ?? (window as unknown as { orientation?: number }).orientation;
-      setAngle(typeof a === "number" ? ((a % 360) + 360) % 360 : null);
-    };
-    read();
-    const so = window.screen?.orientation;
-    so?.addEventListener?.("change", read);
-    window.addEventListener("orientationchange", read);
-    return () => {
-      so?.removeEventListener?.("change", read);
-      window.removeEventListener("orientationchange", read);
-    };
-  }, []);
-  return angle;
 }
 
 export function useBenchCamera() {

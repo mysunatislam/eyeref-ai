@@ -71,7 +71,8 @@ export function useCamera() {
           videoRef.current.srcObject = stream;
           await videoRef.current.play().catch(() => undefined);
         }
-        setFacing(want);
+        // the camera the browser gave, which can differ from the one asked for
+        setFacing(st.facingMode === "user" || st.facingMode === "environment" ? st.facingMode : want);
         setStatus("live");
       } catch (e) {
         const name = (e as DOMException).name;

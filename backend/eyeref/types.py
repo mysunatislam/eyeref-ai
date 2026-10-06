@@ -72,7 +72,10 @@ class CaptureMetadata(BaseModel):
     working_distance_m: float = 1.0
     distance_source: DistanceSource = "manual"
     distance_sd_m: float = 0.08
-    device_rotation_deg: float = 0.0  # CCW roll of the device about the optical axis
+    #: CCW turn of the frame from one taken in the device's reference orientation. A browser turns a
+    #: phone camera's frames with the screen, so this is the screen's turn; the rest of the device's
+    #: roll about the optical axis shows as head roll in the frame.
+    device_rotation_deg: float = 0.0
     head_pose: HeadPose = Field(default_factory=HeadPose)
     illumination: Illumination = "flash"
     source_angle_image_deg: Optional[float] = None  # overrides device-profile geometry
