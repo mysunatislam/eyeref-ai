@@ -1,0 +1,702 @@
+{
+ "simulated": true,
+ "device_id": "simulated-phone",
+ "predicted": {
+  "centre_d": -1,
+  "halfwidth_d": 1.3333333333333333,
+  "dead_zone_d": [
+   -2.333333333333333,
+   0.33333333333333326
+  ]
+ },
+ "steps": [
+  {
+   "step": {
+    "index": 0,
+    "lens_d": -4,
+    "rotation_deg": 0,
+    "refraction_d": 4
+   },
+   "zone": "outside",
+   "expected_side": -1,
+   "frames": 2,
+   "usable": 2,
+   "crescent_share": 1,
+   "side": -1,
+   "width_norm": {
+    "mean": 0.6800431497825907,
+    "sd": 0.002003963683970308,
+    "n": 2
+   },
+   "gradient": {
+    "mean": -0.3478622330187966,
+    "sd": 0.003305404948723245,
+    "n": 2
+   },
+   "inverted": {
+    "mean": 3.1673103263222324,
+    "sd": 0.026100827496300598,
+    "n": 2
+   },
+   "power": {
+    "mean": 3.1673103263222324,
+    "sd": 0.026100827496300598,
+    "n": 2
+   }
+  },
+  {
+   "step": {
+    "index": 1,
+    "lens_d": -3,
+    "rotation_deg": 0,
+    "refraction_d": 3
+   },
+   "zone": "outside",
+   "expected_side": -1,
+   "frames": 2,
+   "usable": 2,
+   "crescent_share": 1,
+   "side": -1,
+   "width_norm": {
+    "mean": 0.6259913950136085,
+    "sd": 0.00008912990194078267,
+    "n": 2
+   },
+   "gradient": {
+    "mean": -0.4267593001139959,
+    "sd": 0.0012222393797231357,
+    "n": 2
+   },
+   "inverted": {
+    "mean": 2.56498046680738,
+    "sd": 0.0008495696494442446,
+    "n": 2
+   },
+   "power": {
+    "mean": 2.56498046680738,
+    "sd": 0.0008495696494442446,
+    "n": 2
+   }
+  },
+  {
+   "step": {
+    "index": 2,
+    "lens_d": -2,
+    "rotation_deg": 0,
+    "refraction_d": 2
+   },
+   "zone": "outside",
+   "expected_side": -1,
+   "frames": 2,
+   "usable": 2,
+   "crescent_share": 1,
+   "side": -1,
+   "width_norm": {
+    "mean": 0.5278435203656429,
+    "sd": 0.0032131968783842817,
+    "n": 2
+   },
+   "gradient": {
+    "mean": -0.5261071151572636,
+    "sd": 0.0011594184544899558,
+    "n": 2
+   },
+   "inverted": {
+    "mean": 1.8239879507818915,
+    "sd": 0.019218266950554827,
+    "n": 2
+   },
+   "power": {
+    "mean": 1.8239879507818915,
+    "sd": 0.019218266950554827,
+    "n": 2
+   }
+  },
+  {
+   "step": {
+    "index": 3,
+    "lens_d": -1,
+    "rotation_deg": 0,
+    "refraction_d": 1
+   },
+   "zone": "outside",
+   "expected_side": -1,
+   "frames": 2,
+   "usable": 2,
+   "crescent_share": 1,
+   "side": -1,
+   "width_norm": {
+    "mean": 0.33323137947952786,
+    "sd": 0.0022477751657861227,
+    "n": 2
+   },
+   "gradient": {
+    "mean": -0.5473344566383918,
+    "sd": 0.0009348571692701094,
+    "n": 2
+   },
+   "inverted": {
+    "mean": 0.9997055481673304,
+    "sd": 0.006741301752543013,
+    "n": 2
+   },
+   "power": {
+    "mean": 0.9997055481673304,
+    "sd": 0.006741301752543013,
+    "n": 2
+   }
+  },
+  {
+   "step": {
+    "index": 4,
+    "lens_d": 0,
+    "rotation_deg": 0,
+    "refraction_d": 0
+   },
+   "zone": "inside",
+   "expected_side": 0,
+   "frames": 2,
+   "usable": 2,
+   "crescent_share": 0,
+   "side": 0,
+   "width_norm": null,
+   "gradient": {
+    "mean": -0.12634346218330494,
+    "sd": 0.0022660578455705386,
+    "n": 2
+   },
+   "inverted": null,
+   "power": {
+    "mean": 0.013704829935261675,
+    "sd": 0.018181500991597023,
+    "n": 2
+   }
+  },
+  {
+   "step": {
+    "index": 5,
+    "lens_d": 1,
+    "rotation_deg": 0,
+    "refraction_d": -1
+   },
+   "zone": "inside",
+   "expected_side": 0,
+   "frames": 2,
+   "usable": 2,
+   "crescent_share": 0,
+   "side": 0,
+   "width_norm": null,
+   "gradient": {
+    "mean": -0.0009508460213850776,
+    "sd": 0.004041907445826547,
+    "n": 2
+   },
+   "inverted": null,
+   "power": {
+    "mean": -0.9923709767981159,
+    "sd": 0.03242986244940089,
+    "n": 2
+   }
+  },
+  {
+   "step": {
+    "index": 6,
+    "lens_d": 2,
+    "rotation_deg": 0,
+    "refraction_d": -2
+   },
+   "zone": "inside",
+   "expected_side": 0,
+   "frames": 2,
+   "usable": 2,
+   "crescent_share": 0,
+   "side": 0,
+   "width_norm": null,
+   "gradient": {
+    "mean": 0.12202094241414954,
+    "sd": 0.0007690324671936263,
+    "n": 2
+   },
+   "inverted": null,
+   "power": {
+    "mean": -1.9790235010262416,
+    "sd": 0.006170259330397194,
+    "n": 2
+   }
+  },
+  {
+   "step": {
+    "index": 7,
+    "lens_d": 3,
+    "rotation_deg": 0,
+    "refraction_d": -3
+   },
+   "zone": "outside",
+   "expected_side": 1,
+   "frames": 2,
+   "usable": 2,
+   "crescent_share": 1,
+   "side": 1,
+   "width_norm": {
+    "mean": 0.33048094547403517,
+    "sd": 0.0014296292939305173,
+    "n": 2
+   },
+   "gradient": {
+    "mean": 0.5482427422277795,
+    "sd": 0.001369726388667747,
+    "n": 2
+   },
+   "inverted": {
+    "mean": -2.9914838330887794,
+    "sd": 0.004252431065145264,
+    "n": 2
+   },
+   "power": {
+    "mean": -2.9914838330887794,
+    "sd": 0.004252431065145264,
+    "n": 2
+   }
+  },
+  {
+   "step": {
+    "index": 8,
+    "lens_d": 4,
+    "rotation_deg": 0,
+    "refraction_d": -4
+   },
+   "zone": "outside",
+   "expected_side": 1,
+   "frames": 2,
+   "usable": 2,
+   "crescent_share": 1,
+   "side": 1,
+   "width_norm": {
+    "mean": 0.5213730019246605,
+    "sd": 0.0036535201574868113,
+    "n": 2
+   },
+   "gradient": {
+    "mean": 0.5250931378713488,
+    "sd": 0.0030713591119729358,
+    "n": 2
+   },
+   "inverted": {
+    "mean": -3.7858273457781255,
+    "sd": 0.021265153039855156,
+    "n": 2
+   },
+   "power": {
+    "mean": -3.7858273457781255,
+    "sd": 0.021265153039855156,
+    "n": 2
+   }
+  },
+  {
+   "step": {
+    "index": 9,
+    "lens_d": -4,
+    "rotation_deg": 90,
+    "refraction_d": 4
+   },
+   "zone": "outside",
+   "expected_side": -1,
+   "frames": 2,
+   "usable": 2,
+   "crescent_share": 1,
+   "side": -1,
+   "width_norm": {
+    "mean": 0.6786602067580341,
+    "sd": 0.0028882506722789606,
+    "n": 2
+   },
+   "gradient": {
+    "mean": -0.3519500241996393,
+    "sd": 0.0031337893057281495,
+    "n": 2
+   },
+   "inverted": {
+    "mean": 3.149461789233776,
+    "sd": 0.03729599027072783,
+    "n": 2
+   },
+   "power": {
+    "mean": 3.149461789233776,
+    "sd": 0.03729599027072783,
+    "n": 2
+   }
+  },
+  {
+   "step": {
+    "index": 10,
+    "lens_d": -3,
+    "rotation_deg": 90,
+    "refraction_d": 3
+   },
+   "zone": "outside",
+   "expected_side": -1,
+   "frames": 2,
+   "usable": 2,
+   "crescent_share": 1,
+   "side": -1,
+   "width_norm": {
+    "mean": 0.6239041614572343,
+    "sd": 0.0014747890765814777,
+    "n": 2
+   },
+   "gradient": {
+    "mean": -0.430785242553208,
+    "sd": 0.0028333502606451774,
+    "n": 2
+   },
+   "inverted": {
+    "mean": 2.5452229136671614,
+    "sd": 0.013901924699249755,
+    "n": 2
+   },
+   "power": {
+    "mean": 2.5452229136671614,
+    "sd": 0.013901924699249755,
+    "n": 2
+   }
+  },
+  {
+   "step": {
+    "index": 11,
+    "lens_d": -2,
+    "rotation_deg": 90,
+    "refraction_d": 2
+   },
+   "zone": "outside",
+   "expected_side": -1,
+   "frames": 2,
+   "usable": 2,
+   "crescent_share": 1,
+   "side": -1,
+   "width_norm": {
+    "mean": 0.5299772426737119,
+    "sd": 0.0009408374002309922,
+    "n": 2
+   },
+   "gradient": {
+    "mean": -0.5258185726088895,
+    "sd": 0.002165215606846876,
+    "n": 2
+   },
+   "inverted": {
+    "mean": 1.8367477610757408,
+    "sd": 0.005678274821891023,
+    "n": 2
+   },
+   "power": {
+    "mean": 1.8367477610757408,
+    "sd": 0.005678274821891023,
+    "n": 2
+   }
+  },
+  {
+   "step": {
+    "index": 12,
+    "lens_d": -1,
+    "rotation_deg": 90,
+    "refraction_d": 1
+   },
+   "zone": "outside",
+   "expected_side": -1,
+   "frames": 2,
+   "usable": 2,
+   "crescent_share": 1,
+   "side": -1,
+   "width_norm": {
+    "mean": 0.33047923402132007,
+    "sd": 0.0019029886520769085,
+    "n": 2
+   },
+   "gradient": {
+    "mean": -0.5458355912514583,
+    "sd": 0.0032006904109121923,
+    "n": 2
+   },
+   "inverted": {
+    "mean": 0.9914822466200047,
+    "sd": 0.005660419076906008,
+    "n": 2
+   },
+   "power": {
+    "mean": 0.9914822466200047,
+    "sd": 0.005660419076906008,
+    "n": 2
+   }
+  },
+  {
+   "step": {
+    "index": 13,
+    "lens_d": 0,
+    "rotation_deg": 90,
+    "refraction_d": 0
+   },
+   "zone": "inside",
+   "expected_side": 0,
+   "frames": 2,
+   "usable": 2,
+   "crescent_share": 0,
+   "side": 0,
+   "width_norm": null,
+   "gradient": {
+    "mean": -0.12511347451630817,
+    "sd": 0.0011679458068371321,
+    "n": 2
+   },
+   "inverted": null,
+   "power": {
+    "mean": 0.0038361401174500376,
+    "sd": 0.009370902815499097,
+    "n": 2
+   }
+  },
+  {
+   "step": {
+    "index": 14,
+    "lens_d": 1,
+    "rotation_deg": 90,
+    "refraction_d": -1
+   },
+   "zone": "inside",
+   "expected_side": 0,
+   "frames": 2,
+   "usable": 2,
+   "crescent_share": 0,
+   "side": 0,
+   "width_norm": null,
+   "gradient": {
+    "mean": -0.00037494328788915867,
+    "sd": 0.0020327311766364753,
+    "n": 2
+   },
+   "inverted": null,
+   "power": {
+    "mean": -0.996991677960086,
+    "sd": 0.016309426511731787,
+    "n": 2
+   }
+  },
+  {
+   "step": {
+    "index": 15,
+    "lens_d": 2,
+    "rotation_deg": 90,
+    "refraction_d": -2
+   },
+   "zone": "inside",
+   "expected_side": 0,
+   "frames": 2,
+   "usable": 2,
+   "crescent_share": 0,
+   "side": 0,
+   "width_norm": null,
+   "gradient": {
+    "mean": 0.12491378560561565,
+    "sd": 0.00013656770195180187,
+    "n": 2
+   },
+   "inverted": null,
+   "power": {
+    "mean": -2.002233955012218,
+    "sd": 0.00109573805157282,
+    "n": 2
+   }
+  },
+  {
+   "step": {
+    "index": 16,
+    "lens_d": 3,
+    "rotation_deg": 90,
+    "refraction_d": -3
+   },
+   "zone": "outside",
+   "expected_side": 1,
+   "frames": 2,
+   "usable": 2,
+   "crescent_share": 1,
+   "side": 1,
+   "width_norm": {
+    "mean": 0.3320424087566347,
+    "sd": 0.00021639645930104877,
+    "n": 2
+   },
+   "gradient": {
+    "mean": 0.5465820393121534,
+    "sd": 0.0029778442655325706,
+    "n": 2
+   },
+   "inverted": {
+    "mean": -2.9961348157168386,
+    "sd": 0.0006466825320518442,
+    "n": 2
+   },
+   "power": {
+    "mean": -2.9961348157168386,
+    "sd": 0.0006466825320518442,
+    "n": 2
+   }
+  },
+  {
+   "step": {
+    "index": 17,
+    "lens_d": 4,
+    "rotation_deg": 90,
+    "refraction_d": -4
+   },
+   "zone": "outside",
+   "expected_side": 1,
+   "frames": 2,
+   "usable": 2,
+   "crescent_share": 1,
+   "side": 1,
+   "width_norm": {
+    "mean": 0.5220290740655638,
+    "sd": 0.001166542843235809,
+    "n": 2
+   },
+   "gradient": {
+    "mean": 0.5271065532625094,
+    "sd": 0.00007781720416038821,
+    "n": 2
+   },
+   "inverted": {
+    "mean": -3.789578261073205,
+    "sd": 0.006808285566196988,
+    "n": 2
+   },
+   "power": {
+    "mean": -3.789578261073205,
+    "sd": 0.006808285566196988,
+    "n": 2
+   }
+  }
+ ],
+ "observed_edges_d": [
+  -2.5,
+  0.5
+ ],
+ "width_fit": {
+  "slope": 0.9010925123594687,
+  "intercept": -0.157556693928187,
+  "steps": 12
+ },
+ "gain": {
+  "gain": 6.017554128352117,
+  "intercept": -0.005893775406409179,
+  "residual_sd": 0.011789751963844694,
+  "n": 12,
+  "r": -0.9998455456064625,
+  "levels": 3,
+  "points": [
+   [
+    -0.12794580705246886,
+    0.75
+   ],
+   [
+    -0.12474111731414105,
+    0.75
+   ],
+   [
+    -0.003808906185257427,
+    0
+   ],
+   [
+    0.0019072141424872717,
+    0
+   ],
+   [
+    0.1214771543416443,
+    -0.75
+   ],
+   [
+    0.12256473048665477,
+    -0.75
+   ],
+   [
+    -0.1259393369163811,
+    0.75
+   ],
+   [
+    -0.12428761211623524,
+    0.75
+   ],
+   [
+    -0.00181230128721812,
+    0
+   ],
+   [
+    0.0010624147114398027,
+    0
+   ],
+   [
+    0.12481721765747447,
+    -0.75
+   ],
+   [
+    0.12501035355375684,
+    -0.75
+   ]
+  ]
+ },
+ "icc": 0.9999513947781636,
+ "criteria": [
+  {
+   "id": "complete",
+   "label": "Every step captured",
+   "pass": true,
+   "detail": "All 18 steps have usable frames."
+  },
+  {
+   "id": "side",
+   "label": "Crescent on the predicted side",
+   "pass": true,
+   "detail": "All 12 steps clear of the dead zone show it on the predicted side."
+  },
+  {
+   "id": "width",
+   "label": "Crescent width matches the model",
+   "pass": true,
+   "detail": "Measured against induced refraction, the slope is 0.90 over 12 steps (0.8 to 1.2 passes). A slope away from 1 means the flash position or the distance is off by that ratio."
+  },
+  {
+   "id": "edges",
+   "label": "Dead zone where predicted",
+   "pass": true,
+   "detail": "Observed −2.50 to +0.50 D, predicted −2.33 to +0.33 D (within 0.25 D passes)."
+  },
+  {
+   "id": "icc",
+   "label": "Repeated frames agree",
+   "pass": true,
+   "detail": "ICC(1,1) of the values from repeated frames is 1.000 (0.9 or more passes)."
+  },
+  {
+   "id": "gain",
+   "label": "Gradient gain fits",
+   "pass": true,
+   "detail": "Gain 6.02, r -1.000, residual SD 0.01 of a half-width, from 12 frames at 3 refractions (needs a positive gain, |r| of 0.9 or more, an SD of 0.35 or less, and 3 refractions)."
+  }
+ ],
+ "go": true,
+ "calibrated": {
+  "id": "simulated-phone",
+  "manufacturer": "simulation",
+  "model": "SIMULATED phone (renderer geometry)",
+  "camera": "rear",
+  "hfov_deg": 68,
+  "flash_offset_mm": [
+   0,
+   -9.4
+  ],
+  "aperture_diameter_mm": 2.8,
+  "gradient_gain": 6.018,
+  "gradient_rel_sd": 0.012,
+  "calibration_version": "bench-2026-01-01",
+  "simulated": true,
+  "notes": "SIMULATED. Gradient gain fitted on simulated bench data only."
+ }
+}

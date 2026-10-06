@@ -10,3 +10,7 @@
   `ml/eyeref_ml/evaluation/study.py` writes it. The web app's study report page is tested against it.
   `ml/tests/test_study.py` fails when the analysis's output drifts from it; rerun that test with
   `EYEREF_UPDATE_FIXTURES=1` to rewrite it.
+- `fixtures/bench_run.sample.json` is a **SIMULATED** bench run in the file format the bench page
+  downloads, and `fixtures/bench_report.sample.json` is the web app's report on it. Both are written by
+  the web test suite. `backend/tests/test_bench_run.py` fails when the Python analysis of the run
+  disagrees with the web app's report.

@@ -35,7 +35,7 @@ first, then astigmatism later.
 | Component | Status | Notes |
 | --- | --- | --- |
 | Power-vector maths, circular axis handling (179° vs 1° = 2°), transposition, mirroring | **WORKING** | Unit-tested in Python and TypeScript |
-| Eccentric photorefraction physics (dead zone, crescent width, inversion with uncertainty) | **WORKING** | Crescent-side sign convention must be verified on the bench (`CRESCENT_SAME_SIDE_FOR_MYOPIC`) |
+| Eccentric photorefraction physics (dead zone, crescent width, inversion with uncertainty) | **WORKING** | Crescent-side sign convention must be verified on the bench (`CRESCENT_SAME_SIDE_FOR_MYOPIC`); the bench run checks it |
 | Face/iris tracking, head pose, gaze, blink, iris-based distance | **WORKING** | MediaPipe in-browser; not yet tested on a diverse population |
 | Pupil / glint / crescent segmentation | **PARTIALLY WORKING** | Robust on rendered eyes; real-camera robustness unmeasured. Browser video gives only about 9–17 px per pupil at 1 m |
 | Frame quality model (Excellent / Acceptable / Poor / Reject) | **WORKING** | Thresholds are engineering choices; need tuning on real captures |
@@ -48,7 +48,8 @@ first, then astigmatism later.
 | Simulation Mode, simulator, synthetic dataset | **SIMULATED** | Always labelled |
 | Model comparison (physics, ridge, poly, RF, GBM, hybrid NN, hybrid CNN), conformal intervals, subject-level and leave-device-out splits | **SIMULATED** | Trained and evaluated on synthetic data only |
 | Learned estimator for real eyes | **REQUIRES TRAINING DATA** | Exported ONNX models are tagged `trained_on_simulated` and **refuse** real frames |
-| Dead-zone gradient gain per device | **REQUIRES TRAINING DATA** | Needs a bench calibration with trial lenses (docs/DEVICE_CALIBRATION.md) |
+| Bench run in the app: stage 0 geometry checks and the dead-zone gradient gain | **PARTIALLY WORKING** | Guides a model eye through trial lenses, checks the stage 0 go/no-go criteria and saves the gain on go; a Python twin gives the same report from the run's file. Verified end to end on the simulator only: the camera path has not yet met a real model eye |
+| Dead-zone gradient gain per device | **REQUIRES TRAINING DATA** | Each real phone needs its own bench run (docs/DEVICE_CALIBRATION.md § 3) |
 | SE accuracy, myopia/hyperopia screening on real people | **REQUIRES CLINICAL VALIDATION** | Protocol in docs/VALIDATION_PROTOCOL.md |
 | CYL / AXIS output | **REQUIRES CLINICAL VALIDATION** | Gated off; research flag only |
 | Research API, encrypted image storage, dataset export, consent enforcement | **WORKING** | Bearer-token access control (required when `EYEREF_ENV=production`), with roles so a capture phone's token can upload but not read data back. Fernet at rest, with key rotation and a command that encrypts older images and checks the image store against the database. SQLite or PostgreSQL, both tested in CI. Versioned migrations upgrade the database on start and keep its data. An audit log records who changed, read or exported research data. A participant's data can be copied out in full, their image consent withdrawn, and server-side eye images expired after a set time |
