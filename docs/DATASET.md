@@ -7,9 +7,11 @@
   EyeRef.
 - **Consent first.**
   - The API returns 403 for any subject without `consent_research`.
-  - Images need a separate `consent_image_storage`.
+  - Images need a separate `consent_image_storage`, which the participant can withdraw at any time
+    while staying in the study.
   - Deleting a subject cascades to its sessions, captures, predictions and ground truth, and deletes
     the encrypted image objects.
+  - Eye images can expire after a set number of days. See [Consent and retention](#consent-and-retention).
 - **Audited.** Every change to research data, and every read or export of it, is recorded with the
   token that made it. The record holds ids and counts only, so it is kept after a subject is deleted
   (see [API](API.md#audit-log)).
@@ -18,23 +20,50 @@
 - **Simulated data is flagged** at the session level, and exports exclude it unless
   `include_simulated=true` is passed.
 
+## Consent and retention
+
+What a participant can ask of the study, and what the research server does. Each is done by the
+study's administrator through the API ([Participants' data](API.md#participants-data)), and each is
+recorded in the audit log.
+
+| The participant asks | The server |
+| --- | --- |
+| For a copy of their data | Returns everything stored about them: each visit with its reference refractions, captures and results, and on request their eye images, decrypted |
+| To stop storing eye images of them | Deletes every eye image stored for them and keeps the rest, which their research consent still covers. No image from a visit before then is stored again, even from a phone that uploads an older record later |
+| To leave the study | Deletes the subject and everything about them, images included. It keeps only a hash of their study code and the date, so a record of an earlier visit still waiting on a phone cannot bring them back |
+
+- **Consent again.** A participant who withdrew image consent can give it again at a later visit. It
+  covers that visit and the ones after it, never an earlier one.
+- **Retention.** Set `EYEREF_IMAGE_RETENTION_DAYS` to the number of days the study's protocol allows
+  eye images to be kept. The server deletes each image that long after it stored it, when it starts
+  and every hour, and keeps the rest of the record. Unset, images are kept until the participant
+  withdraws or is deleted.
+- **Nothing left behind.** The image files are deleted before the database forgets them. If deleting
+  fails, the images stay recorded and the next attempt deletes them, so no image stays on disk without
+  a record of it. An upload that stores images at the same moment as a withdrawal or deletion either
+  finishes first, and loses its images with the rest, or waits and is refused.
+- **On the phone.** The web app keeps its own copy only on the device, with its own limit of 7, 30 or
+  90 days, chosen in History.
+
 ## Schema (backend/eyeref/db/models.py)
 
 | Table | Key fields |
 | --- | --- |
-| `subjects` | `code` (unique, pseudonymous), `age_group`, `consent_research`, `consent_image_storage`, `consent_version`, `wears_correction`, `iris_color`, `site` |
+| `subjects` | `code` (unique, pseudonymous), `age_group`, `consent_research`, `consent_image_storage`, `consent_version`, `images_withdrawn_at`, `wears_correction`, `iris_color`, `site` |
 | `devices` | `id`, manufacturer, model, camera, full `DeviceProfile` JSON, `calibration_version` |
 | `capture_sessions` | subject, device, `protocol_version`, operator, `ambient_lux`, room condition, **`cycloplegia`**, `condition_label`, `simulated` |
-| `captures` | session, eye, frame index, timestamp, `working_distance_m`, illumination, **`meridian_deg`**, metadata JSON, features JSON, quality JSON / score / grade, `pupil_diameter_mm`, encrypted `image_key` |
+| `captures` | session, eye, frame index, timestamp, `working_distance_m`, illumination, **`meridian_deg`**, metadata JSON, features JSON, quality JSON / score / grade, `pupil_diameter_mm`, encrypted `image_key`, `image_stored_at` (when the server stored the image) |
 | `ground_truth` | subject, **visit** (the session it was measured at), eye, **method** (autorefractor, subjective, cycloplegic, retinoscopy, trial_lens, lensmeter), sphere / cylinder / axis (**stored as minus cylinder**), SE, vertex distance, instrument, examiner, raw printout JSON |
 | `predictions` | session, eye, output level, SE + CI, sphere, cylinder, axis, M/J0/J45, confidence, class, **model name and version, calibration version, device profile, extractor version**, full report JSON |
 | `audit_events` | time, actor (token fingerprint), action, subject id, details (ids, counts and flags only). No foreign keys, so events outlive what they describe |
+| `deleted_subjects` | SHA-256 of a deleted subject's code (never the code) and when they were deleted |
 
 JSON Schemas of the exchange models live in `shared/schemas` and are regenerated with `make schemas`.
 
-`GET /api/dataset/export?fmt=csv` produces one row per capture. Each row holds the flattened `f_*`
-features, `session_started_at`, and the `gt_<method>_{sph,cyl,axis,se,vertex_mm}` columns for that eye.
-For training it also has the light source's distance from the lens edge (`eccentricity_mm`: the
+`GET /api/dataset/export?fmt=csv` produces one row per capture, ordered by visit, eye and frame, so the
+same data always exports to the same file. Each row holds the flattened `f_*` features,
+`session_started_at`, and the `gt_<method>_{sph,cyl,axis,se,vertex_mm}` columns for that eye. For
+training it also has the light source's distance from the lens edge (`eccentricity_mm`: the
 capture's own value if it recorded one, otherwise the phone's profile), the pupil diameter, the frame's
 hard failures (`hard_failures`, separated by `|`) and the feature extractor version. `make dataset`
 turns it into the training table that `ml/` reads ([Model training](MODEL_TRAINING.md#training-on-real-data)).

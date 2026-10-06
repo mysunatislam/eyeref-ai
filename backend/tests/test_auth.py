@@ -133,8 +133,9 @@ def test_a_collection_token_adds_data_but_cannot_read_change_or_delete_it(tmp_pa
                   headers=collect).status_code == 200
     assert c.post(f"/api/subjects/{sid}/ground-truth", json={"eye": "OD", "method": "autorefractor", "sphere": -1.0, "cylinder": 0},
                   headers=collect).status_code == 200
-    for method, path in (("GET", "/api/subjects"), ("GET", "/api/dataset/export"), ("GET", "/api/audit"),
-                         ("DELETE", f"/api/subjects/{sid}"), ("POST", "/api/devices")):
+    for method, path in (("GET", "/api/subjects"), ("GET", f"/api/subjects/{sid}"), ("GET", "/api/dataset/export"),
+                         ("GET", "/api/audit"), ("DELETE", f"/api/subjects/{sid}"),
+                         ("DELETE", f"/api/subjects/{sid}/images"), ("POST", "/api/devices")):
         r = c.request(method, path, headers={**collect, "Origin": "http://localhost:3000"})
         assert r.status_code == 403, (method, path)
         assert r.json()["role"] == "collect" and "for adding research data" in r.json()["detail"]
@@ -168,6 +169,7 @@ def test_an_analysis_token_reads_and_exports_but_cannot_add_change_or_delete(tmp
     assert c.get("/api/dataset/export", params={"level": "eye"}, headers=analyse).status_code == 200
     for method, path in (("POST", "/api/subjects"), ("POST", "/api/assessments"), ("POST", "/api/sessions"),
                          ("POST", f"/api/subjects/{sid}/ground-truth"), ("DELETE", f"/api/subjects/{sid}"),
+                         ("DELETE", f"/api/subjects/{sid}/images"), ("GET", f"/api/subjects/{sid}"),
                          ("GET", "/api/audit"), ("POST", "/api/devices")):
         r = c.request(method, path, headers=analyse, json=_subject("S-2") if path == "/api/subjects" else None)
         assert r.status_code == 403 and "reading and exporting research data" in r.json()["detail"], (method, path)

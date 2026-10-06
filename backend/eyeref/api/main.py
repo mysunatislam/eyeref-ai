@@ -6,18 +6,24 @@ Docs: http://localhost:8000/docs   (see docs/API.md)
 The web app works without this server (on-device processing).  The API adds:
 persistent research datasets, server-side reference re-analysis of stored
 crops, simulation/bench endpoints and dataset export for training.  Every change
-to research data, and every read of it, is recorded in an audit log.
+to research data, and every read of it, is recorded in an audit log.  A subject
+can withdraw consent to store eye images, and images can expire after a set time.
 """
 
 from __future__ import annotations
 
+import asyncio
+import base64
 import csv
+import hashlib
 import io
 import json
+import logging
 import os
 import re
 import statistics
-from collections.abc import Iterable, Sequence
+from collections.abc import AsyncIterator, Iterable, Sequence
+from contextlib import asynccontextmanager, suppress
 from datetime import UTC, datetime
 from typing import Any, Literal, Optional, TypeVar
 
@@ -46,7 +52,7 @@ from ..optics.power_vector import SphCylAxis
 from ..pipeline import process_frame
 from ..simulation.bench import run_simulated_bench
 from ..simulation.cohort import SessionConfig, make_subject, run_simulated_assessment
-from ..storage import LocalStorage
+from ..storage import LocalStorage, StorageKeyError
 from ..types import (
     CaptureMetadata,
     Circle,
@@ -56,7 +62,19 @@ from ..types import (
     QualityAssessment,
 )
 from .auth import AuthConfig, TokenAuthMiddleware, UnsafeConfigError
+from .images import (
+    EXPIRY_INTERVAL_S,
+    RETENTION_ACTOR,
+    RetentionConfigError,
+    delete_images,
+    expired_images,
+    hold_subject,
+    retention_days_from_env,
+    subjects_with_expired_images,
+)
 from .uploads import BodySizeLimitMiddleware, read_image
+
+log = logging.getLogger(__name__)
 
 
 class FrameInput(BaseModel):
@@ -186,6 +204,39 @@ def visit_references(ses: m.CaptureSession) -> dict[tuple[str, str], m.GroundTru
     return picked
 
 
+def withdrawn_since(subj: m.Subject, visit_at: datetime) -> Optional[datetime]:
+    """When the subject withdrew consent to store eye images, if that came after this visit began. The consent
+    given at such a visit no longer stands: its images are never stored, and it does not restore the consent."""
+    withdrawn = subj.images_withdrawn_at
+    return utc(withdrawn) if withdrawn is not None and utc(visit_at) <= utc(withdrawn) else None
+
+
+def code_digest(code: str) -> str:
+    """How a deleted subject is remembered: a hash of their code, never the code."""
+    return hashlib.sha256(f"eyeref-subject-code:{code}".encode()).hexdigest()
+
+
+def left_study_since(s: Session, code: str, visit_at: datetime) -> Optional[datetime]:
+    """When the subject with this code was deleted, if that came after this visit began: a record of that visit,
+    sent late, must not bring them back. A visit after it is a new enrolment."""
+    gone = s.get(m.DeletedSubject, code_digest(code))
+    return utc(gone.deleted_at) if gone is not None and utc(visit_at) <= utc(gone.deleted_at) else None
+
+
+def withdrawn_message(withdrawn: datetime) -> str:
+    return (f"this participant withdrew consent to store eye images on {withdrawn:%Y-%m-%d}, after this visit, so "
+            "its images cannot be stored; send it without them")
+
+
+def image_refused(subj: m.Subject, visit_at: datetime) -> Optional[str]:
+    """Why an eye image from this visit of the subject cannot be stored, if it cannot."""
+    if withdrawn := withdrawn_since(subj, visit_at):
+        return withdrawn_message(withdrawn)
+    if not subj.consent_image_storage:
+        return "subject has not consented to image storage"
+    return None
+
+
 def median_of(values: Iterable[Optional[float]]) -> Optional[float]:
     known = [v for v in values if v is not None]
     return statistics.median(known) if known else None
@@ -257,10 +308,29 @@ def parse_form(model: type[T], raw: str, field: str) -> T:
 
 def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
                assistant_client_factory=make_client, auth: Optional[AuthConfig] = None,
-               max_body_bytes: Optional[int] = None) -> FastAPI:
+               max_body_bytes: Optional[int] = None, image_retention_days: Optional[int] = None) -> FastAPI:
     auth = auth if auth is not None else AuthConfig.from_env()
     auth.validate()
     hide_docs = auth.production
+    retention_days = image_retention_days if image_retention_days is not None else retention_days_from_env()
+    if retention_days is not None and retention_days < 1:
+        raise RetentionConfigError(f"the image retention limit must be 1 day or more, not {retention_days}")
+
+    @asynccontextmanager
+    async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+        """With a retention limit, deletes the images past it before serving, then every hour while running."""
+        task = None
+        if retention_days:
+            await asyncio.to_thread(expire_images_now)
+            task = asyncio.create_task(expire_images_hourly())
+        try:
+            yield
+        finally:
+            if task:
+                task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await task
+
     app = FastAPI(
         title="EyeRef AI research API",
         version=__version__,
@@ -268,6 +338,7 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
         docs_url=None if hide_docs else "/docs",
         redoc_url=None if hide_docs else "/redoc",
         openapi_url=None if hide_docs else "/openapi.json",
+        lifespan=lifespan,
     )
     origins = [o.strip() for o in os.environ.get("EYEREF_CORS_ORIGINS", "http://localhost:3000").split(",") if o.strip()]
     # added before CORS so they sit inside it: 401 and 413 responses still carry CORS headers
@@ -286,6 +357,32 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
 
     def get_db():
         yield from db.session()
+
+    def expire_images(now: datetime) -> int:
+        """Deletes every eye image the server stored more than retention_days before `now`, keeping the rest of
+        each record, and records it for each subject. Returns how many images went."""
+        assert retention_days
+        expired = 0
+        with db.SessionLocal() as s:
+            for subject_id in subjects_with_expired_images(s, retention_days, now):
+                if n := delete_images(storage, expired_images(s, subject_id, retention_days, now)):
+                    audit(s, RETENTION_ACTOR, "subject.images_expire", subject_id, images_deleted=n,
+                          retention_days=retention_days)
+                s.commit()  # subject by subject, so a failure later keeps what was done before it
+                expired += n
+        return expired
+
+    def expire_images_now() -> None:
+        try:
+            if n := expire_images(datetime.now(UTC)):
+                log.info("deleted %d eye images past the %d-day retention limit", n, retention_days)
+        except Exception:  # the next pass tries again; nothing was forgotten that is not deleted
+            log.exception("could not delete the eye images past the retention limit")
+
+    async def expire_images_hourly() -> None:
+        while True:
+            await asyncio.sleep(EXPIRY_INTERVAL_S)
+            await asyncio.to_thread(expire_images_now)
 
     def device_or_404(device_id: str) -> DeviceProfile:
         if device_id not in profiles:
@@ -449,8 +546,13 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
 
     # -------------------------------------------------------------- dataset
 
+    def columns(x: m.Base, *leave_out: str) -> dict[str, Any]:
+        """A row's columns, with every time in UTC, whichever database stored it."""
+        values = {c.name: getattr(x, c.name) for c in x.__table__.columns if c.name not in leave_out}
+        return {k: utc(v) if isinstance(v, datetime) else v for k, v in values.items()}
+
     def subj_dict(x: m.Subject) -> dict[str, Any]:
-        return {c.name: getattr(x, c.name) for c in m.Subject.__table__.columns}
+        return columns(x)
 
     @app.post("/api/subjects")
     def create_subject(body: SubjectIn, s: Session = Depends(get_db), who: str = Depends(caller)) -> dict[str, Any]:
@@ -473,18 +575,73 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
         s.commit()
         return rows
 
-    @app.delete("/api/subjects/{subject_id}")
-    def delete_subject(subject_id: str, s: Session = Depends(get_db), who: str = Depends(caller)) -> dict[str, Any]:
+    @app.get("/api/subjects/{subject_id}")
+    def subject_record(subject_id: str, include_images: bool = False, s: Session = Depends(get_db),
+                       who: str = Depends(caller)) -> dict[str, Any]:
+        """Everything stored about one subject, for a participant's request for their data: the subject, each
+        visit with its references, captures and results, and the references recorded without a visit. Eye images
+        are included, decrypted, only when asked for."""
         row = s.get(m.Subject, subject_id)
         if not row:
             raise HTTPException(404)
-        keys = [c.image_key for ses in row.sessions for c in ses.captures if c.image_key]
-        s.delete(row)
-        audit(s, who, "subject.delete", subject_id, images_deleted=len(keys))
+        images = 0
+
+        def capture(c: m.Capture) -> dict[str, Any]:
+            nonlocal images
+            out = {**columns(c, "image_key"), "image_stored": c.image_key is not None}
+            if include_images and c.image_key:
+                try:
+                    png = storage.get(c.image_key, c.image_encrypted)
+                    out["image"] = "data:image/png;base64," + base64.b64encode(png).decode()
+                    images += 1
+                except FileNotFoundError:  # deleted, and the database not yet told: the next attempt finishes it
+                    out["image"], out["image_unreadable"] = None, "its file is gone: it is being deleted"
+                except StorageKeyError as e:
+                    out["image"], out["image_unreadable"] = None, str(e)
+            return out
+
+        visits = sorted(row.sessions, key=lambda v: (utc(v.started_at), v.id))
+        record = {
+            "subject": subj_dict(row),
+            "visits": [{**columns(v, "subject_id"),
+                        "references": [columns(g) for g in row.ground_truths if g.session_id == v.id],
+                        "captures": [capture(c) for c in sorted(v.captures, key=lambda c: (c.eye, c.frame_index, c.id))],
+                        "results": [columns(p) for p in sorted(v.predictions, key=lambda p: (p.eye, p.id))]}
+                       for v in visits],
+            "references_without_visit": [columns(g) for g in row.ground_truths if g.session_id is None],
+        }
+        audit(s, who, "subject.read", subject_id, visits=len(visits), images=images)
+        s.commit()  # before anything is sent, as for an export
+        return record
+
+    @app.delete("/api/subjects/{subject_id}/images")
+    def withdraw_image_consent(subject_id: str, s: Session = Depends(get_db),
+                               who: str = Depends(caller)) -> dict[str, Any]:
+        """The subject withdraws consent to store eye images. Every image stored for them is deleted, and none from
+        a visit before now is stored again. Everything else about them is kept."""
+        hold_subject(s, subject_id)  # an upload storing their images finishes first, and its images go too
+        row = s.get(m.Subject, subject_id)
+        if not row:
+            raise HTTPException(404)
+        n = delete_images(storage, [c for v in row.sessions for c in v.captures])
+        row.consent_image_storage, row.images_withdrawn_at = False, datetime.now(UTC)
+        audit(s, who, "subject.images_withdraw", subject_id, images_deleted=n)
         s.commit()
-        for k in keys:
-            storage.delete(k)
-        return {"deleted": subject_id, "images_deleted": len(keys)}
+        return {"subject_id": subject_id, "images_deleted": n, "images_withdrawn_at": utc(row.images_withdrawn_at)}
+
+    @app.delete("/api/subjects/{subject_id}")
+    def delete_subject(subject_id: str, s: Session = Depends(get_db), who: str = Depends(caller)) -> dict[str, Any]:
+        hold_subject(s, subject_id)  # an upload storing their images finishes first, and its images go too
+        row = s.get(m.Subject, subject_id)
+        if not row:
+            raise HTTPException(404)
+        # the images first: if deleting one fails, the subject is still there to delete again
+        n = delete_images(storage, [c for v in row.sessions for c in v.captures])
+        s.delete(row)
+        s.merge(m.DeletedSubject(code_sha256=code_digest(row.code), deleted_at=datetime.now(UTC)))
+        audit(s, who, "subject.delete", subject_id, images_deleted=n)
+        s.commit()
+        return {"deleted": subject_id, "images_deleted": n}
 
 
     @app.post("/api/subjects/{subject_id}/ground-truth")
@@ -533,20 +690,28 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
         ses = s.get(m.CaptureSession, session_id)
         if not ses:
             raise HTTPException(404)
-        row = new_capture(session_id, parse_form(CaptureMetadata, metadata, "metadata"),
-                          parse_form(PhotorefractionFeatures, features, "features") if features else None,
-                          parse_form(QualityAssessment, quality, "quality") if quality else None,
-                          profiles.get(ses.device_id))
+        meta = parse_form(CaptureMetadata, metadata, "metadata")
+        feats = parse_form(PhotorefractionFeatures, features, "features") if features else None
+        qual = parse_form(QualityAssessment, quality, "quality") if quality else None
+        if image is not None and (why := image_refused(ses.subject, ses.started_at)):
+            raise HTTPException(403, why)  # before the image is even read
+        # read before the subject is held: awaiting while holding it would stall any request waiting for it
+        data = await read_image(image, formats=("png",)) if image is not None else None
+        if data is not None:
+            hold_subject(s, ses.subject_id)  # a withdrawal or deletion under way finishes first, and is seen
+            if not s.get(m.CaptureSession, session_id, populate_existing=True):
+                raise HTTPException(404)
+            s.refresh(ses.subject)
+            if why := image_refused(ses.subject, ses.started_at):  # again, now that nothing can change it
+                raise HTTPException(403, why)
+        row = new_capture(session_id, meta, feats, qual, profiles.get(ses.device_id))
         s.add(row)
         key = None
-        if image is not None:
-            if not ses.subject.consent_image_storage:
-                raise HTTPException(403, "subject has not consented to image storage")
-            data = await read_image(image, formats=("png",))
+        if data is not None:
             s.flush()  # assigns row.id, which names the stored object: one object per capture
             key = f"{ses.subject_id}/{session_id}/{row.id}.png"
             storage.put(key, data)
-            row.image_key, row.image_encrypted = key, storage.encrypted
+            row.image_key, row.image_encrypted, row.image_stored_at = key, storage.encrypted, datetime.now(UTC)
         try:
             s.flush()  # assigns row.id when there was no image to name
             audit(s, who, "capture.add", ses.subject_id, session_id=session_id, capture_id=row.id, eye=row.eye,
@@ -618,26 +783,35 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
             dev = body.device
         data = [await read_image(f, formats=("png",)) for f in files]  # every image is checked before any is stored
 
+        # the visit is when its eyes were photographed, however much later the record is uploaded
+        visit_at = min(utc(c.metadata.timestamp) for c in body.captures)
         keys: list[str] = []
         try:
             subj = s.scalar(select(m.Subject).where(m.Subject.code == body.subject.code))
+            if subj is not None:
+                hold_subject(s, subj.id)  # a withdrawal or deletion under way finishes first, and is seen
+                subj = s.get(m.Subject, subj.id, populate_existing=True)
+            if subj is None and (left := left_study_since(s, body.subject.code, visit_at)):
+                raise HTTPException(403, f"this participant left the study on {left:%Y-%m-%d}, after this visit, "
+                                         "so its record cannot be stored")
             created = subj is None
+            withdrawn = None if created else withdrawn_since(subj, visit_at)
+            if withdrawn and files:
+                raise HTTPException(403, withdrawn_message(withdrawn))
             if subj is None:
                 subj = m.Subject(**body.subject.model_dump())
                 s.add(subj)
                 s.flush()  # assigns subj.id
                 audit(s, who, "subject.create", subj.id, consent_research=subj.consent_research,
                       consent_image_storage=subj.consent_image_storage, consent_version=subj.consent_version)
-            elif body.subject.consent_image_storage and not subj.consent_image_storage:
+            elif body.subject.consent_image_storage and not subj.consent_image_storage and not withdrawn:
                 subj.consent_image_storage, subj.consent_version = True, body.subject.consent_version
                 audit(s, who, "subject.consent", subj.id, consent_image_storage=True,
                       consent_version=subj.consent_version)
             ensure_device_row(s, dev)
             if new_device:
                 audit(s, who, "device.save", device_id=dev.id, calibration_version=dev.calibration_version)
-            # the visit is when its eyes were photographed, however much later the record is uploaded
-            ses = m.CaptureSession(subject_id=subj.id, client_ref=body.client_ref,
-                                   started_at=min(utc(c.metadata.timestamp) for c in body.captures),
+            ses = m.CaptureSession(subject_id=subj.id, client_ref=body.client_ref, started_at=visit_at,
                                    **body.session.model_dump())
             s.add(ses)
             s.flush()  # assigns ses.id
@@ -650,7 +824,7 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
                     key = f"{subj.id}/{ses.id}/{row.id}.png"
                     storage.put(key, data[c.image])
                     keys.append(key)
-                    row.image_key, row.image_encrypted = key, storage.encrypted
+                    row.image_key, row.image_encrypted, row.image_stored_at = key, storage.encrypted, datetime.now(UTC)
             ids = add_predictions(s, ses.id, body.report)
             audit(s, who, "assessment.upload", subj.id, session_id=ses.id, ground_truths=len(body.ground_truth),
                   captures=len(rows), images_stored=len(keys), prediction_ids=ids)
@@ -677,7 +851,10 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
     def capture_rows(s: Session, include_simulated: bool) -> list[dict[str, Any]]:
         rows: list[dict[str, Any]] = []
         refs: dict[str, dict[tuple[str, str], m.GroundTruth]] = {}
-        for c in s.scalars(select(m.Capture)):
+        # in a fixed order, so the same data always exports to the same file (training records its checksum)
+        for c in s.scalars(select(m.Capture).join(m.CaptureSession).order_by(
+                m.CaptureSession.started_at, m.CaptureSession.id, m.Capture.eye, m.Capture.frame_index,
+                m.Capture.timestamp, m.Capture.id)):
             ses = c.session
             if ses.simulated and not include_simulated:
                 continue
