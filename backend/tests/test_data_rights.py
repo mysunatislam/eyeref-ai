@@ -292,6 +292,33 @@ def test_a_participants_record_holds_everything_stored_about_them(url, tmp_path,
     assert client.get("/api/subjects/nobody").status_code == 404
 
 
+def test_images_stay_readable_when_encryption_is_switched_on_or_its_key_changes(url, tmp_path, simulated,
+                                                                                monkeypatch):
+    plain, old, new = _png(1), _png(2), _png(3)
+    old_key, new_key = Fernet.generate_key().decode(), Fernet.generate_key().decode()
+
+    def server(keys):
+        monkeypatch.setenv("EYEREF_STORAGE_KEY", keys)
+        return TestClient(create_app(url, data_dir=str(tmp_path)))
+
+    sid = _send(server(""), _record(simulated, ref="plain", images=1), [plain]).json()["subject_id"]
+    _send(server(old_key), _record(simulated, ref="old", images=1), [old])  # encryption switched on
+    _send(server(f"{new_key}, {old_key}"), _record(simulated, ref="new", images=1), [new])  # its key rotated
+
+    def shown(keys):
+        record = server(keys).get(f"/api/subjects/{sid}", params={"include_images": True}).json()
+        return sorted(((c["image"] and base64.b64decode(c["image"].split(",", 1)[1]), c.get("image_unreadable"))
+                       for c in _captures(record) if c["image_stored"]), key=repr)
+
+    other_key = "it was encrypted with a key that EYEREF_STORAGE_KEY does not list"
+    no_key = "it was stored encrypted, and EYEREF_STORAGE_KEY is not set"
+    assert shown(f"{new_key},{old_key}") == sorted([(plain, None), (old, None), (new, None)], key=repr)
+    assert shown(new_key) == sorted([(plain, None), (new, None), (None, other_key)], key=repr)
+    assert shown("") == sorted([(plain, None), (None, no_key), (None, no_key)], key=repr)  # never ciphertext
+    reads = [d["images"] for a, d in _trail(server("")) if a == "subject.read"]
+    assert reads == [3, 2, 1]  # the images each read could include
+
+
 def test_images_are_deleted_once_they_are_older_than_the_retention_limit(url, tmp_path, simulated, monkeypatch):
     app = create_app(url, data_dir=str(tmp_path), image_retention_days=30)
     client = TestClient(app)  # not started yet, so no pass has run
@@ -406,8 +433,8 @@ def test_an_image_that_could_not_be_deleted_stays_recorded_until_it_is(url, tmp_
     assert len(calls) == 2 and len(_stored_images(tmp_path)) == 1  # one went before the failure
     record = client.get(f"/api/subjects/{sid}", params={"include_images": True}).json()
     assert record["subject"]["consent_image_storage"] is True and record["subject"]["images_withdrawn_at"] is None
-    shown = [c["image"] for c in _captures(record) if c["image_stored"]]
-    assert len(shown) == 2 and shown.count(None) == 1  # both still recorded; the one deleted cannot be shown
+    shown = [(c["image"] is not None, c.get("image_unreadable")) for c in _captures(record) if c["image_stored"]]
+    assert sorted(shown, key=repr) == [(False, "its file is gone: it is being deleted"), (True, None)]  # both recorded
     actions = {"subject.images_withdraw", "subject.delete", "subject.images_expire"}
     assert not [a for a, _ in _trail(client) if a in actions]
 

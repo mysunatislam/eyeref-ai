@@ -153,8 +153,9 @@ each is [audited](#audit-log). See also [Consent and retention](DATASET.md#conse
 
 - Each capture has its metadata, features and quality, and `image_stored`. The storage key is left out.
 - With `include_images=true`, each capture whose image is stored also has `image`, the eye crop as a
-  PNG data URL, decrypted. An image whose file is already gone, because it is being deleted or deleting
-  it failed part way, has `image: null`.
+  PNG data URL, decrypted. An image that cannot be read has `image: null`, and `image_unreadable` says
+  why: its file is gone because it is being deleted, or it was encrypted with a key the server is not
+  given (see [Environment](#environment)).
 - Times are in UTC. Visits are oldest first. 404 for an unknown subject.
 
 **Withdrawing image consent.** `DELETE /api/subjects/{id}/images` deletes every eye image stored for
@@ -290,7 +291,9 @@ See `.env.example`. The variables are:
 
 - `EYEREF_DATA_DIR`
 - `EYEREF_DATABASE_URL`
-- `EYEREF_STORAGE_KEY` (a Fernet key)
+- `EYEREF_STORAGE_KEY` (a Fernet key). To rotate it, list the new key first and the old one after it,
+  comma-separated: new images are encrypted with the first, and images stored under any listed key stay
+  readable. So do images stored before a key was set, which stay unencrypted.
 - `EYEREF_MODEL_PATH`
 - `EYEREF_CORS_ORIGINS`
 - `EYEREF_ENV` (`development` or `production`)

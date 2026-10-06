@@ -52,7 +52,7 @@ from ..optics.power_vector import SphCylAxis
 from ..pipeline import process_frame
 from ..simulation.bench import run_simulated_bench
 from ..simulation.cohort import SessionConfig, make_subject, run_simulated_assessment
-from ..storage import LocalStorage
+from ..storage import LocalStorage, StorageKeyError
 from ..types import (
     CaptureMetadata,
     Circle,
@@ -591,10 +591,13 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
             out = {**columns(c, "image_key"), "image_stored": c.image_key is not None}
             if include_images and c.image_key:
                 try:
-                    out["image"] = "data:image/png;base64," + base64.b64encode(storage.get(c.image_key)).decode()
+                    png = storage.get(c.image_key, c.image_encrypted)
+                    out["image"] = "data:image/png;base64," + base64.b64encode(png).decode()
                     images += 1
                 except FileNotFoundError:  # deleted, and the database not yet told: the next attempt finishes it
-                    out["image"] = None
+                    out["image"], out["image_unreadable"] = None, "its file is gone: it is being deleted"
+                except StorageKeyError as e:
+                    out["image"], out["image_unreadable"] = None, str(e)
             return out
 
         visits = sorted(row.sessions, key=lambda v: (utc(v.started_at), v.id))
