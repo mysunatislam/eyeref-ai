@@ -40,15 +40,17 @@ that releases 90%.
 | Axis | **Circular** error (179° vs 1° = 2°), only for eyes with reference \|CYL\| ≥ 0.75 D: mean, median, % within 5°/10°/20° |
 | Screening | Sensitivity, specificity, PPV, NPV, ROC AUC (with ROC curve) for myopia (SE ≤ −0.5 D adults), hyperopia (SE ≥ +0.5 D adults; age-specific thresholds for children), astigmatism (\|CYL\| ≥ 0.75/1.0/1.5 D), **anisometropia** (\|ΔSE\| ≥ 1.0 D) |
 | Uncertainty | Empirical coverage of the 95% intervals, interval width, calibration plot |
-| Quality / gating | Rejection rate by grade, MAE if rejected frames had been used (justifies the gate), selective-prediction curve |
+| Quality / gating | Frames at each quality grade, and why those not used failed; the MAE the eyes the gate held back would have had (justifies the gate); selective-prediction curve; whether the uncertainty ranks the error |
 | Repeatability | ICC(1,1), within-subject SD, coefficient of repeatability (2.77 × Sw) from repeated captures |
 | Subgroups | Device, age band, refractive range, pupil size, distance, iris colour / skin tone, sex if collected |
 
 Report 95% confidence intervals for every metric. Use bootstrap resampling over **subjects**, not over
 eyes or frames.
 
-Not yet computed from real data: the quality and gating analysis. It needs every frame, and a rerun
-of the estimator without the gate, which the simulated benchmark does.
+One part of the quality analysis comes only from the simulated benchmark: the error of single frames
+that failed the quality check. The app does not estimate a frame that fails, so a study has no such
+estimate to compare. The study analysis judges the gate where it decides, at the eye: the number the
+app had for each eye it held back is compared with the reference.
 
 ## Analysing a study
 
@@ -65,7 +67,8 @@ of the estimator without the gate, which the simulated benchmark does.
    both eyes. The script prints a summary and writes every metric, with its interval, to the JSON file.
 3. Open the JSON file in the web app: Validation, then "Open a study report". It shows the tables and
    figures a paper needs: outcomes, the Bland–Altman plot, screening accuracy with each condition's
-   2x2 table and ROC curve, the reliability diagrams, repeatability and the subgroups. The file is read
+   2x2 table and ROC curve, the reliability diagrams, repeatability, the gate analysis, frame quality
+   and the subgroups. The file is read
    in the browser and is not uploaded. A report computed from simulated data is marked as such.
 
 How the script applies this protocol:
@@ -94,8 +97,21 @@ How the script applies this protocol:
   reference found, over the screened eyes, at the product's age thresholds. The JSON report has the
   reliability table, by tenth of probability. The summary gives the expected calibration error: the
   mean gap between predicted and observed frequency, weighted by the eyes in each tenth.
+- **Gate.** Over the eyes with a reference, three groups: the eyes given a number, the eyes the gate
+  held back although the app had a number for them (its M, compared as a released SE would be,
+  at the cornea beyond ±4 D), and the two together, which is what the app would show with no gate.
+  Each has its share of the eyes, its MAE and its share within 0.50 D. If the gate works, the held-back
+  eyes are further off. The selective-prediction curve releases eyes from the one the app was most sure
+  about (the smallest SD of M) to the least, with the MAE of those released so far at each share; eyes
+  of equal SD are released together. The app's own gate is a point on that plot. The Spearman
+  correlation of the SD with the absolute error says whether the app was less sure about the eyes it
+  got wrong.
+- **Frames.** The share of all graded frames at each quality grade, the share used (excellent or
+  acceptable), and for the frames not used, the share that failed for each reason. A frame can fail
+  for more than one reason, so these can add up to more than the share not used.
 - **Subgroups** report the release rate and the SE agreement separately by device, age group,
-  refractive range of the reference, pupil size, distance, iris colour, pigmentation and sex. Pupil
+  refractive range of the reference, pupil size, distance, iris colour, pigmentation and sex, with the
+  share of frames used in each. Pupil
   size and distance are the medians over that eye's captures at the visit. The distance bands
   separate the protocol's 1.0 m and 1.5 m. A subgroup that was not collected is left out.
 - **Repeatability** uses the released SE of the same eye from separate visits on the same day (UTC).

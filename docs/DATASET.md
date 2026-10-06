@@ -40,8 +40,12 @@ is the training table format used by `ml/`.
 and its interval, power vector, class and astigmatism probabilities, frame counts, model version) next
 to the same references. For the protocol's subgroups, each row also has the median pupil diameter
 (`pupil_mm`) and working distance (`distance_m`) of that eye's captures, and the subject's sex, iris
-colour and pigmentation when they were collected. This is the input to the study analysis in
-VALIDATION_PROTOCOL.md. An eye photographed
+colour and pigmentation when they were collected. For the gate analysis it has the M the product
+computed even when it held the eye back (`pred_m`) and its SD (`pred_m_sd`), the number of the eye's
+frames at each quality grade (`frames_excellent`, `frames_acceptable`, `frames_poor`, `frames_reject`),
+and, for the frames not used, how many failed for each reason (`frames_failed_<reason>`, such as
+`frames_failed_pupil_too_small`; `low_score` when the overall score alone was too low). A frame can fail
+for more than one reason. This is the input to the study analysis in VALIDATION_PROTOCOL.md. An eye photographed
 at a visit without a result still gets a row, so every eye that entered the protocol is counted.
 
 A capture is paired only with a reference measured at the same visit, as the validation protocol
