@@ -82,12 +82,19 @@ EYEREF_API_TOKENS="collect:<phone token>,analyse:<analyst token>,admin:<administ
 | Method | Path | Body | Returns |
 | --- | --- | --- | --- |
 | POST | `/api/analyze/frame` | multipart: `image` (eye crop PNG/JPEG), `metadata` (JSON `CaptureMetadata`), `iris` (JSON circle), `device_id`, `estimator` | `FrameRecord` (features, quality, estimate) |
-| POST | `/api/estimate` | `{frames: [{metadata, features, quality}], device_id, age_group, estimator: physics or ml, gating}` | `AssessmentReport` |
+| POST | `/api/estimate` | `{frames: [{metadata, features, quality}], device_id, age_group, estimator: physics or ml, gating, focus_model}` | `AssessmentReport` |
 | POST | `/api/simulate` | `{subject_id, age_group, astigmatism_quantification_enabled, frames_per_meridian, meridians}` | **SIMULATED** report, plus ground truth |
 | GET | `/api/bench/simulate` | (none) | Simulated bench run: dead-zone edges, feature monotonicity, gradient fit |
 
 `estimator=ml` returns `insufficient` for real frames until a model trained on real data is installed
 (`EYEREF_MODEL_PATH`).
+
+`focus_model` allows for the eyes focusing on the light (docs/PHOTOREFRACTION.md §5). Left out, it is on for
+`physics` and off for `ml`, whose model learned from static targets; send `false` for a capture through a
+stage 1 trial lens. When it is on, the report's `focus` gives the light's vergence, the age's focusing
+amplitude and how likely it is that the eyes focused. Each measured eye then carries `refraction_range95`,
+the 95% range of its own refraction, and an eye with a crescent whose range reaches 1 D or more past the
+top of its reading's interval comes back with `focus_limited: true` and no `se_d`.
 
 ## Dataset (Mode 2)
 
