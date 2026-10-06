@@ -1,0 +1,410 @@
+{
+ "simulated": true,
+ "people": 3,
+ "complete": 3,
+ "captures": 18,
+ "devices": [
+  "simulated-phone"
+ ],
+ "quality": {
+  "eye_captures": 36,
+  "passed": 36,
+  "released": 31,
+  "frames": 216,
+  "usable_frames": 215,
+  "passed_share": 1,
+  "released_share": 0.8611111111111112
+ },
+ "fit": {
+  "slope": 1.0377776357891182,
+  "slope_ci95": [
+   0.9726831242776457,
+   1.1028721473005907
+  ],
+  "intercept": 0.23376073559924734,
+  "intercept_ci95": [
+   -0.19494943646909327,
+   0.662470907667588
+  ],
+  "within_sd_d": 0.03338311506678523,
+  "repeatability_d": 0.09253327400015018,
+  "icc": 0.9700076482545787,
+  "people": 3,
+  "eyes": 6,
+  "n": 25,
+  "points": [
+   {
+    "code": "S1-01",
+    "eye": "OD",
+    "lens_d": 1.5,
+    "x": -1.5274949083503055,
+    "y": -1.6043339997456765,
+    "baseline_d": 0.005591340213352947
+   },
+   {
+    "code": "S1-01",
+    "eye": "OD",
+    "lens_d": 2,
+    "x": -2.0491803278688523,
+    "y": -2.1004945562373205,
+    "baseline_d": 0.005591340213352947
+   },
+   {
+    "code": "S1-01",
+    "eye": "OD",
+    "lens_d": 2.5,
+    "x": -2.577319587628866,
+    "y": -2.639192556680803,
+    "baseline_d": 0.005591340213352947
+   },
+   {
+    "code": "S1-01",
+    "eye": "OD",
+    "lens_d": 3,
+    "x": -3.112033195020747,
+    "y": -3.2496901770601467,
+    "baseline_d": 0.005591340213352947
+   },
+   {
+    "code": "S1-01",
+    "eye": "OS",
+    "lens_d": 1.5,
+    "x": -1.5274949083503055,
+    "y": -1.5299205393883923,
+    "baseline_d": 0.07812329932653794
+   },
+   {
+    "code": "S1-01",
+    "eye": "OS",
+    "lens_d": 2,
+    "x": -2.0491803278688523,
+    "y": -2.0381932307127273,
+    "baseline_d": 0.07812329932653794
+   },
+   {
+    "code": "S1-01",
+    "eye": "OS",
+    "lens_d": 2.5,
+    "x": -2.577319587628866,
+    "y": -2.6110162374555466,
+    "baseline_d": 0.07812329932653794
+   },
+   {
+    "code": "S1-01",
+    "eye": "OS",
+    "lens_d": 3,
+    "x": -3.112033195020747,
+    "y": -3.124453445714541,
+    "baseline_d": 0.07812329932653794
+   },
+   {
+    "code": "S1-02",
+    "eye": "OD",
+    "lens_d": 1.5,
+    "x": -1.5274949083503055,
+    "y": -1.237624305464807,
+    "baseline_d": 0.3550579629443664
+   },
+   {
+    "code": "S1-02",
+    "eye": "OD",
+    "lens_d": 2,
+    "x": -2.0491803278688523,
+    "y": -1.7804215504129242,
+    "baseline_d": 0.3550579629443664
+   },
+   {
+    "code": "S1-02",
+    "eye": "OD",
+    "lens_d": 2.5,
+    "x": -2.577319587628866,
+    "y": -2.298642749158258,
+    "baseline_d": 0.3550579629443664
+   },
+   {
+    "code": "S1-02",
+    "eye": "OD",
+    "lens_d": 3,
+    "x": -3.112033195020747,
+    "y": -2.930460556976143,
+    "baseline_d": 0.3550579629443664
+   },
+   {
+    "code": "S1-02",
+    "eye": "OD",
+    "lens_d": 4,
+    "x": -4.201680672268908,
+    "y": -3.954047908251453,
+    "baseline_d": 0.3550579629443664
+   },
+   {
+    "code": "S1-02",
+    "eye": "OS",
+    "lens_d": 1.5,
+    "x": -1.5274949083503055,
+    "y": -1.2038227745319536,
+    "baseline_d": 0.39739044994078343
+   },
+   {
+    "code": "S1-02",
+    "eye": "OS",
+    "lens_d": 2,
+    "x": -2.0491803278688523,
+    "y": -1.7273400285152478,
+    "baseline_d": 0.39739044994078343
+   },
+   {
+    "code": "S1-02",
+    "eye": "OS",
+    "lens_d": 2.5,
+    "x": -2.577319587628866,
+    "y": -2.2524620148564587,
+    "baseline_d": 0.39739044994078343
+   },
+   {
+    "code": "S1-02",
+    "eye": "OS",
+    "lens_d": 3,
+    "x": -3.112033195020747,
+    "y": -2.8428900329105646,
+    "baseline_d": 0.39739044994078343
+   },
+   {
+    "code": "S1-03",
+    "eye": "OD",
+    "lens_d": 1.5,
+    "x": -1.5274949083503055,
+    "y": -1.1263115906136782,
+    "baseline_d": 0.4459438711676911
+   },
+   {
+    "code": "S1-03",
+    "eye": "OD",
+    "lens_d": 2,
+    "x": -2.0491803278688523,
+    "y": -1.677175330412317,
+    "baseline_d": 0.4459438711676911
+   },
+   {
+    "code": "S1-03",
+    "eye": "OD",
+    "lens_d": 2.5,
+    "x": -2.577319587628866,
+    "y": -2.2132033944197618,
+    "baseline_d": 0.4459438711676911
+   },
+   {
+    "code": "S1-03",
+    "eye": "OD",
+    "lens_d": 3,
+    "x": -3.112033195020747,
+    "y": -2.8156108504608373,
+    "baseline_d": 0.4459438711676911
+   },
+   {
+    "code": "S1-03",
+    "eye": "OS",
+    "lens_d": 1.5,
+    "x": -1.5274949083503055,
+    "y": -1.4400145992505293,
+    "baseline_d": 0.12045749000275219
+   },
+   {
+    "code": "S1-03",
+    "eye": "OS",
+    "lens_d": 2,
+    "x": -2.0491803278688523,
+    "y": -1.9817219948548968,
+    "baseline_d": 0.12045749000275219
+   },
+   {
+    "code": "S1-03",
+    "eye": "OS",
+    "lens_d": 2.5,
+    "x": -2.577319587628866,
+    "y": -2.530190996584725,
+    "baseline_d": 0.12045749000275219
+   },
+   {
+    "code": "S1-03",
+    "eye": "OS",
+    "lens_d": 3,
+    "x": -3.112033195020747,
+    "y": -3.1823190998761994,
+    "baseline_d": 0.12045749000275219
+   }
+  ]
+ },
+ "focus": {
+  "shift_d": -1.0705572477782692,
+  "ci95": [
+   -1.4150438044135383,
+   -0.7260706911430003
+  ],
+  "people": 3,
+  "eyes": 6,
+  "points": [
+   {
+    "code": "S1-01",
+    "eye": "OD",
+    "lens_d": 0,
+    "x": 0,
+    "y": -0.9116280181132564,
+    "baseline_d": 0.005591340213352947
+   },
+   {
+    "code": "S1-01",
+    "eye": "OS",
+    "lens_d": 0,
+    "x": 0,
+    "y": -0.8256046239519288,
+    "baseline_d": 0.07812329932653794
+   },
+   {
+    "code": "S1-02",
+    "eye": "OD",
+    "lens_d": 0,
+    "x": 0,
+    "y": -0.7747673196798294,
+    "baseline_d": 0.3550579629443664
+   },
+   {
+    "code": "S1-02",
+    "eye": "OS",
+    "lens_d": 0,
+    "x": 0,
+    "y": -0.7804773531830267,
+    "baseline_d": 0.39739044994078343
+   },
+   {
+    "code": "S1-03",
+    "eye": "OD",
+    "lens_d": 0,
+    "x": 0,
+    "y": -0.7057470712585755,
+    "baseline_d": 0.4459438711676911
+   },
+   {
+    "code": "S1-03",
+    "eye": "OS",
+    "lens_d": 0,
+    "x": 0,
+    "y": -1.0225546868875142,
+    "baseline_d": 0.12045749000275219
+   }
+  ]
+ },
+ "lenses": [
+  {
+   "lens_d": 0,
+   "captures": 3,
+   "roles": {
+    "fogging": 0,
+    "check": 3,
+    "in_reach": 0
+   },
+   "induced_d": 0,
+   "eye_captures": 6,
+   "passed": 6,
+   "released": 6,
+   "mean_m": -0.8367965121790218
+  },
+  {
+   "lens_d": 1.5,
+   "captures": 3,
+   "roles": {
+    "fogging": 3,
+    "check": 0,
+    "in_reach": 0
+   },
+   "induced_d": -1.5274949083503053,
+   "eye_captures": 6,
+   "passed": 6,
+   "released": 6,
+   "mean_m": -1.3570046348325062
+  },
+  {
+   "lens_d": 2,
+   "captures": 3,
+   "roles": {
+    "fogging": 3,
+    "check": 0,
+    "in_reach": 0
+   },
+   "induced_d": -2.0491803278688523,
+   "eye_captures": 6,
+   "passed": 6,
+   "released": 6,
+   "mean_m": -1.884224448524239
+  },
+  {
+   "lens_d": 2.5,
+   "captures": 3,
+   "roles": {
+    "fogging": 3,
+    "check": 0,
+    "in_reach": 0
+   },
+   "induced_d": -2.577319587628866,
+   "eye_captures": 6,
+   "passed": 6,
+   "released": 6,
+   "mean_m": -2.4241179915259257
+  },
+  {
+   "lens_d": 3,
+   "captures": 3,
+   "roles": {
+    "fogging": 3,
+    "check": 0,
+    "in_reach": 0
+   },
+   "induced_d": -3.112033195020747,
+   "eye_captures": 6,
+   "passed": 6,
+   "released": 6,
+   "mean_m": -3.0242373604997383
+  },
+  {
+   "lens_d": 4,
+   "captures": 3,
+   "roles": {
+    "fogging": 3,
+    "check": 0,
+    "in_reach": 0
+   },
+   "induced_d": -4.201680672268908,
+   "eye_captures": 6,
+   "passed": 6,
+   "released": 1,
+   "mean_m": -3.954047908251453
+  }
+ ],
+ "criteria": [
+  {
+   "id": "people",
+   "label": "Enough people",
+   "pass": false,
+   "detail": "3 people captured at every lens; the protocol asks for 10."
+  },
+  {
+   "id": "slope",
+   "label": "Measured change follows the lens",
+   "pass": true,
+   "detail": "Slope 1.04 (95% CI 0.97 to 1.10) from 6 eyes of 3 people; 0.8 to 1.2 passes."
+  },
+  {
+   "id": "within_sd",
+   "label": "Repeatable",
+   "pass": true,
+   "detail": "Released values sit 0.03 D (SD) from each eye's line; 0.50 D or less passes."
+  },
+  {
+   "id": "quality",
+   "label": "Captures pass quality",
+   "pass": true,
+   "detail": "100% of eye-captures passed (the app did not ask to repeat them), and 86% got a number; 60% passing is enough."
+  }
+ ],
+ "verdict": "incomplete"
+}

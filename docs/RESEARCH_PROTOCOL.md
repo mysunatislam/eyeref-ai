@@ -45,23 +45,48 @@ study records; `python -m eyeref.research.bench_run` gives the same report from 
 
 ## Stage 1: the first experiment, induced defocus in adults (n ≈ 10 people, 20 eyes)
 
-This is the cleanest first human experiment, because the **change** in refraction is known exactly.
+This is the cleanest first human experiment, because the **change** in refraction is known exactly. The
+app runs it: **Validation → Stage 1: induced defocus**. It fixes each participant's lens order from their
+code, records the lens with every capture, and checks the criteria below; `make stage1 DATA=…` gives the
+same report from the file it saves.
 
 - Participants are adults aged 18–39 (low accommodation variability relative to children). Use their
   habitual correction (contact lenses, or their glasses prescription in a trial frame) to make them
-  near-emmetropic.
-- Add lenses of **−2, −1, 0, +1 and +2 D** over the correction, in random order. A plus lens makes the
-  eye relatively myopic. Capture the standard protocol for each lens.
+  near-emmetropic. A correction held in the trial frame changes what a lens added in front of it does at
+  the eye, so the page asks where the correction sits and takes the vertex distance into account.
+- Add lenses of **0, +1.50, +2, +2.50, +3 and +4 D** over the correction, in the order the participant's
+  code gives. Capture the standard protocol for each lens.
+- **Why only plus lenses.** The subject fixates the light at the camera, 1 m away, so an eye that can
+  focus will pull about 1 D of accommodation into every reading, and a minus lens only asks for more. A
+  plus lens does the opposite: once the eye is more myopic than the light is near, the light lies beyond
+  its far point, focusing can only blur it further, and the eye relaxes. From +1.50 D over the correction
+  at 1 m, every eye within ±0.50 D of emmetropia is fogged, so the lens accounts for the whole change.
+  The analysis calls those captures *fogging* and fits the slope to them alone; a lens that leaves the
+  light within reach is recorded but left out of the slope.
+- **The no-lens capture** is the control: with the frame empty the light is within reach, so the
+  difference between it and the eye's own fogging line measures how far that eye followed the light. That
+  is the accommodation error every ordinary EyeRef capture carries, measured rather than modelled, and it
+  is reported next to the slope instead of being folded into it.
 - The outcome is the slope and intercept of measured M against induced defocus. The ideal slope is 1.
-  Report repeatability as ICC and the within-subject SD.
+  One slope is fitted across eyes, each eye with its own intercept, and its 95% interval treats each
+  **person** as one unit (a cluster-robust standard error), because two eyes of one person move together.
+  Report repeatability as ICC and the within-subject SD; the SD around each eye's line also gives the
+  smallest change between two captures of one eye that is not noise (1.96 × √2 × SD).
+- Stage 0 comes first: without a bench-measured gain the dead zone returns ranges rather than numbers, so
+  a near-emmetropic eye at the no-lens step may have nothing to release.
 
 **Go/no-go:**
 
 - the slope is 0.8–1.2;
 - the within-subject SD is at most 0.5 D for released results;
-- at least 60% of captures pass quality.
+- at least 60% of captures pass quality (the app did not ask for a repeat);
+- at least 10 people captured at every lens, before any verdict is read at all.
 
 If this fails, fix capture and optics before collecting a dataset.
+
+**Keeping the data straight.** A stage 1 capture measured the eye *and* a trial lens, so its values are
+never the participant's refraction. The app keeps them out of the trend in History, out of the printable
+referral report and out of research uploads, because the research server does not record the lens.
 
 ## Stage 2: the first 100 labelled eyes (about 50 adults)
 

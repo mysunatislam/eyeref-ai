@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { AssessFlow } from "@/components/capture/AssessFlow";
 import { PageHeader } from "@/components/layout/PageHeader";
 
@@ -12,7 +13,9 @@ export default function AssessPage() {
         title="Refraction screening"
         description="Both eyes are captured together at four device angles. Each angle measures one meridian; together they constrain sphere and astigmatism."
       />
-      <AssessFlow />
+      <Suspense fallback={<p className="text-muted text-sm">Loading…</p>}>
+        <AssessFlow />
+      </Suspense>
     </>
   );
 }
