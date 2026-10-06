@@ -17,7 +17,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { benchSteps, withStep, type BenchRun, type BenchShot } from "@/lib/bench/run";
-import { expectedSearchRadiusPx, useBenchCamera, useScreenAngle } from "@/lib/bench/useBenchCamera";
+import { expectedSearchRadiusPx, useBenchCamera } from "@/lib/bench/useBenchCamera";
+import { frameRotationDeg, useScreenAngle } from "@/lib/camera/orientation";
 import { isUsable } from "@/lib/cv/quality";
 import { formatDiopters } from "@/lib/optics/powerVector";
 import { useSettings } from "@/lib/settings";
@@ -204,7 +205,7 @@ export function BenchCapture({
     setError(null);
     try {
       const taken = await captureStep(run, step, search, {
-        frameRotationDeg: screenAngle,
+        frameRotationDeg: screenAngle === null ? null : frameRotationDeg(screenAngle, "environment"),
         lightWasOn: lightOn,
       });
       setShots(taken);

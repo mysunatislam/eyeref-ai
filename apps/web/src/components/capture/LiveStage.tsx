@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/field";
 import { Switch } from "@/components/ui/switch";
-import { useDeviceRotation } from "@/lib/camera/useDeviceRotation";
+import { probedRotationDeg, turnToTarget, useScreenAngle } from "@/lib/camera/orientation";
 import { rgbaToDataUrl } from "@/lib/cv/draw";
 import { isUsable } from "@/lib/cv/quality";
 import { DEFAULT_GATING } from "@/lib/inference/fusion";
@@ -42,9 +42,8 @@ export function LiveStage({
   const [stepIdx, setStepIdx] = useState(0);
   const [manualD, setManualD] = useState<number | null>(null);
   const [useManual, setUseManual] = useState(false);
-  const rotation = useDeviceRotation();
+  const screenAngle = useScreenAngle();
   const step = steps[Math.min(stepIdx, steps.length - 1)]!;
-  const measuredRot = rotation.rollDeg === null ? null : ((rotation.rollDeg % 180) + 180) % 180;
   const ctx = useMemo(
     () => ({
       device,
@@ -61,6 +60,7 @@ export function LiveStage({
     status,
     error,
     facing,
+    frameRotationDeg,
     caps,
     torchOn,
     startCamera: start,
@@ -72,7 +72,11 @@ export function LiveStage({
     captureBurst,
     showLandmarks,
     setShowLandmarks,
-  } = useLiveTracker(ctx, estimator, measuredRot ?? step.rotationDeg);
+  } = useLiveTracker(ctx, estimator, screenAngle);
+  // the phone's turn from the head, read from the picture: the frame's rotation and the eyes' tilt in it
+  const measuredRot = t.face && t.rollDeg !== null ? probedRotationDeg(frameRotationDeg, t.rollDeg) : null;
+  const rotationOff =
+    phase === "capture" && measuredRot !== null ? rotationError(measuredRot, step.rotationDeg) : null;
   const [frames, setFrames] = useState<FrameRecord[]>([]);
   const [count, setCount] = useState<number | null>(null);
   const [capturing, setCapturing] = useState(false);
@@ -99,8 +103,8 @@ export function LiveStage({
     pupilMm: t.pupilMm.OD ?? t.pupilMm.OS,
     grade: t.grade.OD,
     flashAvailable,
-    deviceRotationErrorDeg:
-      phase === "capture" && measuredRot !== null ? rotationError(measuredRot, step.rotationDeg) : null,
+    deviceRotationErrorDeg: rotationOff,
+    deviceTurn: rotationOff === null ? null : turnToTarget(rotationOff, facing),
   });
 
   const capture = async () => {
@@ -309,21 +313,20 @@ export function LiveStage({
                   Meridian {stepIdx + 1} of {steps.length}
                 </CardTitle>
                 <CardDescription>
-                  Rotate the phone around the lens to the angle shown, keep it pointed at the eyes, then
-                  capture.
+                  Turn the phone around its lens until the two lines on the dial meet, keep it pointed at the
+                  eyes, then capture.
                 </CardDescription>
               </div>
-              <MeridianDial target={step.rotationDeg} measured={measuredRot} size={92} />
+              <MeridianDial target={step.rotationDeg} measured={measuredRot} facing={facing} size={92} />
             </CardHeader>
             <CardContent className="space-y-4">
-              {rotation.permission === "unknown" && (
-                <Button size="sm" variant="secondary" className="w-full" onClick={rotation.request}>
-                  Enable tilt sensor for angle guidance
-                </Button>
-              )}
-              {rotation.permission !== "granted" && rotation.permission !== "unknown" && (
+              {measuredRot === null && (
                 <p className="text-muted text-xs">
-                  No tilt sensor: the nominal angle {step.rotationDeg}° will be recorded. Rotate carefully.
+                  The angle is read from the tilt of the eyes in the picture, so it shows once both eyes are
+                  tracked.
+                  {!t.face &&
+                    step.rotationDeg !== 0 &&
+                    " If the face is lost as the phone turns, turn it back upright, then slowly round again so the tracker can follow the face."}
                 </p>
               )}
               <Indicators compact items={readiness.indicators} />

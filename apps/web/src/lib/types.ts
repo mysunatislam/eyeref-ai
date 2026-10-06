@@ -47,6 +47,11 @@ export interface CaptureMetadata {
   workingDistanceM: number;
   distanceSource: "iris" | "manual" | "calibrated" | "simulated";
   distanceSdM: number;
+  /**
+   * How far the frame is turned from one taken in the device's reference orientation, anticlockwise in
+   * the image. For a phone camera this is the screen's turn, since the browser turns frames with the
+   * screen; the rest of the phone's turn shows as head roll (camera/orientation).
+   */
   deviceRotationDeg: number;
   headPose: HeadPose;
   illumination: Illumination;

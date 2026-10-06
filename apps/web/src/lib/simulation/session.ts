@@ -106,22 +106,38 @@ export interface SimulatedFrame {
   truthMeridianDeg: number;
 }
 
-/** Render one frame for a given eye + device rotation (used by both batch sessions and the live sim stage). */
+/**
+ * The simulated phone's screen at a rotation (anticlockwise), as a phone with auto-rotate on and
+ * upside-down portrait off turns it: portrait until the phone is well over on its side, then landscape
+ * the way it was turned.
+ */
+export function simulatedScreenAngle(deviceRotationDeg: number): number {
+  const r = ((deviceRotationDeg % 360) + 360) % 360;
+  return r >= 67.5 && r < 180 ? 90 : r >= 180 && r <= 292.5 ? 270 : 0;
+}
+
+/**
+ * Render one frame for a given eye + device rotation (used by both batch sessions and the live sim stage).
+ * By default the frame turns with the phone, so the head is upright in it. A real browser turns the
+ * frame only with the screen: `frameRotationDeg` sets that turn, and the rest of the phone's rotation then
+ * shows as the head's tilt in the frame, as on a real phone.
+ */
 export function simulateFrame(
   s: VirtualSubject,
   eye: EyeSide,
   deviceRotationDeg: number,
   frameIndex: number,
   sessionSeed = 0,
-  opts: { blinkRate?: number; motionRate?: number; targetDistanceM?: number } = {},
+  opts: { blinkRate?: number; motionRate?: number; targetDistanceM?: number; frameRotationDeg?: number } = {},
 ): SimulatedFrame {
   const rng = createRng(seedFrom(`${s.id}|${eye}|${deviceRotationDeg}|${frameIndex}|${sessionSeed}`));
   const trueD = Math.max(0.6, Math.min(1.5, normal(rng, opts.targetDistanceM ?? 1, 0.06)));
-  const roll = normal(rng, 0, 3);
+  const frameRotationDeg = opts.frameRotationDeg ?? deviceRotationDeg;
+  const roll = frameRotationDeg - deviceRotationDeg + normal(rng, 0, 3);
   const acc = s.accommodationBiasD + Math.abs(normal(rng, 0, ACCOMMODATION_SD[s.ageGroup] * 0.3));
   const blink = rng() < (opts.blinkRate ?? 0.06);
   const motion = rng() < (opts.motionRate ?? 0.06);
-  const src = ((sourceAngleReferenceDeg(SIM_DEVICE) ?? 270) + deviceRotationDeg) % 360;
+  const src = ((((sourceAngleReferenceDeg(SIM_DEVICE) ?? 270) + frameRotationDeg) % 360) + 360) % 360;
   const { image, truth } = renderEye({
     refraction: eye === "OD" ? s.od : s.os,
     accommodationD: acc,
@@ -147,7 +163,7 @@ export function simulateFrame(
     workingDistanceM: trueD + normal(rng, 0, 0.05),
     distanceSource: "simulated",
     distanceSdM: 0.05,
-    deviceRotationDeg,
+    deviceRotationDeg: frameRotationDeg,
     headPose: { yawDeg: normal(rng, 0, 3), pitchDeg: normal(rng, 0, 3), rollDeg: roll },
     illumination: "flash",
     sourceAngleImageDeg: null,

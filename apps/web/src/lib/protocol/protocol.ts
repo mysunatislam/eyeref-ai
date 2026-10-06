@@ -18,6 +18,7 @@ import { processFrame } from "../inference/pipeline";
 import {
   makeSubject,
   SIM_DEVICE,
+  simulatedScreenAngle,
   simulateFrame,
   subjectTruth,
   type VirtualSubject,
@@ -137,7 +138,11 @@ export function captureSimulatedFrame(
   targetDistanceM: number,
 ): CapturedEye[] {
   return (["OD", "OS"] as const).map((eye) => {
-    const sf = simulateFrame(subject, eye, rotationDeg, frameIndex, sessionSeed, { targetDistanceM });
+    // frames turn with the simulated phone's screen, as a real browser's do
+    const sf = simulateFrame(subject, eye, rotationDeg, frameIndex, sessionSeed, {
+      targetDistanceM,
+      frameRotationDeg: simulatedScreenAngle(rotationDeg),
+    });
     const { record, segmentation } = processFrame(sf.image, sf.iris, sf.metadata, SIM_DEVICE, estimator);
     record.simTruth = { powerInMeridianD: sf.truthPowerD, meridianDeg: sf.truthMeridianDeg };
     return { eye, image: sf.image, segmentation, record };

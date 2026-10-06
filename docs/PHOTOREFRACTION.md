@@ -69,6 +69,14 @@ about the optical axis rotates that meridian. EyeRef captures four device rotati
 meridian_eye = (source_angle_in_image − head_roll) mod 180     (TABO convention)
 ```
 
+The source angle in the image is the flash's direction from the lens plus the **frame's** rotation, not
+the phone's tilt. A browser turns a phone camera's frames with the screen, in steps of 90°: at 45° the
+screen usually stays in portrait, so the frame is not turned and the head leans 45° the other way in the
+picture. The phone's turn from the head is therefore read from the picture, as the frame's rotation
+less the eyes' tilt, and the capture screen guides each step with that. Adding a tilt sensor's angle
+as well would count the turn twice, and a tilt taken modulo 180° would put the light on the wrong side
+of a phone turned clockwise onto its side.
+
 Per-meridian powers are fitted with
 **P(θ) = M + J0·cos 2θ + J45·sin 2θ** (Thibos power vectors). This uses weighted least squares with
 a weak prior of N(0, diag(4², 0.35², 0.35²)) D². The posterior is sampled to give SPH/CYL/AXIS
@@ -91,7 +99,9 @@ With one meridian, astigmatism is not assessed. With two, only a probability of
 - Image angles are measured counter-clockwise with y up: `image_vector_to_tabo(dx, dy_down) = atan2(−dy, dx)`.
 - Un-mirroring maps θ → 180° − θ, and head roll changes sign.
 - The flash offset is given in mm in the captured-image frame (x right, y up). The source angle in the
-  image is the direction from the lens to the flash, plus the device rotation.
+  image is the direction from the lens to the flash, plus the frame's rotation. For the rear camera
+  that is the screen's turn from its natural orientation; the front camera looks back at the person
+  holding the phone, so for it the screen's turn runs the other way in the image.
 
 ## 5. Accommodation
 

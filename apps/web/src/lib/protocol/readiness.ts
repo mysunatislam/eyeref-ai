@@ -28,7 +28,10 @@ export interface ReadinessInput {
   pupilMm: number | null;
   grade: QualityGrade | null;
   flashAvailable: boolean;
+  /** the probed rotation less the step's, on the meridian circle */
   deviceRotationErrorDeg: number | null;
+  /** which way to turn the phone, as you look at its screen, to reach the step's angle */
+  deviceTurn?: "clockwise" | "anticlockwise" | null;
 }
 
 const f = (v: number | null, d = 1, unit = "") =>
@@ -120,18 +123,20 @@ export function evaluateReadiness(r: ReadinessInput): { indicators: Indicator[];
     r.flashAvailable ? undefined : "No eccentric source: photorefraction impossible",
   );
 
-  if (r.deviceRotationErrorDeg !== null)
+  if (r.deviceRotationErrorDeg !== null) {
+    const off = Math.abs(r.deviceRotationErrorDeg);
     add(
       "meridian",
       "Device angle",
-      `${f(r.deviceRotationErrorDeg, 0, "°")} off`,
-      Math.abs(r.deviceRotationErrorDeg) <= 7
-        ? "ok"
-        : Math.abs(r.deviceRotationErrorDeg) <= 15
-          ? "warn"
-          : "bad",
-      "Rotate the phone to the target angle",
+      `${f(off, 0, "°")} off`,
+      off <= 7 ? "ok" : off <= 15 ? "warn" : "bad",
+      off <= 7
+        ? undefined
+        : r.deviceTurn
+          ? `Turn the phone ${r.deviceTurn}`
+          : "Rotate the phone to the target angle",
     );
+  }
 
   add(
     "quality",
