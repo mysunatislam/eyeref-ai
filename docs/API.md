@@ -187,7 +187,8 @@ limit when it starts, before it serves anything, and then every hour.
 **If deleting fails.** The image files are deleted before the database forgets them. If one cannot be
 deleted, the request fails with 500, the images stay recorded, and calling it again finishes the job.
 A failed retention pass is logged and tried again an hour later. An image is never left on disk
-without a record of it.
+without a record of it, and the image check finds any file that is
+([Looking after stored images](#looking-after-stored-images)).
 
 ## Audit log
 
@@ -203,6 +204,7 @@ nothing and records nothing.
 | `subject.read` | A subject's whole record is read | Number of visits, number of images included |
 | `subject.images_withdraw` | A subject withdraws consent to store eye images | Number of images deleted |
 | `subject.images_expire` | Images pass the [retention limit](#participants-data) | Number of images deleted, the limit in days |
+| `subject.images_encrypt` | A subject's images are [encrypted](#looking-after-stored-images), or encrypted again under a new key | Number of images encrypted, number encrypted again |
 | `subject.delete` | A subject and all their data are deleted | Number of images deleted |
 | `ground_truth.add` | A reference refraction is added | Its id, the visit, the eye, the method |
 | `session.create` | A capture session starts | Its id, the device profile, whether it is simulated |
@@ -215,7 +217,8 @@ nothing and records nothing.
 
 - **Who.** `actor` is the fingerprint of the API token that was used: `tok_` and the first 12 hex
   digits of the token's SHA-256. The token itself is never stored. With auth off, `actor` is
-  `anonymous`, and for images deleted by the retention limit it is `retention`. To find which token a fingerprint belongs to:
+  `anonymous`. For images deleted by the retention limit it is `retention`, and for images encrypted
+  from the command line it is `maintenance`. To find which token a fingerprint belongs to:
   `python -c "import hashlib, sys; print('tok_' + hashlib.sha256(sys.argv[1].encode()).hexdigest()[:12])" "$TOKEN"`.
 - **No personal data.** Events hold ids, counts and flags: no subject codes, measurements, notes or
   images. The trail is therefore kept when a subject is deleted, and still shows what happened to them.
@@ -285,15 +288,97 @@ whenever the models and the migrations disagree, so a model change cannot ship w
 SQLite alters a table by rebuilding it, so foreign keys are switched off while migrating (otherwise
 rebuilding `subjects` would delete every session that refers to it) and checked once at the end.
 
+## Looking after stored images
+
+Each stored eye image is a file under `$EYEREF_DATA_DIR/objects`, and the database records which file
+belongs to which capture. Two commands look after them. Run them beside the server, with its
+`EYEREF_DATABASE_URL`, `EYEREF_DATA_DIR` and `EYEREF_STORAGE_KEY`, from `backend/` or in its container:
+
+```bash
+docker compose exec api python -m eyeref.api.images check
+```
+
+They work only on a database the server has already set up, at the same schema version, and on an
+image store that exists. Pointed anywhere else, they stop with exit status 2 and change nothing, so a
+wrong setting cannot make every image look like a file no record names.
+
+**Checking.** `python -m eyeref.api.images check` reads every recorded image and lists every file. It
+reports:
+
+- an image whose file is gone;
+- an image that cannot be read, and why: it was encrypted with a key that `EYEREF_STORAGE_KEY` does not
+  list, or the file is not a PNG image, so it is damaged;
+- an image stored without encryption although a key is set;
+- a file no record names, once it is an hour old. A younger one may belong to an upload still under
+  way. Such files are left by a server that stopped between writing an image and recording it, or by
+  an encryption that could not delete an old copy.
+
+It also says how many images are encrypted with a key other than the first. That is not a problem, but
+the other key is still needed. It exits with status 1 when there is a problem, so a scheduled job can
+raise an alert. `--delete-orphans` deletes the files no record names. A check that runs while the
+server is deleting images, for a withdrawal or the retention limit, can report one of them as gone; run
+it again.
+
+**Encrypting older images.** Images stored while `EYEREF_STORAGE_KEY` was unset stay unencrypted when a
+key is set later, and the server logs how many there are when it starts.
+`python -m eyeref.api.images encrypt` encrypts them with the first key.
+
+**Rotating the key.**
+
+1. Generate a new key and put it first, keeping the old one after it: `EYEREF_STORAGE_KEY=<new>,<old>`.
+   Restart the server. New images use the new key, and the old ones stay readable.
+2. Run `python -m eyeref.api.images encrypt` with the same setting. It encrypts every image under the
+   old key again, with the new one.
+3. When `check` no longer reports images under another key, set `EYEREF_STORAGE_KEY=<new>` and restart.
+4. Keep the old key for as long as you keep backups made before step 2. They cannot be read without it.
+
+`encrypt` goes one participant at a time and holds each, as an upload or a withdrawal does, so the
+server can keep running. Each image is written under a new name, the database moves to it, and only
+then is the old file deleted. If it stops part way, every image is still readable, and running it again
+carries on; once nothing is left to do, running it changes nothing. Each participant whose images it
+encrypts is [audited](#audit-log) as `subject.images_encrypt` by `maintenance`. It exits with status 1
+and lists any image it could not encrypt (the file is gone or cannot be read), and any old file it could
+not delete, which `check --delete-orphans` deletes later.
+
+**Backups.** Copy the database first, then the image store:
+
+```bash
+# SQLite: a consistent copy while the server runs
+python -c "import sqlite3; sqlite3.connect('data/eyeref.db').backup(sqlite3.connect('backup/eyeref.db'))"
+# PostgreSQL
+pg_dump --format=custom --file=backup/eyeref.dump "postgresql://user:password@host:5432/eyeref"
+# then the images, keeping their file times
+rsync -a data/objects/ backup/objects/
+```
+
+In that order, every image the database copy records was already written, so the copy of the store has
+it, unless the image was deleted in between for a withdrawal or the retention limit. Files written after
+the database copy are files no record names.
+
+- The database holds study codes, measurements and reference refractions. EyeRef does not encrypt it, so
+  encrypt its backups.
+- Images are encrypted with the storage key when one is set. Keep the keys apart from the backups: a key
+  stored with the images protects nothing.
+- A backup keeps what was deleted after it was made. Restoring one brings back images and participants
+  withdrawn or deleted since, so keep backups no longer than the study's protocol allows. After a
+  restore, repeat the withdrawals and deletions made since the backup: export the audit log first if
+  the database is still there, since its `subject.images_withdraw` and `subject.delete` events list
+  them. The retention limit applies again on its own when the server starts.
+
+**Restoring.** Stop the server, put back the database and the image store, and start it. It upgrades a
+backup made by an older version. Then run `check`, and `check --delete-orphans` to delete the files the
+restored database does not name.
+
 ## Environment
 
 See `.env.example`. The variables are:
 
 - `EYEREF_DATA_DIR`
 - `EYEREF_DATABASE_URL`
-- `EYEREF_STORAGE_KEY` (a Fernet key). To rotate it, list the new key first and the old one after it,
-  comma-separated: new images are encrypted with the first, and images stored under any listed key stay
-  readable. So do images stored before a key was set, which stay unencrypted.
+- `EYEREF_STORAGE_KEY` (a Fernet key, or several, comma-separated, newest first). New images are
+  encrypted with the first, and images stored under any listed key stay readable, as do images stored
+  before a key was set. To encrypt those, or to retire an old key, see
+  [Looking after stored images](#looking-after-stored-images).
 - `EYEREF_MODEL_PATH`
 - `EYEREF_CORS_ORIGINS`
 - `EYEREF_ENV` (`development` or `production`)

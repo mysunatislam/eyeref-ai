@@ -2,7 +2,7 @@
 
 LocalStorage writes files under a root directory; if ``EYEREF_STORAGE_KEY``
 (a Fernet key) is set, bytes are encrypted at rest.  An S3/GCS backend only has
-to implement the same three methods.
+to implement the same methods.
 
 To rotate the key, list the new one first and keep the old ones after it,
 comma-separated: new images use the first, and every one listed can read.
@@ -11,6 +11,9 @@ comma-separated: new images use the first, and every one listed can read.
 from __future__ import annotations
 
 import os
+import secrets
+from collections.abc import Iterator
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Optional, Protocol
 
@@ -25,6 +28,8 @@ class ObjectStorage(Protocol):
     def put(self, key: str, data: bytes) -> None: ...
     def get(self, key: str, encrypted: Optional[bool] = None) -> bytes: ...
     def delete(self, key: str) -> None: ...
+    def is_current(self, key: str, encrypted: bool) -> bool: ...
+    def objects(self) -> Iterator[tuple[str, datetime]]: ...
 
 
 class LocalStorage:
@@ -33,11 +38,12 @@ class LocalStorage:
         self.root.mkdir(parents=True, exist_ok=True)
         key = key if key is not None else os.environ.get("EYEREF_STORAGE_KEY", "")
         keys = [k.strip() for k in key.split(",") if k.strip()]
-        self._fernet = None
+        self._fernet = self._current = None
         if keys:
             from cryptography.fernet import Fernet, MultiFernet
 
-            self._fernet = MultiFernet([Fernet(k.encode()) for k in keys])  # encrypts with the first
+            fernets = [Fernet(k.encode()) for k in keys]
+            self._fernet, self._current = MultiFernet(fernets), fernets[0]  # encrypts with the first
 
     @property
     def encrypted(self) -> bool:
@@ -50,9 +56,17 @@ class LocalStorage:
         return p
 
     def put(self, key: str, data: bytes) -> None:
+        """Writes the object whole or not at all: it goes to a temporary file first, which a crash can leave
+        behind (`python -m eyeref.api.images check` finds it), but never half an image under the key."""
         p = self._path(key)
         p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_bytes(self._fernet.encrypt(data) if self._fernet else data)
+        tmp = p.with_name(f"{p.name}.{secrets.token_hex(4)}.tmp")
+        try:
+            tmp.write_bytes(self._fernet.encrypt(data) if self._fernet else data)
+            os.replace(tmp, p)
+        except BaseException:
+            tmp.unlink(missing_ok=True)
+            raise
 
     def get(self, key: str, encrypted: Optional[bool] = None) -> bytes:
         """The object's bytes. `encrypted` is whether it was stored encrypted, as recorded with it; images stored
@@ -71,3 +85,24 @@ class LocalStorage:
 
     def delete(self, key: str) -> None:
         self._path(key).unlink(missing_ok=True)  # already gone is fine: deleting twice at once must not fail
+
+    def is_current(self, key: str, encrypted: bool) -> bool:
+        """Whether the object is encrypted with the first key, as a new one would be."""
+        if not encrypted or self._current is None:
+            return False
+        from cryptography.fernet import InvalidToken
+
+        try:
+            self._current.decrypt(self._path(key).read_bytes())
+        except InvalidToken:
+            return False
+        return True
+
+    def objects(self) -> Iterator[tuple[str, datetime]]:
+        """Every file in the store, temporary ones included, with when it was last written."""
+        for p in self.root.rglob("*"):
+            try:
+                if p.is_file():
+                    yield p.relative_to(self.root).as_posix(), datetime.fromtimestamp(p.stat().st_mtime, UTC)
+            except FileNotFoundError:  # deleted while listing
+                continue

@@ -71,6 +71,7 @@ from .images import (
     hold_subject,
     retention_days_from_env,
     subjects_with_expired_images,
+    unencrypted_images,
 )
 from .uploads import BodySizeLimitMiddleware, read_image
 
@@ -351,6 +352,9 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
     storage = LocalStorage(os.path.join(data_dir, "objects"))
     if auth.production and not storage.encrypted:
         raise UnsafeConfigError("EYEREF_ENV=production requires EYEREF_STORAGE_KEY so eye images are encrypted at rest")
+    if storage.encrypted and (plain := unencrypted_images(db)):
+        log.warning("%d eye images were stored before EYEREF_STORAGE_KEY was set and are not encrypted; run "
+                    "python -m eyeref.api.images encrypt", plain)
     profiles = load_profiles(os.path.join(data_dir, "device_profiles"))
     physics = PhysicsHeuristicEstimator()
     learned = OnnxMeridionalEstimator(MODEL_PATH)
@@ -365,6 +369,7 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
         expired = 0
         with db.SessionLocal() as s:
             for subject_id in subjects_with_expired_images(s, retention_days, now):
+                hold_subject(s, subject_id)  # an upload, withdrawal or encryption of their images finishes first
                 if n := delete_images(storage, expired_images(s, subject_id, retention_days, now)):
                     audit(s, RETENTION_ACTOR, "subject.images_expire", subject_id, images_deleted=n,
                           retention_days=retention_days)

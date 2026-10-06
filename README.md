@@ -51,7 +51,7 @@ first, then astigmatism later.
 | Dead-zone gradient gain per device | **REQUIRES TRAINING DATA** | Needs a bench calibration with trial lenses (docs/DEVICE_CALIBRATION.md) |
 | SE accuracy, myopia/hyperopia screening on real people | **REQUIRES CLINICAL VALIDATION** | Protocol in docs/VALIDATION_PROTOCOL.md |
 | CYL / AXIS output | **REQUIRES CLINICAL VALIDATION** | Gated off; research flag only |
-| Research API, encrypted image storage, dataset export, consent enforcement | **WORKING** | Bearer-token access control (required when `EYEREF_ENV=production`), with roles so a capture phone's token can upload but not read data back. Fernet at rest, with key rotation. SQLite or PostgreSQL, both tested in CI. Versioned migrations upgrade the database on start and keep its data. An audit log records who changed, read or exported research data. A participant's data can be copied out in full, their image consent withdrawn, and server-side eye images expired after a set time |
+| Research API, encrypted image storage, dataset export, consent enforcement | **WORKING** | Bearer-token access control (required when `EYEREF_ENV=production`), with roles so a capture phone's token can upload but not read data back. Fernet at rest, with key rotation and a command that encrypts older images and checks the image store against the database. SQLite or PostgreSQL, both tested in CI. Versioned migrations upgrade the database on start and keep its data. An audit log records who changed, read or exported research data. A participant's data can be copied out in full, their image consent withdrawn, and server-side eye images expired after a set time |
 | Optional AI explanation (local Gemma via Ollama by default; Gigalogy Maira optional) | **PARTIALLY WORKING** | Text-only summary, numeric guard tested against prescription-leaking replies, consent required for any remote provider. Verified against mocks only, because model downloads are blocked in the build sandbox. Run `scripts/check_assistant.py` once on your machine |
 | Error recovery: crash pages, update prompt, unreadable records | **WORKING** | A failed page offers a retry without losing stored data, a new version offers a reload, and records the app cannot read are counted instead of hiding the rest |
 | Installable app (PWA) with offline use | **WORKING** | Manifest, icons and a service worker that caches app code and the MediaPipe model, never results or camera frames. Verified offline in Chromium. Needs HTTPS to install |
@@ -148,7 +148,8 @@ scripts/         export_schemas.py, run-all.sh
 - Plain JSON exports leave eye images out. A backup keeps them only inside a file encrypted on the
   device with the user's passphrase, which EyeRef never sees.
 - The server refuses to store data without research consent, and refuses images without separate
-  image consent. It encrypts images at rest when `EYEREF_STORAGE_KEY` is set.
+  image consent. It encrypts images at rest when `EYEREF_STORAGE_KEY` is set, and a command encrypts any
+  stored before then ([Looking after stored images](docs/API.md#looking-after-stored-images)).
 - A participant can get a copy of everything stored about them, withdraw image consent while staying
   in the study, or leave it. A record of an earlier visit, uploaded late, cannot undo either. The server
   can also delete eye images a set number of days after storing them (`EYEREF_IMAGE_RETENTION_DAYS`).

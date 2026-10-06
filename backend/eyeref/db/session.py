@@ -10,7 +10,8 @@ from alembic.config import Config
 from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from sqlalchemy import create_engine, event, inspect
-from sqlalchemy.engine import Connection, Engine
+from sqlalchemy.engine import Connection, Engine, make_url
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session, sessionmaker
 
 DEFAULT_URL = "sqlite:///./data/eyeref.db"
@@ -112,6 +113,36 @@ def make_engine(url: str | None = None) -> Engine:
     """An engine for the database, with its schema brought up to date."""
     eng = connect(url)
     upgrade(eng)
+    return eng
+
+
+class DatabaseNotSetUpError(RuntimeError):
+    """A command that runs beside the server was pointed at a database the server has not set up."""
+
+
+def existing_engine(url: str | None = None) -> Engine:
+    """An engine for a database the server has already set up, at this version's schema, for commands that run
+    beside the server. Unlike make_engine it creates and upgrades nothing: pointed at the wrong database, such a
+    command would find none of the server's records, and could take every image file for one no record names."""
+    url = database_url(url)
+    shown = make_url(url).render_as_string(hide_password=True)
+    path = make_url(url).database
+    if url.startswith("sqlite") and path not in (None, "", ":memory:") and not os.path.exists(path):
+        raise DatabaseNotSetUpError(f"there is no database at {shown}; set EYEREF_DATABASE_URL to the server's")
+    eng = connect(url)
+    head = ScriptDirectory.from_config(alembic_config()).get_current_head()
+    try:
+        current = current_revision(eng)
+    except OperationalError as e:
+        eng.dispose()
+        raise DatabaseNotSetUpError(f"could not read the database at {shown}: {e.orig}") from e
+    if current != head:
+        eng.dispose()
+        raise DatabaseNotSetUpError(
+            f"the database at {shown} has no EyeRef schema; set EYEREF_DATABASE_URL to the server's"
+            if current is None else
+            f"the database at {shown} is at schema revision {current}, and this version of EyeRef expects {head}; "
+            "run this command from the same version as the server")
     return eng
 
 
