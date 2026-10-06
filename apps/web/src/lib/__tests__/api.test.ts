@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { api, ApiError, buildUpload, connOf, dataUrlToBlob } from "../api";
+import { api, ApiError, buildUpload, connOf, dataUrlToBlob, describeAccess } from "../api";
 import type { AssessmentReport, StoredAssessment } from "../types";
 import { frame } from "./fixtures";
 
@@ -80,6 +80,52 @@ describe("research API client", () => {
     const err = await api.health({ url: "http://api.test", token: "bad" }).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(ApiError);
     expect((err as ApiError).message).toMatch(/rejected the access token/);
+  });
+});
+
+describe("access check", () => {
+  it("asks the server what this device's token may do", async () => {
+    const fn = mockFetch(200, { auth: "token", role: "collect", token: "tok_0123456789ab" });
+    const access = await api.access({ url: "http://api.test", token: "t" });
+    const [url, init] = fn.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("http://api.test/api/access");
+    expect(new Headers(init.headers).get("authorization")).toBe("Bearer t");
+    expect(access).toEqual({ auth: "token", role: "collect", token: "tok_0123456789ab" });
+    expect(describeAccess(access)).toEqual({
+      tone: "ok",
+      text: expect.stringMatching(
+        /^Connected with a collection token \(tok_0123456789ab\)\..*cannot read any back/,
+      ),
+    });
+  });
+
+  it("warns when the token is more than a capture phone needs, cannot upload, or is not needed at all", () => {
+    expect(describeAccess({ auth: "token", role: "admin", token: "tok_a" })).toEqual({
+      tone: "warn",
+      text: expect.stringMatching(/admin token \(tok_a\).*delete all research data/),
+    });
+    expect(describeAccess({ auth: "token", role: "analyse", token: "tok_b" })).toEqual({
+      tone: "warn",
+      text: expect.stringMatching(/analysis token \(tok_b\).*uploads from this device will be refused/),
+    });
+    expect(describeAccess({ auth: "disabled", role: "admin", token: null })).toEqual({
+      tone: "warn",
+      text: expect.stringMatching(/no access tokens set.*Set EYEREF_API_TOKENS before collecting real data/),
+    });
+  });
+
+  it("passes on the server's words when a token's role does not allow a request", async () => {
+    mockFetch(403, {
+      detail:
+        "This API token is for reading and exporting research data, so it cannot do this. Ask the study's administrator for a token that can.",
+      role: "analyse",
+    });
+    await expect(
+      api.uploadAssessment({ url: "http://api.test", token: "t" }, { record: {}, images: [] }),
+    ).rejects.toMatchObject({
+      status: 403,
+      message: expect.stringMatching(/^This API token is for reading/),
+    });
   });
 });
 

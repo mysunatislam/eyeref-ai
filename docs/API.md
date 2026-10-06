@@ -21,11 +21,41 @@ export EYEREF_ENV=production   # refuse to start without tokens or an image-encr
 - Public: `GET /health`, `GET /api/models`, `GET /api/devices`, `GET /api/meta/extractor`,
   `GET /api/assistant/status`, and CORS preflight requests.
 - Several comma-separated tokens can be active at once, so a token can be rotated without downtime.
-  Tokens shorter than 24 characters are refused at startup.
+  Tokens shorter than 24 characters are refused at startup, and so is a token listed twice.
 - Tokens are compared in constant time and never appear in logs or in the config's repr. The
   [audit log](#audit-log) names each caller by the token's fingerprint instead.
 - In the web app, paste the token under Calibration → App settings. It is stored on that device only.
+  **Check access**, under it, asks the server what the token may do.
 - With no tokens in development (the default), auth is off and `/health` reports `"auth": "disabled"`.
+
+### Roles
+
+Each token has a role, so a capture phone that is lost or shared gives away as little as possible.
+Write the role before the token; a token without one is an admin token, as every token was before
+roles existed:
+
+```bash
+EYEREF_API_TOKENS="collect:<phone token>,analyse:<analyst token>,admin:<administrator token>"
+```
+
+| Role | For | May call, besides the public endpoints |
+| --- | --- | --- |
+| `collect` | Capture phones | `POST /api/assessments`, `POST /api/subjects`, `POST /api/subjects/{id}/ground-truth`, `POST /api/sessions`, `POST /api/sessions/{id}/captures`, `POST /api/sessions/{id}/predictions`. It cannot read any research data back. An upload can add the profile of a phone the server does not know yet, but never replaces one it has. |
+| `analyse` | Whoever analyses the study | `GET /api/subjects`, `GET /api/dataset/export`. It cannot add, change or delete anything. |
+| `admin` | The study's administrator | Every endpoint. Only an admin may delete a subject (`DELETE /api/subjects/{id}`), add or replace a device profile (`POST /api/devices`), or read the [audit log](#audit-log). |
+
+- Every role may call the endpoints that compute on what the request brings and store nothing
+  (`/api/analyze/frame`, `/api/estimate`, `/api/simulate`, `/api/bench/simulate`,
+  `/api/assistant/explain`), and `GET /api/access`.
+- A request the token's role does not allow gets 403, with the role and a sentence saying what the
+  token is for: `{"detail": "This API token is for adding research data, so it cannot do this. Ask the study's administrator for a token that can.", "role": "collect"}`.
+  Like a 401, it is refused before it reaches the API, so nothing is stored or audited.
+- An endpoint added later is admin-only until it is given to a role in `ROLE_ENDPOINTS`
+  (`backend/eyeref/api/auth.py`). A test fails if any endpoint is neither public nor decided.
+- An unknown role (`colect:...`) stops the server at startup with the list of roles.
+- `GET /api/access` returns what the caller's token may do: `{"auth": "token", "role": "collect", "token": "tok_0123456789ab"}`,
+  where `token` is the fingerprint the audit log uses. With auth off it returns
+  `{"auth": "disabled", "role": "admin", "token": null}`.
 
 ## Limits
 
@@ -41,6 +71,7 @@ export EYEREF_ENV=production   # refuse to start without tokens or an image-encr
 | Method | Path | Description |
 | --- | --- | --- |
 | GET | `/health` | Status and version |
+| GET | `/api/access` | What the caller's token may do: its [role](#roles) and fingerprint |
 | GET | `/api/models` | Available estimators and their versions (the physics estimator, and the ONNX model if loaded) |
 | GET | `/api/devices` | Device profiles |
 | POST | `/api/devices` | Add or replace a device profile (`DeviceProfile`). The id is up to 64 letters, digits, `.`, `_` or `-`, because it names the profile's file |
@@ -132,9 +163,9 @@ nothing and records nothing.
 - **Reading it.** `GET /api/audit?subject_id=&action=&before=&limit=` returns `{events, next_before}`,
   newest first. Each event is `{id, at, actor, action, subject_id, details}`, with `at` in UTC.
   `limit` is 1 to 1000 (default 100). To get the next page, pass `next_before` as `before`; it is
-  `null` on the last page. Like every data endpoint, it needs a token.
-- A request with a missing or wrong token gets 401 before it reaches the API, so it appears in the
-  server's access log rather than the audit log.
+  `null` on the last page. It needs an admin token.
+- A request with a missing or wrong token gets 401, and one its token's role does not allow gets 403,
+  before it reaches the API, so it appears in the server's access log rather than the audit log.
 
 ## Optional AI explanation
 
@@ -205,6 +236,6 @@ See `.env.example`. The variables are:
 - `EYEREF_MODEL_PATH`
 - `EYEREF_CORS_ORIGINS`
 - `EYEREF_ENV` (`development` or `production`)
-- `EYEREF_API_TOKENS` (comma-separated bearer tokens)
+- `EYEREF_API_TOKENS` (comma-separated bearer tokens, each optionally `collect:`, `analyse:` or `admin:` first)
 - `EYEREF_MAX_BODY_BYTES` (default 10 MB)
 - `MAIRA_*`

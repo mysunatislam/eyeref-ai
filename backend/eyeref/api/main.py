@@ -325,6 +325,14 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
         return {"status": "ok", "version": __version__, "storage_encrypted": storage.encrypted,
                 "ml_model_available": learned.available, "auth": "token" if auth.enabled else "disabled"}
 
+    @app.get("/api/access")
+    def access(request: Request) -> dict[str, Any]:
+        """What the calling token may do: its role, and its fingerprint as the audit log names it. With auth
+        off, anyone may do anything."""
+        if not auth.enabled:
+            return {"auth": "disabled", "role": "admin", "token": None}
+        return {"auth": "token", "role": request.state.role, "token": request.state.actor}
+
     @app.get("/api/models")
     def models() -> list[dict[str, Any]]:
         return [

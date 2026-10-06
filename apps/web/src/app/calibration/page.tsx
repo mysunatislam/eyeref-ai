@@ -2,12 +2,14 @@
 import { useState } from "react";
 import { DeadZoneCalculator } from "@/components/calibration/DeadZoneCalculator";
 import { ScreenCalibration } from "@/components/calibration/ScreenCalibration";
+import { ServerAccess } from "@/components/calibration/ServerAccess";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Switch } from "@/components/ui/switch";
+import { connOf } from "@/lib/api";
 import { DEVICE_PROFILES, eccentricityMm, getDevice } from "@/lib/devices";
 import { useSettings } from "@/lib/settings";
 import type { DeviceProfile } from "@/lib/types";
@@ -123,7 +125,7 @@ export default function CalibrationPage() {
               </Field>
               <Field
                 label="Research backend access token"
-                hint="Only needed when the backend sets EYEREF_API_TOKENS. Stored on this device only."
+                hint="Only needed when the backend sets EYEREF_API_TOKENS. A capture phone needs a collection token, which can upload records but not read them. Stored on this device only."
               >
                 <Input
                   type="password"
@@ -132,6 +134,7 @@ export default function CalibrationPage() {
                   onBlur={(e) => set({ apiToken: e.target.value.trim() })}
                 />
               </Field>
+              <ServerAccess conn={connOf(s)} className="col-span-2" />
             </div>
           </CardContent>
         </Card>
