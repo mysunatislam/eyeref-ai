@@ -2,6 +2,8 @@
 for validation."""
 
 import copy
+import csv
+import io
 import json
 import statistics
 
@@ -11,6 +13,7 @@ from eyeref.api.main import GRADES, create_app
 from eyeref.calibration.device_profiles import BUILTIN_PROFILES
 from eyeref.simulation.cohort import make_subject, run_simulated_assessment
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine, text
 
 REFERENCES = [{"eye": "OD", "method": "autorefractor", "sphere": -3.0, "cylinder": -0.5, "axis": 10},
               {"eye": "OD", "method": "subjective", "sphere": -2.75, "cylinder": 0, "vertex_distance_mm": 13.5}]
@@ -140,3 +143,29 @@ def test_each_frame_carries_what_training_needs_from_its_capture(client, release
     assert second[0]["eccentricity_mm"] == 6.5
     assert third[0]["eccentricity_mm"] == BUILTIN_PROFILES["simulated-phone"].eccentricity_mm() == 8.0
     assert third[0]["pupil_diameter_mm"] is None and third[0]["f_pupil_diameter_mm"] == 0.0
+
+
+def test_the_same_data_always_exports_to_the_same_file(tmp_path, released):
+    url = fresh_database(tmp_path)
+    client = TestClient(create_app(url, data_dir=str(tmp_path)))
+    frames, report = copy.deepcopy(released)
+    visits = {}
+    for ref, day in (("later", "2026-09-08"), ("earlier", "2026-09-01")):  # the later visit uploaded first
+        for f in frames:
+            f["metadata"]["timestamp"] = f"{day}T10:00:00Z"
+        visits[ref] = _upload(client, (frames, report), ref)["session_id"]
+
+    def export():
+        return client.get("/api/dataset/export", params={"include_simulated": True}).text
+
+    before = export()
+    engine = create_engine(url)
+    try:
+        with engine.begin() as conn:  # PostgreSQL moves rewritten rows, as withdrawing images does
+            conn.execute(text("UPDATE captures SET illumination = illumination WHERE session_id = :s"),
+                         {"s": visits["later"]})
+    finally:
+        engine.dispose()
+    assert export() == before  # so a dataset's checksum names its data
+    keys = [(r["session_started_at"], r["eye"], int(r["frame_index"])) for r in csv.DictReader(io.StringIO(before))]
+    assert keys == sorted(keys) and keys[0][0].startswith("2026-09-01")  # visits in the order they took place

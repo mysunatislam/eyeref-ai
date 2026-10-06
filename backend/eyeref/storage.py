@@ -51,6 +51,4 @@ class LocalStorage:
         return self._fernet.decrypt(raw) if self._fernet else raw
 
     def delete(self, key: str) -> None:
-        p = self._path(key)
-        if p.exists():
-            p.unlink()
+        self._path(key).unlink(missing_ok=True)  # already gone is fine: deleting twice at once must not fail

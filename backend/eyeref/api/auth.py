@@ -65,8 +65,12 @@ ROLE_ENDPOINTS: dict[str, frozenset[tuple[str, str]]] = {
     }),
     "analyse": frozenset({("GET", "/api/subjects"), ("GET", "/api/dataset/export"), *_ANY_ROLE}),
 }
-#: Decided admin-only: deleting data, changing a device's calibration for everyone, reading the audit log.
-ADMIN_ONLY = frozenset({("DELETE", "/api/subjects/{subject_id}"), ("POST", "/api/devices"), ("GET", "/api/audit")})
+#: Decided admin-only: deleting data, a participant's whole record (their eye images included), changing a
+#: device's calibration for everyone, reading the audit log.
+ADMIN_ONLY = frozenset({
+    ("DELETE", "/api/subjects/{subject_id}"), ("DELETE", "/api/subjects/{subject_id}/images"),
+    ("GET", "/api/subjects/{subject_id}"), ("POST", "/api/devices"), ("GET", "/api/audit"),
+})
 
 
 def _pattern(template: str) -> re.Pattern[str]:

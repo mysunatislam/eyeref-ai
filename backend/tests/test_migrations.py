@@ -164,6 +164,34 @@ def test_references_recorded_before_visits_were_linked_join_the_only_visit(tmp_p
     assert linked == {"g-one": "one-v1", "g-two": None, "g-none": None}
 
 
+def test_images_stored_before_the_server_recorded_when_count_from_when_they_were_taken(tmp_path):
+    url = fresh_database(tmp_path)
+    old = connect(url)
+    upgrade(old, "0004")
+    taken = datetime(2026, 8, 1, 9, 30, tzinfo=UTC)
+    with old.begin() as conn:
+        _device(conn)
+        _subject(conn, "s1")
+        _visit(conn, "s1", "v1")
+        for cid, key in (("with-image", "s1/v1/with-image.png"), ("without", None)):
+            _insert(conn, m.Capture, id=cid, session_id="v1", eye="OD", frame_index=0, timestamp=taken,
+                    illumination="flash", metadata_json={}, image_key=key, image_encrypted=False)
+    old.dispose()
+
+    engine = make_engine(url)
+    with engine.connect() as conn:
+        stored = dict(conn.execute(text("select id, image_stored_at from captures")).all())
+        withdrawn = conn.execute(text("select images_withdrawn_at from subjects")).scalar_one()
+    assert {k: _utc(v) for k, v in stored.items()} == {"with-image": taken, "without": None}
+    assert withdrawn is None  # no one has withdrawn yet
+
+
+def _utc(at):
+    if isinstance(at, str):  # SQLite returns text for a raw query
+        at = datetime.fromisoformat(at)
+    return at if at is None or at.tzinfo else at.replace(tzinfo=UTC)
+
+
 def test_an_older_version_refuses_a_database_a_newer_one_migrated(tmp_path):
     url = fresh_database(tmp_path)
     engine = make_engine(url)

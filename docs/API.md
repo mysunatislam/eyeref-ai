@@ -42,7 +42,7 @@ EYEREF_API_TOKENS="collect:<phone token>,analyse:<analyst token>,admin:<administ
 | --- | --- | --- |
 | `collect` | Capture phones | `POST /api/assessments`, `POST /api/subjects`, `POST /api/subjects/{id}/ground-truth`, `POST /api/sessions`, `POST /api/sessions/{id}/captures`, `POST /api/sessions/{id}/predictions`. It cannot read any research data back. An upload can add the profile of a phone the server does not know yet, but never replaces one it has. |
 | `analyse` | Whoever analyses the study | `GET /api/subjects`, `GET /api/dataset/export`. It cannot add, change or delete anything. |
-| `admin` | The study's administrator | Every endpoint. Only an admin may delete a subject (`DELETE /api/subjects/{id}`), add or replace a device profile (`POST /api/devices`), or read the [audit log](#audit-log). |
+| `admin` | The study's administrator | Every endpoint. Only an admin may read a participant's whole record (`GET /api/subjects/{id}`), withdraw their image consent (`DELETE /api/subjects/{id}/images`), delete a subject (`DELETE /api/subjects/{id}`), add or replace a device profile (`POST /api/devices`), or read the [audit log](#audit-log). |
 
 - Every role may call the endpoints that compute on what the request brings and store nothing
   (`/api/analyze/frame`, `/api/estimate`, `/api/simulate`, `/api/bench/simulate`,
@@ -113,6 +113,9 @@ record = {client_ref, subject: {code, age_group, consent_research, consent_image
   only with that session's captures. The session is dated by its first capture, not by the upload.
 - **Consent.** 403 without `consent_research`, and 403 if images are sent without
   `consent_image_storage`. Each image must belong to exactly one capture (`image` is its index).
+  After a participant [withdraws image consent](#participants-data), a record of a visit that began
+  before the withdrawal gets 403 if it carries images (send it again without them), and the consent it
+  carries does not give theirs back.
 - **No mixing.** The session, every capture and the report must agree on `simulated`, and the report
   must come from the session's device profile (422 otherwise).
 - **Custom phones.** A device profile the server does not know is registered from `device` (404 if
@@ -126,12 +129,64 @@ The step-by-step endpoints below remain for scripts and other clients.
 | POST | `/api/assessments` | One record, all or nothing, as above |
 | POST | `/api/subjects` | `{code, age_group, consent_research, consent_image_storage, ...}`. Returns **403 without `consent_research`** and 409 for a duplicate code |
 | GET | `/api/subjects` | List |
-| DELETE | `/api/subjects/{id}` | Cascading delete, including the stored images |
+| GET | `/api/subjects/{id}?include_images=false` | Everything stored about one subject ([participants' data](#participants-data)) |
+| DELETE | `/api/subjects/{id}/images` | Withdraws consent to store eye images: deletes them and keeps the rest ([participants' data](#participants-data)) |
+| DELETE | `/api/subjects/{id}` | Cascading delete, including the stored images. An earlier visit's record cannot bring them back ([participants' data](#participants-data)) |
 | POST | `/api/subjects/{id}/ground-truth` | `{eye, method, sphere, cylinder, axis, vertex_distance_mm, instrument, examiner, raw, session_id}`. Stored in minus cylinder. `session_id` is the visit it was measured at (404 if the subject has no such session); give it whenever the subject may have more than one visit |
 | POST | `/api/sessions` | `{subject_id, device_id, protocol_version, cycloplegia, condition_label, simulated, ...}` |
-| POST | `/api/sessions/{id}/captures` | multipart: `metadata`, `features`, `quality`, optional `image` (PNG). The image is refused with 403 without image consent, is stored once per capture, and is encrypted at rest when `EYEREF_STORAGE_KEY` is set |
+| POST | `/api/sessions/{id}/captures` | multipart: `metadata`, `features`, `quality`, optional `image` (PNG). The image is refused with 403 without image consent, or when the subject withdrew it after the session began. It is stored once per capture, and is encrypted at rest when `EYEREF_STORAGE_KEY` is set |
 | POST | `/api/sessions/{id}/predictions` | `AssessmentReport`. Stores one row per eye with model, extractor and calibration versions |
 | GET | `/api/dataset/export?fmt=csv\|json&include_simulated=false&level=capture\|eye` | `level=capture` (the default): one row per capture, with flattened features, its geometry, quality and extractor version, the visit's start, and the reference refractions of the same visit per method ([pairing](DATASET.md#schema-backendeyerefdbmodelspy)), for [training](MODEL_TRAINING.md#training-on-real-data). `level=eye`: one row per eye per visit, with what the product released, how sure it was, how its frames were graded and the same references, for [validation](VALIDATION_PROTOCOL.md#analysing-a-study) ([columns](DATASET.md)) |
+
+## Participants' data
+
+What a participant can ask of the study, and how the server does it. Each is an admin action, and
+each is [audited](#audit-log). See also [Consent and retention](DATASET.md#consent-and-retention).
+
+**A copy of their data.** `GET /api/subjects/{id}` returns everything stored about the subject:
+
+```
+{subject: {...},
+ visits: [{id, device_id, started_at, ..., references: [...], captures: [...], results: [...]}],
+ references_without_visit: [...]}
+```
+
+- Each capture has its metadata, features and quality, and `image_stored`. The storage key is left out.
+- With `include_images=true`, each capture whose image is stored also has `image`, the eye crop as a
+  PNG data URL, decrypted. An image whose file is already gone, because it is being deleted or deleting
+  it failed part way, has `image: null`.
+- Times are in UTC. Visits are oldest first. 404 for an unknown subject.
+
+**Withdrawing image consent.** `DELETE /api/subjects/{id}/images` deletes every eye image stored for
+the subject and keeps the rest of their data, which their research consent still covers. It returns
+`{subject_id, images_deleted, images_withdrawn_at}`. Calling it again deletes nothing more.
+
+- `consent_image_storage` becomes false, and `images_withdrawn_at` records when.
+- No image from a visit that began before then is stored again, whether it comes in an upload or is
+  added to the session later. Such a record can still be uploaded without its images.
+- The participant can consent again at a later visit. That covers the images of visits after the
+  withdrawal only.
+- An upload storing images of the subject at the same moment finishes first, and its images are
+  deleted too; one that arrives during the withdrawal waits for it, then is refused.
+
+**Leaving the study.** `DELETE /api/subjects/{id}` deletes the subject and everything about them. The
+server keeps only a SHA-256 hash of their study code and when they left, never the code. A record of a
+visit from before then, sent again or sent late by a phone that was offline, gets 403 and stores
+nothing. A visit after it is a new enrolment.
+
+**Retention.** With `EYEREF_IMAGE_RETENTION_DAYS=<days>`, each eye image is deleted that many days
+after the server stored it, and the rest of the record stays. The server deletes the images past the
+limit when it starts, before it serves anything, and then every hour.
+
+- A value that is not a whole number of days, 1 or more, stops the server at startup.
+- Images stored before the server recorded when, by earlier versions, count from when they were
+  photographed.
+- Unset, images are kept until the participant withdraws image consent or is deleted.
+
+**If deleting fails.** The image files are deleted before the database forgets them. If one cannot be
+deleted, the request fails with 500, the images stay recorded, and calling it again finishes the job.
+A failed retention pass is logged and tried again an hour later. An image is never left on disk
+without a record of it.
 
 ## Audit log
 
@@ -144,6 +199,9 @@ nothing and records nothing.
 | --- | --- | --- |
 | `subject.create` | A subject is enrolled | Research and image consent, consent version |
 | `subject.list` | The subject list is read | Number of subjects |
+| `subject.read` | A subject's whole record is read | Number of visits, number of images included |
+| `subject.images_withdraw` | A subject withdraws consent to store eye images | Number of images deleted |
+| `subject.images_expire` | Images pass the [retention limit](#participants-data) | Number of images deleted, the limit in days |
 | `subject.delete` | A subject and all their data are deleted | Number of images deleted |
 | `ground_truth.add` | A reference refraction is added | Its id, the visit, the eye, the method |
 | `session.create` | A capture session starts | Its id, the device profile, whether it is simulated |
@@ -156,7 +214,7 @@ nothing and records nothing.
 
 - **Who.** `actor` is the fingerprint of the API token that was used: `tok_` and the first 12 hex
   digits of the token's SHA-256. The token itself is never stored. With auth off, `actor` is
-  `anonymous`. To find which token a fingerprint belongs to:
+  `anonymous`, and for images deleted by the retention limit it is `retention`. To find which token a fingerprint belongs to:
   `python -c "import hashlib, sys; print('tok_' + hashlib.sha256(sys.argv[1].encode()).hexdigest()[:12])" "$TOKEN"`.
 - **No personal data.** Events hold ids, counts and flags: no subject codes, measurements, notes or
   images. The trail is therefore kept when a subject is deleted, and still shows what happened to them.
@@ -238,4 +296,5 @@ See `.env.example`. The variables are:
 - `EYEREF_ENV` (`development` or `production`)
 - `EYEREF_API_TOKENS` (comma-separated bearer tokens, each optionally `collect:`, `analyse:` or `admin:` first)
 - `EYEREF_MAX_BODY_BYTES` (default 10 MB)
+- `EYEREF_IMAGE_RETENTION_DAYS` (delete each eye image this many days after it was stored; unset keeps them)
 - `MAIRA_*`

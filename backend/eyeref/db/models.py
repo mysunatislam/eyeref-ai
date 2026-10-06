@@ -9,6 +9,10 @@ Design rules (docs/DATASET.md):
   encrypted) object store, never in the DB.
 * Deleting a subject cascades to sessions, captures, ground truth and
   predictions, and the storage layer deletes the image objects.
+* Withdrawing image consent deletes a subject's images and keeps the rest;
+  images older than the retention limit are deleted the same way.
+* A deleted subject is remembered only by a hash of their code, so an older
+  record cannot bring them back.
 * Every change to research data, and every read or export of it, adds an audit
   event in the same transaction.
 """
@@ -58,6 +62,9 @@ class Subject(Base):
     consent_research: Mapped[bool] = mapped_column(Boolean, default=False)
     consent_image_storage: Mapped[bool] = mapped_column(Boolean, default=False)
     consent_version: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    # When the subject last withdrew consent to store eye images. Images of captures taken before then
+    # are never stored again, whatever an older record says.
+    images_withdrawn_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     site: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     simulated: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
@@ -118,6 +125,8 @@ class Capture(Base):
     quality_json: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, nullable=True)
     image_key: Mapped[Optional[str]] = mapped_column(String(256), nullable=True)  # eye crop only
     image_encrypted: Mapped[bool] = mapped_column(Boolean, default=False)
+    # When the server stored the image, by its own clock: the retention limit counts from here.
+    image_stored_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
 
     session: Mapped[CaptureSession] = relationship(back_populates="captures")
 
@@ -160,6 +169,15 @@ class AuditEvent(Base):
     action: Mapped[str] = mapped_column(String(64), index=True)
     subject_id: Mapped[Optional[str]] = mapped_column(String(32), nullable=True, index=True)
     details: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, nullable=True)
+
+
+class DeletedSubject(Base):
+    """A subject who was deleted, known only by a hash of their code and when, so that a record of an earlier
+    visit, still waiting on a phone, cannot bring them back (docs/DATASET.md#consent-and-retention)."""
+
+    __tablename__ = "deleted_subjects"
+    code_sha256: Mapped[str] = mapped_column(String(64), primary_key=True)
+    deleted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 
 class Prediction(Base):
