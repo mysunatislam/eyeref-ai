@@ -41,7 +41,12 @@ recorded in the audit log.
 - **Nothing left behind.** The image files are deleted before the database forgets them. If deleting
   fails, the images stay recorded and the next attempt deletes them, so no image stays on disk without
   a record of it. An upload that stores images at the same moment as a withdrawal or deletion either
-  finishes first, and loses its images with the rest, or waits and is refused.
+  finishes first, and loses its images with the rest, or waits and is refused. The image check lists any
+  file no record names, such as one left by a server that stopped mid-upload, and can delete it
+  ([Looking after stored images](API.md#looking-after-stored-images)).
+- **Backups.** A backup keeps what was deleted after it was made, so keep backups no longer than the
+  protocol allows, and after restoring one, repeat the withdrawals and deletions made since
+  ([Backups](API.md#looking-after-stored-images)).
 - **On the phone.** The web app keeps its own copy only on the device, with its own limit of 7, 30 or
   90 days, chosen in History.
 
