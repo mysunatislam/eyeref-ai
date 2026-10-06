@@ -57,7 +57,7 @@ export function ProfileStep({
               readOnly={!!induced}
             />
           </Field>
-          <Field label="Age group" hint="Sets accommodation model and screening thresholds">
+          <Field label="Age group" hint="Sets how far the eyes can focus, and the screening thresholds">
             <Select value={age} onChange={(e) => setAge(e.target.value as AgeGroup)}>
               {Object.entries(AGE_LABEL).map(([k, v]) => (
                 <option key={k} value={k}>
@@ -137,8 +137,8 @@ export function ProfileStep({
                 <AlertTriangle className="size-4" /> Children accommodate strongly
               </div>
               <p className="mt-2">
-                Without cycloplegic drops, children can hide hyperopia by focusing. Results for this age group
-                are screening-only, and wider uncertainty is applied automatically.
+                Without cycloplegic drops, children can hide hyperopia by focusing on the light. Results for
+                this age group are screening-only: a range or a category, never a number.
               </p>
             </CardContent>
           </Card>

@@ -65,9 +65,10 @@
 | Power vectors, axis maths | `optics/power_vector.py` | `optics/powerVector.ts` |
 | Meridional fit, sampling | `optics/meridional.py` | `optics/meridional.ts` |
 | Photorefraction physics | `optics/photorefraction.py` | `optics/photorefraction.ts` |
-| Thresholds, accommodation, class probabilities | `optics/classification.py` | `optics/classification.ts` |
+| Thresholds, focusing amplitude and drift, class probabilities | `optics/classification.py` | `optics/classification.ts` |
 | Segmentation / features / quality | `cv/*.py` | `cv/*.ts` |
 | Estimators | `inference/estimators.py` | `inference/estimators.ts` |
+| Focusing on the light (both eyes at once) | `inference/focus.py` | `inference/focus.ts` |
 | Fusion and gating | `inference/fusion.py` | `inference/fusion.ts` |
 | Simulator | `simulation/*.py` | `simulation/*.ts` |
 | Device profiles | `calibration/device_profiles.py` | `devices.ts` |

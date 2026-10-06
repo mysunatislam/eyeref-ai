@@ -34,9 +34,23 @@ def thresholds_for_age(age: AgeGroup) -> ScreeningThresholds:
     return ScreeningThresholds()
 
 
-#: Residual accommodation uncertainty (SD, D) by age group.  Non-cycloplegic
-#: measurements in young eyes are biased towards myopia and fluctuate; this is
-#: an explicit, documented model of that limitation (docs/MEDICAL_LIMITATIONS.md).
+#: How far the eyes can focus (D), by age group: Hofstetter's average amplitude,
+#: 18.5 - 0.3 x age, at the youngest age in each group, and at least 1 D for the
+#: depth of focus.  It bounds how much hyperopia an eye can hide by focusing on
+#: the light (eyeref.inference.focus).  Unknown age takes the largest.
+ACCOMMODATION_AMPLITUDE_D: dict[str, float] = {
+    "child_3_7": 17.6,
+    "child_8_12": 16.1,
+    "teen": 14.6,
+    "adult_18_39": 13.1,
+    "adult_40_59": 6.5,
+    "adult_60_plus": 1.0,
+    "unknown": 17.6,
+}
+
+#: What is left of focusing once the eyes' response to the light is modelled
+#: (eyeref.inference.focus): its moment-to-moment drift and a slight lead or
+#: lag, as an SD (D) by age group (docs/MEDICAL_LIMITATIONS.md).
 ACCOMMODATION_SD: dict[str, float] = {
     "child_3_7": 0.80,
     "child_8_12": 0.65,

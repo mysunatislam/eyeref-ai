@@ -91,8 +91,13 @@ def test_cyl_axis_hidden_unless_enabled():
 
 def test_confidence_threshold_controls_screening_vs_repeat():
     frames = [_frame("OD", 0, -0.5, sigma=0.9) for _ in range(5)]
-    r = fuse_eye("OD", frames, "child_3_7", False, GatingConfig(min_class_confidence_screening=0.99))
-    assert r.output_level == "repeat"
+    cfg = GatingConfig(min_class_confidence_screening=0.99)
+    # the reading as the camera saw it is too uncertain for any class
+    assert fuse_eye("OD", frames, "child_3_7", False, cfg, focus_model=False).output_level == "repeat"
+    # allowing for focusing on the light, the eye could hide hyperopia: a range with no class, as a repeat
+    # would read the same
+    r = fuse_eye("OD", frames, "child_3_7", False, cfg)
+    assert (r.output_level, r.refractive_class, r.focus_limited) == ("screening", None, True)
 
 
 def test_dead_zone_only_gives_screening_statement():
@@ -106,8 +111,12 @@ def test_left_right_separation_and_anisometropia():
     frames = [_frame("OD", rot, -4.0) for rot in (0, 90) for _ in range(5)]
     frames += [_frame("OS", rot, -1.0) for rot in (0, 90) for _ in range(5)]
     rep = build_report(frames, "adult_60_plus", DEV.id, "cal", "t", "0", "test", "x")
-    assert rep.eyes["OD"].se_d == pytest.approx(-4.0, abs=0.15)
-    assert rep.eyes["OS"].se_d == pytest.approx(-1.0, abs=0.15)
+    od, os_ = rep.eyes["OD"], rep.eyes["OS"]
+    assert od.power_vector["M"] == pytest.approx(-4.0, abs=0.15)
+    assert os_.power_vector["M"] == pytest.approx(-1.0, abs=0.15)
+    # the eyes could be focusing for the left eye's light, which moves both by the same amount
+    assert od.se_d - os_.se_d == pytest.approx(-3.0, abs=0.15)
+    assert -4.0 < od.se_d < -3.0 + 0.15
     assert rep.anisometropia_probability > 0.9
     assert any("anisometropia" in r for r in rep.referral_reasons)
 

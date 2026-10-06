@@ -11,6 +11,7 @@ import {
   topClass,
   truncatedPriorClassProbabilities,
   type ClassProbabilities,
+  type ScreeningThresholds,
 } from "../optics/classification";
 import {
   countDistinctMeridians,
@@ -18,19 +19,23 @@ import {
   posteriorPowerVector,
   sampleRefraction,
   type MeridionalObservation,
+  type RefractionDistribution,
 } from "../optics/meridional";
-import { normalizeAxis, powerInMeridian } from "../optics/powerVector";
+import { formatDiopters, normalizeAxis, powerInMeridian } from "../optics/powerVector";
 import { isUsable } from "../cv/quality";
 import type {
   AgeGroup,
   AssessmentReport,
   EyeResult,
   EyeSide,
+  FocusSummary,
   FrameRecord,
   MeridianSummary,
   Provenance,
   QualityGrade,
+  RefractiveClass,
 } from "../types";
+import { DEFAULT_FOCUS, focusPosterior, type EyeReading, type FocusPosterior } from "./focus";
 
 export const APP_VERSION = "0.1.0";
 export const RHO_SYSTEMATIC = 0.5;
@@ -55,6 +60,10 @@ export interface GatingConfig {
   calibrationSdCalibrated: number;
   populationPriorMean: number;
   populationPriorSd: number;
+  /** the share of what it needs that an eye focuses on the light, assumed uniform over this range */
+  focusResponse: [number, number];
+  /** correlation between a person's two eyes in the population (the focusing model's prior) */
+  eyeCorrelation: number;
 }
 
 export const DEFAULT_GATING: GatingConfig = {
@@ -70,7 +79,18 @@ export const DEFAULT_GATING: GatingConfig = {
   calibrationSdCalibrated: 0.2,
   populationPriorMean: -0.5,
   populationPriorSd: 2.0,
+  focusResponse: [0, 1],
+  eyeCorrelation: 0.95,
 };
+
+/** The focusing model's settings that the gating configuration carries. */
+const focusConfig = (cfg: GatingConfig) => ({
+  ...DEFAULT_FOCUS,
+  focusResponse: cfg.focusResponse,
+  priorMeanD: cfg.populationPriorMean,
+  priorSdD: cfg.populationPriorSd,
+  eyeCorrelation: cfg.eyeCorrelation,
+});
 
 const binMeridian = (m: number) =>
   normalizeAxis(Math.round(normalizeAxis(m) / MERIDIAN_BIN_DEG) * MERIDIAN_BIN_DEG);
@@ -115,16 +135,49 @@ function emptyEye(eye: EyeSide, frames: FrameRecord[], usable: FrameRecord[]): E
   };
 }
 
-export function fuseEye(
+/** What an eye's frames measured, before focusing on the light is allowed for. */
+interface EyeMeasurement {
+  /** filled with everything measured; the output fields are set by gateEye */
+  res: EyeResult;
+  /** already final: nothing usable was measured */
+  done: boolean;
+  t: ScreeningThresholds;
+  reading: EyeReading;
+  hasObs: boolean;
+  nQuant: number;
+  nIntervals: number;
+  dist: RefractionDistribution | null;
+  /** the class probabilities of the reading on its own, as if the eyes had not focused */
+  readingProbs: ClassProbabilities | null;
+  /** the 95% half-width of the reading on its own (D) */
+  readingHalf: number | null;
+  acc: number;
+}
+
+function measureEye(
   eye: EyeSide,
   frames: FrameRecord[],
   ageGroup: AgeGroup,
   calibrated: boolean,
-  cfg: GatingConfig = DEFAULT_GATING,
-): EyeResult {
+  cfg: GatingConfig,
+): EyeMeasurement {
   const t = thresholdsForAge(ageGroup);
+  const acc = ACCOMMODATION_SD[ageGroup] ?? 0.5;
   const usable = frames.filter((f) => isUsable(f.quality) && f.estimate && f.estimate.meridianDeg !== null);
   const res = emptyEye(eye, frames, usable);
+  const final = (): EyeMeasurement => ({
+    res,
+    done: true,
+    t,
+    reading: { kind: "none" },
+    hasObs: false,
+    nQuant: 0,
+    nIntervals: 0,
+    dist: null,
+    readingProbs: null,
+    readingHalf: null,
+    acc,
+  });
   if (frames.length) {
     res.medianQuality = median(frames.map((f) => f.quality.score));
     const grades = (usable.length ? usable : frames).map((f) => f.quality.grade);
@@ -135,7 +188,7 @@ export function fuseEye(
   res.reflexMeanLuma = lum.length ? median(lum) : null;
   if (!usable.length) {
     res.message = "No frame passed quality control. Repeat the measurement (see capture guidance).";
-    return res;
+    return final();
   }
   const groups = new Map<number, FrameRecord[]>();
   for (const f of usable) {
@@ -181,7 +234,7 @@ export function fuseEye(
   }
   if (!obs.length && !intervals.length) {
     res.message = `Too few usable frames per meridian (need ${cfg.minUsableFramesPerMeridian}). Repeat the measurement.`;
-    return res;
+    return final();
   }
   let post;
   if (obs.length) {
@@ -206,7 +259,6 @@ export function fuseEye(
     );
   }
   const nQuant = countDistinctMeridians(obs.map((o) => o.meridianDeg));
-  const acc = ACCOMMODATION_SD[ageGroup] ?? 0.5;
   const cal = calibrated ? cfg.calibrationSdCalibrated : cfg.calibrationSdUncalibrated;
   post.cov[0][0] += acc ** 2 + cal ** 2;
   const dist = sampleRefraction(post);
@@ -223,50 +275,148 @@ export function fuseEye(
     axisSamples: dist.axisSamples,
     axisSdDeg: dist.axisSdDeg,
   };
-  let probs: ClassProbabilities;
-  if (obs.length) probs = classProbabilities(M, sd[0]!, t);
-  else {
+  let readingProbs: ClassProbabilities;
+  let reading: EyeReading;
+  if (obs.length) {
+    readingProbs = classProbabilities(M, sd[0]!, t);
+    reading = { kind: "reading", meanD: M, sdD: sd[0]! };
+  } else {
     const lo = Math.min(...intervals.map((i) => i[1]));
     const hi = Math.max(...intervals.map((i) => i[2]));
-    probs = truncatedPriorClassProbabilities(lo, hi, t, cfg.populationPriorMean, cfg.populationPriorSd);
+    readingProbs = truncatedPriorClassProbabilities(
+      lo,
+      hi,
+      t,
+      cfg.populationPriorMean,
+      cfg.populationPriorSd,
+    );
     res.deadZoneD = [lo, hi];
+    reading = { kind: "interval", loD: lo, hiD: hi, sdD: Math.sqrt(acc ** 2 + cal ** 2) };
   }
-  res.classProbabilities = probs;
   if (nQuant >= cfg.minDistinctMeridiansForCyl) {
     const key = String(t.astigmatismCyl);
     res.astigmatismProbability = dist.pCylGe[key] ?? dist.pCylGe["0.75"] ?? null;
   }
-  res.notes.push(
-    `Non-cycloplegic measurement: accommodation uncertainty of ±${acc.toFixed(2)} D (SD) included for this age group. True refraction may be more hyperopic than measured.`,
-  );
   if (!calibrated) res.notes.push("Device not calibrated: ±0.50 D calibration uncertainty included.");
+  return {
+    res,
+    done: false,
+    t,
+    reading,
+    hasObs: obs.length > 0,
+    nQuant,
+    nIntervals: intervals.length,
+    dist,
+    readingProbs,
+    readingHalf: obs.length ? (dist.seCi95[1] - dist.seCi95[0]) / 2 : null,
+    acc,
+  };
+}
 
-  const seHalf = (dist.seCi95[1] - dist.seCi95[0]) / 2;
+const CHILD: AgeGroup[] = ["child_3_7", "child_8_12"];
+
+/**
+ * Sets what an eye's result says. With the focusing model, a number is released only when the eye's own
+ * refraction is pinned to the interval limit after allowing for focusing on the light; without it (a
+ * stage 1 capture, which records the eye as the camera saw it), the reading is taken as it stands.
+ */
+function gateEye(
+  m: EyeMeasurement,
+  ageGroup: AgeGroup,
+  cfg: GatingConfig,
+  focus: FocusPosterior | null,
+  workingDistanceM: number,
+): EyeResult {
+  const { res, t, dist } = m;
+  if (m.done || !dist) return res;
+  const ef = focus?.eyes[res.eye] ?? null;
+  const probs = ef ? ef.classProbabilities : m.readingProbs!;
+  res.classProbabilities = probs;
   const top = topClass(probs);
-  if (obs.length && seHalf <= cfg.maxSeCiHalfwidthQuantitative) {
+  const max = cfg.maxSeCiHalfwidthQuantitative;
+  const fmt = (v: number) => formatDiopters(v);
+  const d = workingDistanceM.toFixed(2);
+  let half = m.readingHalf;
+  let shift = 0;
+  if (ef && focus) {
+    half = (ef.ci95[1] - ef.ci95[0]) / 2;
+    res.refractionRange95 = ef.ci95;
+    res.notes.push(
+      `Allows for the eyes focusing on the light ${d} m away, which makes an eye read more myopic than it is: by up to ${focus.amplitudeD.toFixed(1)} D at this age, at ${Math.round(focus.focusResponse[0] * 100)}–${Math.round(focus.focusResponse[1] * 100)}% of what the eye needs.`,
+      `Drift in focusing of ±${m.acc.toFixed(2)} D (SD) included for this age group.`,
+    );
+  } else
+    res.notes.push(
+      `Not corrected for focusing on the light: the reading is the eye as the camera saw it, focusing included. Drift in focusing of ±${m.acc.toFixed(2)} D (SD) included.`,
+    );
+  // focusing on the light can hide this much error above what the reading alone allows
+  const hidden = ef ? ef.ci95[1] - (m.hasObs ? dist.seCi95[1] : res.deadZoneD![1]) : 0;
+  const canHide = hidden >= 1;
+  // Where focusing can hide error, a class rests on the eye's range alone: the population's prior would
+  // otherwise decide how much hyperopia is hidden, so emmetropia is never claimed for such an eye.
+  const cls: RefractiveClass | null = canHide
+    ? ef!.ci95[1] < t.myopiaSe
+      ? "myopia"
+      : ef!.ci95[0] >= t.hyperopiaSe
+        ? "hyperopia"
+        : null
+    : top.confidence >= cfg.minClassConfidenceScreening
+      ? top.label
+      : null;
+
+  if (m.hasObs && half! <= max) {
+    const seD = ef ? ef.medianD : res.powerVector!.M;
+    shift = seD - res.powerVector!.M;
     Object.assign(res, {
       outputLevel: "quantitative",
-      seD: M,
-      seCi95: dist.seCi95,
+      seD,
+      seCi95: ef ? ef.ci95 : dist.seCi95,
       refractiveClass: top.label,
-      severity: severityLabel(M, t),
+      severity: severityLabel(seD, t),
       confidence: top.confidence,
-      message: "Quantitative spherical-equivalent estimate within the configured uncertainty limit.",
+      message:
+        Math.abs(shift) >= 0.05
+          ? "Quantitative spherical-equivalent estimate within the configured uncertainty limit, allowing for the eyes focusing on the light."
+          : "Quantitative spherical-equivalent estimate within the configured uncertainty limit.",
     });
-  } else if (top.confidence >= cfg.minClassConfidenceScreening) {
+  } else if (ef && m.hasObs && canHide) {
+    // focusing on the light is what leaves the eye's refraction open: a repeat would read the same
+    res.focusLimited = true;
+    res.outputLevel = "screening";
+    const [lo, hi] = ef.ci95.map(fmt);
+    if (cls) Object.assign(res, { refractiveClass: cls, confidence: probs[cls] });
+    if (cls === "myopia")
+      res.message = `This eye is myopic, between ${lo} and ${hi}. The eyes could focus on the light ${d} m away, which makes an eye read more myopic than it is by an amount this capture cannot show, so no number is given.`;
+    else if (cls === "hyperopia")
+      res.message = `This eye shows hyperopia even while it can focus on the light: ${lo} or more. Finding how much needs an eye examination with eye drops.`;
+    else {
+      const exam = CHILD.includes(ageGroup) ? "an eye examination with eye drops" : "an eye examination";
+      const open =
+        ef.ci95[0] >= t.myopiaSe ? "emmetropic or hyperopic" : "emmetropic, mildly myopic or hyperopic";
+      res.message = `This eye could focus on the light ${d} m away, which makes it read more myopic than it is (here ${fmt(res.powerVector!.M)}) by an amount this capture cannot show. It is no more myopic than ${lo}; whether it is ${open} needs ${exam}.`;
+    }
+  } else if (cls) {
     Object.assign(res, {
       outputLevel: "screening",
-      refractiveClass: top.label,
-      confidence: top.confidence,
-      seCi95: obs.length ? dist.seCi95 : null,
-      message: obs.length
-        ? `Quantitative refraction unreliable (95% interval ±${seHalf.toFixed(2)} D). Result suggests ${top.label}. Repeat measurement or obtain clinical refraction.`
-        : `No photorefraction crescent detected in any meridian: refraction lies inside this setup's dead zone (${res.deadZoneD![0].toFixed(2)} to ${res.deadZoneD![1].toFixed(2)} D). Screening result only.`,
+      refractiveClass: cls,
+      confidence: probs[cls],
+      seCi95: m.hasObs ? (ef ? ef.ci95 : dist.seCi95) : null,
+      message: m.hasObs
+        ? `Quantitative refraction unreliable (95% interval ±${half!.toFixed(2)} D). Result suggests ${cls}. Repeat measurement or obtain clinical refraction.`
+        : `No photorefraction crescent detected in any meridian: the reading lies inside this setup's dead zone (${fmt(res.deadZoneD![0])} to ${fmt(res.deadZoneD![1])}). Screening result only.`,
     });
-  } else if (!obs.length) {
+  } else if (!m.hasObs) {
+    const [lo, hi] = res.deadZoneD!;
+    // the eye is no more myopic than the reading, give or take its drift and calibration
+    const floor = fmt(ef ? ef.ci95[0] : lo);
+    const ruled = canHide
+      ? `myopia beyond ${floor}, but an eye that can focus on the light can hide hyperopia here, and mild myopia cannot be told from emmetropia at this distance`
+      : ef
+        ? `myopia beyond ${floor} and hyperopia beyond ${fmt(ef.ci95[1])}, but mild myopia cannot be told from emmetropia at this distance`
+        : `myopia beyond ${floor}, but mild myopia cannot be told from emmetropia at this distance`;
     Object.assign(res, {
       outputLevel: "screening",
-      message: `No crescent detected: refraction lies between ${res.deadZoneD![0].toFixed(2)} and ${res.deadZoneD![1].toFixed(2)} D in all measured meridians. This excludes larger refractive errors but cannot separate mild myopia from emmetropia at this distance. Optional: repeat at 1.5 m, or obtain clinical refraction.`,
+      message: `No crescent detected: the reading lies between ${fmt(lo)} and ${fmt(hi)} in all measured meridians. That rules out ${ruled}. Optional: repeat at 1.5 m, or obtain clinical refraction.`,
     });
     return res;
   } else {
@@ -279,20 +429,21 @@ export function fuseEye(
   const canCyl =
     cfg.astigmatismQuantificationEnabled &&
     res.outputLevel === "quantitative" &&
-    nQuant >= cfg.minDistinctMeridiansForCyl &&
+    m.nQuant >= cfg.minDistinctMeridiansForCyl &&
     cylWidth <= cfg.maxCylCiWidth &&
     (dist.point.cyl > -0.25 || dist.axisSdDeg <= cfg.maxAxisSdDeg);
   if (canCyl) {
+    // focusing moves the sphere with the spherical equivalent and leaves the cylinder alone
     res.astigmatismStatus = "quantified";
-    res.sphD = dist.point.sph;
-    res.sphCi95 = dist.sphCi95;
+    res.sphD = dist.point.sph + shift;
+    res.sphCi95 = [dist.sphCi95[0] + shift, dist.sphCi95[1] + shift];
     res.cylD = dist.point.cyl;
     res.cylCi95 = dist.cylCi95;
     if (dist.point.axis !== null && dist.point.cyl <= -0.25) {
       res.axisDeg = dist.point.axis;
       res.axisUncertaintyDeg = dist.axisSdDeg * 1.96;
     }
-  } else if (nQuant >= 2 || (nQuant >= 1 && intervals.length)) {
+  } else if (m.nQuant >= 2 || (m.nQuant >= 1 && m.nIntervals)) {
     res.astigmatismStatus = "screening_only";
     if (!cfg.astigmatismQuantificationEnabled)
       res.notes.push(
@@ -300,6 +451,40 @@ export function fuseEye(
       );
   } else res.notes.push("Only one meridian measured: astigmatism not assessed (prior used).");
   return res;
+}
+
+/** The working distance the frames measured: the median of their distances, or 1 m with none. */
+function workingDistance(frames: FrameRecord[]): number {
+  const d = frames
+    .filter((f) => isUsable(f.quality) && f.estimate && f.estimate.meridianDeg !== null)
+    .map((f) => f.metadata.workingDistanceM)
+    .filter((v) => Number.isFinite(v) && v > 0);
+  return d.length ? median(d) : 1;
+}
+
+/** One eye on its own: its fellow is taken from the population, given this eye. */
+export function fuseEye(
+  eye: EyeSide,
+  frames: FrameRecord[],
+  ageGroup: AgeGroup,
+  calibrated: boolean,
+  cfg: GatingConfig = DEFAULT_GATING,
+  focusModel = true,
+): EyeResult {
+  const m = measureEye(eye, frames, ageGroup, calibrated, cfg);
+  const d = workingDistance(frames);
+  const none: EyeReading = { kind: "none" };
+  const focus =
+    focusModel && !m.done
+      ? focusPosterior(
+          { OD: eye === "OD" ? m.reading : none, OS: eye === "OS" ? m.reading : none },
+          ageGroup,
+          d,
+          m.t,
+          focusConfig(cfg),
+        )
+      : null;
+  return gateEye(m, ageGroup, cfg, focus, d);
 }
 
 export interface ReportInput {
@@ -312,6 +497,12 @@ export interface ReportInput {
   gating?: GatingConfig;
   symptomsReported?: boolean;
   id?: string;
+  /**
+   * Allow for the eyes focusing on the light. A stage 1 capture turns it off: through a trial lens the
+   * point is the eye as the camera saw it. It defaults to on, except for a learned estimator: that predicts
+   * each meridian's own refraction, having learned from clinical refractions how its training eyes focused.
+   */
+  focusModel?: boolean;
 }
 
 export function buildReport(input: ReportInput): AssessmentReport {
@@ -321,20 +512,28 @@ export function buildReport(input: ReportInput): AssessmentReport {
   if (simulated && !frames.every((f) => f.metadata.simulated))
     throw new Error("Mixing simulated and real frames in one report is not allowed.");
   const calibrated = input.calibrationVersion !== "uncalibrated";
-  const od = fuseEye(
+  const mOD = measureEye(
     "OD",
     frames.filter((f) => f.metadata.eye === "OD"),
     ageGroup,
     calibrated,
     cfg,
   );
-  const os = fuseEye(
+  const mOS = measureEye(
     "OS",
     frames.filter((f) => f.metadata.eye === "OS"),
     ageGroup,
     calibrated,
     cfg,
   );
+  const d = workingDistance(frames);
+  // the eyes focus together, so the model reads both eyes at once
+  const focus =
+    (input.focusModel ?? input.estimator.kind !== "ml")
+      ? focusPosterior({ OD: mOD.reading, OS: mOS.reading }, ageGroup, d, mOD.t, focusConfig(cfg))
+      : null;
+  const od = gateEye(mOD, ageGroup, cfg, focus, d);
+  const os = gateEye(mOS, ageGroup, cfg, focus, d);
   const t = thresholdsForAge(ageGroup);
   const provenance: Provenance = {
     modelName: input.estimator.name,
@@ -360,6 +559,7 @@ export function buildReport(input: ReportInput): AssessmentReport {
     interpretation: "",
     disclaimer: MEDICAL_DISCLAIMER,
     provenance,
+    focus: focus ? focusSummary(focus, d) : null,
   };
   const reasons: string[] = [];
   if (od.powerVector && os.powerVector && od.outputLevel !== "repeat" && os.outputLevel !== "repeat") {
@@ -401,7 +601,16 @@ export function buildReport(input: ReportInput): AssessmentReport {
   if (input.symptomsReported) reasons.push("Visual symptoms reported.");
   rep.referralReasons = reasons;
   const labels = [od, os].map((r) => r.refractiveClass).filter((l): l is NonNullable<typeof l> => l !== null);
-  if (!labels.length)
+  // an eye with a range but no class: no crescent, or a reading that focusing on the light leaves open
+  const ranged = [od, os].filter((r) => r.outputLevel === "screening" && r.refractiveClass === null);
+  if (!labels.length && ranged.length)
+    rep.interpretation =
+      "No refractive error this method can measure at this distance." +
+      (focus && (focus.pFocusing >= 0.05 || ranged.some((r) => r.focusLimited))
+        ? " An eye that can focus on the light hides hyperopia and mild myopia from it."
+        : "") +
+      (ranged.length < 2 ? " Repeat the measurement for the other eye." : "");
+  else if (!labels.length)
     rep.interpretation = "No reliable refractive pattern could be determined. Please repeat the measurement.";
   else if (labels.every((l) => l === "emmetropia"))
     rep.interpretation =
@@ -410,6 +619,27 @@ export function buildReport(input: ReportInput): AssessmentReport {
     const kinds = [...new Set(labels.filter((l) => l !== "emmetropia"))].sort();
     rep.interpretation = `Your measurements show a pattern consistent with ${kinds.join(" and ")} refractive error.`;
   }
+  // an eye whose range, focusing allowed for, reaches hyperopia has not had it ruled out
+  if (
+    focus &&
+    CHILD.includes(ageGroup) &&
+    [od, os].some(
+      (r) => r.outputLevel !== "repeat" && (r.refractionRange95?.[1] ?? -Infinity) >= t.hyperopiaSe,
+    )
+  )
+    rep.interpretation +=
+      " In children, hyperopia is usually only found with eye drops (a cycloplegic refraction); this capture does not rule it out.";
   if (simulated) rep.interpretation = `SIMULATED DATA. ${rep.interpretation}`;
   return rep;
+}
+
+function focusSummary(f: FocusPosterior, workingDistanceM: number): FocusSummary {
+  return {
+    workingDistanceM,
+    lightD: f.lightD,
+    amplitudeD: f.amplitudeD,
+    focusResponse: f.focusResponse,
+    pFocusing: f.pFocusing,
+    meanFocusD: f.meanFocusD,
+  };
 }

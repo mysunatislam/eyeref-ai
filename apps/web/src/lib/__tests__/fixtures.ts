@@ -2,7 +2,7 @@ import { extractFeatures } from "../cv/features";
 import { meridianEyeDeg } from "../devices";
 import { renderEye } from "../simulation/renderer";
 import { SIM_DEVICE } from "../simulation/session";
-import type { CaptureMetadata, FrameRecord, QualityGrade } from "../types";
+import type { CaptureMetadata, FrameRecord, PhotorefractionFeatures, QualityGrade } from "../types";
 
 /** Shared test fixtures: capture metadata and frames with a fixed meridional estimate. */
 export const meta = (o: Partial<CaptureMetadata> = {}): CaptureMetadata => ({
@@ -25,6 +25,10 @@ export const meta = (o: Partial<CaptureMetadata> = {}): CaptureMetadata => ({
 });
 export const IRIS = { cx: 79.5, cy: 79.5, r: 52 };
 
+// one rendered eye's features serve every fixture frame: rendering it per frame made tests slow
+let features: PhotorefractionFeatures | undefined;
+const sharedFeatures = () => (features ??= extractFeatures(renderEye({ seed: 1 }).image, 270, IRIS).features);
+
 /** A frame whose estimator saw `power` D in the meridian at device rotation `rot` (null: dead zone). */
 export function frame(
   eye: "OD" | "OS",
@@ -36,7 +40,7 @@ export function frame(
   const m = meta({ eye, deviceRotationDeg: rot, simulated });
   return {
     metadata: m,
-    features: extractFeatures(renderEye({ seed: 1 }).image, 270, IRIS).features,
+    features: { ...sharedFeatures() },
     quality: {
       score: grade === "excellent" ? 0.9 : 0.1,
       grade,

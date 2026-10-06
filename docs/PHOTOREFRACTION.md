@@ -103,22 +103,56 @@ With one meridian, astigmatism is not assessed. With two, only a probability of
   that is the screen's turn from its natural orientation; the front camera looks back at the person
   holding the phone, so for it the screen's turn runs the other way in the image.
 
-## 5. Accommodation
+## 5. Focusing on the light
 
-The subject fixates the light at the camera, so accommodation pulls the eye's focus towards the camera
-plane. Myopes cannot relax beyond their far point and are measured well. Hyperopes and young people
-partly focus their error away. This is **latent hyperopia**, and the simulator reproduces it. EyeRef
-therefore:
+The person looks at the light at the camera, about a metre away. An eye whose far point lies beyond the
+light can bring it into focus, and it does: it focuses (accommodates) on it, and reads more myopic than
+it is by however much it focused. A myope more myopic than −1/d cannot see the light clearly; focusing
+would only blur it further, so that eye relaxes and reads as it is. Emmetropes and hyperopes can hide
+part or all of their error, which is **latent hyperopia**, and why only a **cycloplegic** refraction is a
+valid reference for under-18s.
 
-- adds an age-dependent accommodation SD to M. The SD in dioptres is:
-  - age 3–7: 0.80
-  - age 8–12: 0.65
-  - teen: 0.50
-  - adult 18–39: 0.35
-  - adult 40–59: 0.20
-  - adult 60+: 0.10
-- marks every child result as screening only in the UI,
-- tells investigators that only **cycloplegic** refraction is a valid ground truth for under-18s.
+EyeRef models this from both eyes at once (`inference/focus.ts`, twin `eyeref/inference/focus.py`):
+
+- **The eyes focus together**, by the same amount, to clear the eye that needs least. With the light at
+  F = −1/d, eye e needs D_e = M_e − F to see it; the eyes focus A = min(amplitude, g · D\*), where D\* is
+  the smallest demand that is not below 0 (0 when neither eye can see the light), and g is the share of
+  that demand they follow. g is taken as **uniform over 0 to 1**: nothing is assumed beyond what optics
+  allows. Stage 1's no-lens capture measures what people actually do (RESEARCH_PROTOCOL.md).
+- **The amplitude** bounds how much an eye can hide: Hofstetter's average, 18.5 − 0.3 × age, at the
+  youngest age in each group, and at least 1 D for depth of focus.
+
+  | Age group | Amplitude | Drift (SD) |
+  | --- | --- | --- |
+  | 3–7 | 17.6 D | 0.80 D |
+  | 8–12 | 16.1 D | 0.65 D |
+  | teen | 14.6 D | 0.50 D |
+  | adult 18–39 | 13.1 D | 0.35 D |
+  | adult 40–59 | 6.5 D | 0.20 D |
+  | adult 60+ | 1.0 D | 0.10 D |
+
+  The drift, moment-to-moment wander in focusing, is added to M as before.
+- **The posterior** is worked out on a 0.05 D grid over (M_OD, M_OS), averaged over g. What a capture
+  shows about an eye uses no prior on it, so a clear reading is not pulled toward the population; an eye
+  with no reading follows its fellow through the correlation between eyes (0.95). The screening class
+  probabilities use the population's prior, N(−0.5, 2²), on each eye.
+- **A number** is released only when the eye's own refraction, focusing allowed for, has a 95% interval
+  no wider than ±1 D. At 1 m that happens for myopes beyond about −1.5 to −2 D at any age, whose eyes
+  cannot see the light, and for most eyes over 60, which can barely focus. A reading moved by focusing
+  says so in its message.
+- **A range** is given when focusing could hide 1 D or more above what the reading allows: "no more
+  myopic than X", with hyperopia not ruled out. A class is given then only when the whole range lies past
+  a threshold, so emmetropia is never claimed for an eye that could be focusing. A repeat would read the
+  same, so the app does not ask for one. Children get "an eye examination with eye drops".
+- **The dead zone** no longer rules out hyperopia in an eye that can focus.
+
+Two cases take the reading as it stands. A capture through a stage 1 trial lens records the eye as the
+camera saw it, focusing included. A learned estimator predicts each meridian's own refraction, having
+learned from clinical refractions how its training eyes focused, so it is not corrected a second time.
+
+The simulator's eyes focus the same way, with g uniform over 0.5 to 1 (people mostly follow the light),
+plus their drift. Since the model assumes the wider 0 to 1, its intervals cover the simulated eyes with
+room to spare, and its median sits a little on the myopic side of them.
 
 ## 6. Other sources of error
 

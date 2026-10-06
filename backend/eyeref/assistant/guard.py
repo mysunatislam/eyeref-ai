@@ -26,6 +26,11 @@ def _norm(v: str) -> float:
     return round(float(v.replace("−", "-").replace(",", ".")), 2)
 
 
+def numbers_in(text: str) -> list[float]:
+    """The dioptre values a piece of the pipeline's own text states, such as an eye's range."""
+    return [_norm(v) for v in DIOPTRE.findall(text)]
+
+
 def allowed_values(report_numbers: Iterable[float]) -> set[float]:
     out = set()
     for v in report_numbers:

@@ -674,12 +674,6 @@ export function stage1Subject(lens: InducedDefocus): VirtualSubject {
   const os = own();
   const x = inducedChangeD(lens);
   const rx = (e: ReturnType<typeof own>) => ({ sph: e.M + x - e.cyl / 2, cyl: e.cyl, axis: e.axis });
-  // the two eyes focus together, as far as the less fogged one needs to see the light
-  const pull = Math.max(od.M, os.M) + x + 1 / lens.workingDistanceM;
-  return {
-    ...base,
-    od: rx(od),
-    os: rx(os),
-    accommodationBiasD: Math.max(0, pull) * SIM_FOCUS_RESPONSE,
-  };
+  // the simulator focuses the eyes on the light while the lens leaves it within their reach
+  return { ...base, od: rx(od), os: rx(os), focusResponse: SIM_FOCUS_RESPONSE };
 }

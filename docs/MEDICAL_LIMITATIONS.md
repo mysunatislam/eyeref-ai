@@ -24,7 +24,7 @@ comprehensive eye examination.
 | Limitation | Effect | Mitigation in the software |
 | --- | --- | --- |
 | Dead zone (eccentricity larger than the pupil) | Emmetropia and low myopia produce no crescent | Interval outputs; calibrated gradient; recommend 1.5 m |
-| Accommodation without cycloplegia | Hyperopia under-read, especially in children | Age-specific uncertainty; children screening-only |
+| The eyes focus on the light (no cycloplegia) | An eye that can see the light reads more myopic than it is: hyperopia and mild myopia are hidden, especially in children | Focusing modelled from both eyes up to the amplitude for the age; a number only when the eye is still pinned down, otherwise a range with hyperopia not ruled out; children screening-only |
 | Small pupils (bright rooms, age, medication) | Wider dead zone, unusable frames | Dim-room guidance, pupil gate |
 | Low pixel count in browser video | Crescent width imprecise | Iris-pixel warning; native app planned |
 | Device geometry unknown | Scale errors | Calibration wizard; ±0.5 D added when uncalibrated |
@@ -38,7 +38,8 @@ comprehensive eye examination.
 - **Quantitative estimate**: an SE with a 95% interval no wider than ±1.0 D. This is still not a
   prescription.
 - **Screening only**: a likely category (myopia, no significant error, hyperopia) with a confidence,
-  but no dioptre value.
+  but no dioptre value; or, when the eyes could be focusing on the light, a range ("no more myopic
+  than X") with hyperopia not ruled out, and a category only if the whole range lies past a threshold.
 - **Repeat / insufficient confidence**: nothing is estimated.
 
 The printable referral report shows the same gated output on one A4 page for an eye-care

@@ -32,14 +32,26 @@ export function SimTruthCard({ a }: { a: StoredAssessment }) {
     const t = truth[eye];
     const est = a.report.eyes[eye];
     const se = est.outputLevel === "quantitative" ? est.seD : null;
+    // without a number, the range the eye was placed in, and whether the true value lies inside it
+    const range = se === null && est.outputLevel !== "repeat" ? (est.refractionRange95 ?? null) : null;
     return {
       eye,
       level: est.outputLevel,
       cells: [
         truthRx(t),
         formatDiopters(t.se),
-        se === null ? est.outputLevel : formatDiopters(se),
-        se === null ? "—" : formatDiopters(se - t.se),
+        se !== null
+          ? formatDiopters(se)
+          : range
+            ? `${formatDiopters(range[0])} to ${formatDiopters(range[1])}`
+            : est.outputLevel,
+        se !== null
+          ? formatDiopters(se - t.se)
+          : range
+            ? t.se >= range[0] && t.se <= range[1]
+              ? "inside the range"
+              : "outside the range"
+            : "—",
       ],
     };
   });
@@ -109,9 +121,10 @@ export function SimTruthCard({ a }: { a: StoredAssessment }) {
           ))}
         </div>
         <p className="text-muted mt-3 text-xs">
-          The simulator models accommodation, so hyperopes are often under-read, as with real undilated eyes.
-          This comparison only shows the algorithm is self-consistent; it is not evidence of clinical
-          accuracy.
+          The simulated eyes focus on the light, as real undilated eyes do, so an eye that can see it reads
+          more myopic than it is. The estimate allows for that, which is why such an eye gets a range rather
+          than a number. This comparison only shows the algorithm is self-consistent; it is not evidence of
+          clinical accuracy.
         </p>
       </CardContent>
     </Card>

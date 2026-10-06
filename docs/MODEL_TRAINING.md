@@ -56,7 +56,9 @@ other than the one it was trained on.
 
 ## Simulated results and what they teach (SIMULATED DATA)
 
-These are SE mean absolute errors across all test eyes:
+These are SE mean absolute errors across all test eyes, from the simulator before its eyes focused on
+the light (PHOTOREFRACTION.md § 5). A rerun will move them: the frames now show the focusing, while
+the targets stay each eye's own refraction, as a clinical refraction would give them.
 
 | Model | Subject split | Unseen device |
 | --- | --- | --- |

@@ -93,13 +93,13 @@ export const SIM_PRESETS: SimPreset[] = [
   {
     id: "hyperope",
     label: "Hyperope",
-    description: "+2.50 D. Watch accommodation hide part of it (latent hyperopia).",
+    description: "+2.50 D. The eyes focus on the light and hide most of it: expect a range, not a number.",
     apply: (s) => ((s.od = { sph: 2.5, cyl: 0, axis: null }), (s.os = { sph: 2.25, cyl: 0, axis: null })),
   },
   {
     id: "emmetrope",
     label: "Emmetrope",
-    description: "Plano. Falls inside the dead zone: expect an interval, not a number.",
+    description: "Plano. A young eye focuses on the light and reads mildly myopic: expect a range.",
     apply: (s) => ((s.od = { sph: 0, cyl: 0, axis: null }), (s.os = { sph: 0.25, cyl: 0, axis: null })),
   },
   {
@@ -169,6 +169,8 @@ export function finalizeAssessment(args: {
     extractorVersion: EXTRACTOR_VERSION,
     gating: gatingFrom(args.settings),
     symptomsReported: args.profile.symptoms,
+    // through a trial lens the point is the eye as the camera saw it, focusing included
+    focusModel: args.induced ? false : undefined,
   });
   return {
     id: report.id,

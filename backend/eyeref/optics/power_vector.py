@@ -55,6 +55,14 @@ def format_axis(axis_deg: Optional[float]) -> str:
     return f"{display_axis(axis_deg):03d}°"
 
 
+def format_diopters(v: float, digits: int = 2) -> str:
+    """A power as the app writes it: "−1.25 D", "+0.50 D", and "0.00 D" with no sign (twin of formatDiopters)."""
+    s = f"{abs(v):.{digits}f}"
+    if float(s) == 0:
+        return f"{s} D"
+    return f"{'−' if v < 0 else '+'}{s} D"
+
+
 def circular_axis_error(a_deg: float, b_deg: float) -> float:
     """Smallest angular difference between two axes (period 180 deg).
 

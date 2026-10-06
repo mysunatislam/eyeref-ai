@@ -30,10 +30,26 @@ function resultCell(e: EyeResult) {
     );
   }
   if (e.outputLevel === "screening") {
+    const r = e.focusLimited ? e.refractionRange95 : null;
     return (
       <>
         <div className="font-semibold">No value given</div>
-        <div className="text-ink-2 text-[11px]">Uncertainty too wide for a dioptre value</div>
+        <div className="text-ink-2 text-[11px]">
+          {!r ? (
+            "Uncertainty too wide for a dioptre value"
+          ) : r[1] <= 0 ? (
+            <>
+              Range <span className="whitespace-nowrap">{formatDiopters(r[0])}</span> to{" "}
+              <span className="whitespace-nowrap">{formatDiopters(r[1])}</span>, allowing for focusing on the
+              light
+            </>
+          ) : (
+            <>
+              No more myopic than <span className="whitespace-nowrap">{formatDiopters(r[0])}</span>; focusing
+              on the light can hide hyperopia
+            </>
+          )}
+        </div>
       </>
     );
   }
@@ -234,10 +250,11 @@ export function ReferralReport({ a }: { a: StoredAssessment }) {
           </h2>
           <p className="mt-1">
             Non-cycloplegic eccentric photorefraction from a phone camera and its own light source, combining
-            several device orientations. Spherical equivalent (SE) is shown only when its 95% interval is
-            narrow enough; otherwise only a screening category is given. Accommodation can mask hyperopia,
-            especially in children. This is a screening estimate, not a refraction, and it does not assess
-            ocular health.
+            several device orientations. The eyes can focus on the light, which makes an eye read more myopic
+            than it is; the estimate allows for this up to the focusing amplitude for the age group, and gives
+            the spherical equivalent (SE) only when its 95% interval is still narrow. Otherwise a range or a
+            screening category is given. Hyperopia is not ruled out without cycloplegia, especially in
+            children. This is a screening estimate, not a refraction, and it does not assess ocular health.
           </p>
         </section>
 

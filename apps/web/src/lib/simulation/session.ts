@@ -5,7 +5,7 @@
  * record is flagged simulated and the UI labels it "SIMULATED DATA".
  */
 import { DEVICE_PROFILES, eccentricityMm, sourceAngleReferenceDeg } from "../devices";
-import { ACCOMMODATION_SD } from "../optics/classification";
+import { ACCOMMODATION_AMPLITUDE_D, ACCOMMODATION_SD } from "../optics/classification";
 import { fromPowerVector, sphericalEquivalent, toPowerVector, type SphCylAxis } from "../optics/powerVector";
 import { createRng, normal, seedFrom, uniform } from "../random";
 import type { AgeGroup, CaptureMetadata, Circle, EyeSide } from "../types";
@@ -54,8 +54,15 @@ export interface VirtualSubject {
   irisRgb: [number, number, number];
   skinRgb: [number, number, number];
   fundusReflectance: number;
-  accommodationBiasD: number;
+  /**
+   * How fully the eyes focus on the light: the share of what the eye that can see it with least effort
+   * needs. The light is about a metre away, so an eye that can focus on it does, and reads more myopic.
+   */
+  focusResponse: number;
 }
+
+/** The share of what they need that simulated eyes focus on the light: most of the way, as people do. */
+export const SIM_FOCUS_RESPONSE_RANGE: [number, number] = [0.5, 1];
 
 const q = (v: number) => Math.round(v * 4) / 4;
 
@@ -89,8 +96,19 @@ export function makeSubject(id: string, ageGroup?: AgeGroup): VirtualSubject {
     irisRgb: IRIS[Math.floor(rng() * IRIS.length)]!,
     skinRgb: SKIN[Math.floor(rng() * SKIN.length)]!,
     fundusReflectance: uniform(rng, 0.6, 1),
-    accommodationBiasD: Math.abs(normal(rng, 0, ACCOMMODATION_SD[age] * 0.6)),
+    focusResponse: uniform(rng, ...SIM_FOCUS_RESPONSE_RANGE),
   };
+}
+
+/**
+ * How far the eyes focus on a light `distanceM` away (D). The eyes focus together, to clear the eye that
+ * needs least; an eye more myopic than the light is near cannot see it clearly, and when neither can, the
+ * eyes stay relaxed. Twin of eyeref.simulation.cohort.focus_on_light.
+ */
+export function focusOnLight(s: VirtualSubject, distanceM: number): number {
+  const demands = [s.od, s.os].map((rx) => sphericalEquivalent(rx) + 1 / distanceM).filter((d) => d >= 0);
+  if (!demands.length) return 0;
+  return Math.min(ACCOMMODATION_AMPLITUDE_D[s.ageGroup], s.focusResponse * Math.min(...demands));
 }
 
 export function subjectTruth(s: VirtualSubject) {
@@ -134,7 +152,9 @@ export function simulateFrame(
   const trueD = Math.max(0.6, Math.min(1.5, normal(rng, opts.targetDistanceM ?? 1, 0.06)));
   const frameRotationDeg = opts.frameRotationDeg ?? deviceRotationDeg;
   const roll = frameRotationDeg - deviceRotationDeg + normal(rng, 0, 3);
-  const acc = s.accommodationBiasD + Math.abs(normal(rng, 0, ACCOMMODATION_SD[s.ageGroup] * 0.3));
+  // focusing drifts from moment to moment, in both eyes at once
+  const drift = createRng(seedFrom(`${s.id}|focus|${deviceRotationDeg}|${frameIndex}|${sessionSeed}`));
+  const acc = Math.max(0, focusOnLight(s, trueD) + normal(drift, 0, ACCOMMODATION_SD[s.ageGroup] * 0.3));
   const blink = rng() < (opts.blinkRate ?? 0.06);
   const motion = rng() < (opts.motionRate ?? 0.06);
   const src = ((((sourceAngleReferenceDeg(SIM_DEVICE) ?? 270) + frameRotationDeg) % 360) + 360) % 360;

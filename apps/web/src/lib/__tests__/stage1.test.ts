@@ -362,6 +362,8 @@ describe("a simulated stage 1 series", () => {
           estimator: { name: est.name, version: est.version, kind: est.kind },
           extractorVersion: EXTRACTOR_VERSION,
           id: `${code}-${lensD}`,
+          // as finalizeAssessment does for a capture through a trial lens
+          focusModel: false,
         });
         items.push({
           id: built.id,

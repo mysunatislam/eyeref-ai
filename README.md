@@ -15,7 +15,8 @@ crescent in the pupil whose side and width depend on the eye's defocus relative 
 3. grades every frame (blur, glare, blink, gaze, motion, pupil size, distance, illumination), rejecting bad ones,
 4. inverts the crescent with the Bobier–Braddick model per **meridian** (one meridian per device rotation),
 5. fits a Bayesian **power vector (M, J0, J45)**, so axis is never regressed as a raw 0–180° number,
-6. propagates uncertainty (Monte Carlo, accommodation, calibration and temporal noise) to 95% intervals, and
+6. allows for the eyes focusing on the light, which makes an eye read more myopic than it is, and
+   propagates uncertainty (Monte Carlo, focusing drift, calibration and temporal noise) to 95% intervals, and
 7. **gates** the output: *quantitative SE* → *screening only* → *repeat / insufficient confidence*.
 
 It never invents SPH/CYL/AXIS. CYL/AXIS display is **off by default** until validated on controlled
@@ -40,6 +41,7 @@ first, then astigmatism later.
 | Pupil / glint / crescent segmentation | **PARTIALLY WORKING** | Robust on rendered eyes; real-camera robustness unmeasured. Browser video gives only about 9–17 px per pupil at 1 m |
 | Frame quality model (Excellent / Acceptable / Poor / Reject) | **WORKING** | Thresholds are engineering choices; need tuning on real captures |
 | Bayesian M/J0/J45 fusion, gating, anisometropia, reflex asymmetry | **WORKING** | Gating limits are configurable (`GatingConfig`) |
+| Focusing on the light (latent hyperopia) | **WORKING** | Both eyes' readings give each eye's own refraction, focusing allowed for up to the amplitude for the age. An eye that could be focusing gets a range, not a number, with hyperopia not ruled out. How far people follow the light is assumed to be anywhere from none to all the way until stage 1 measures it |
 | Guided capture UI (lighting, distance, positioning, 4 meridians, torch pulses, countdown, overlays) | **WORKING** | Torch control needs Chrome on Android; iOS Safari has no torch API |
 | Probed meridian from the picture: the screen's turn of the frame and the eyes' tilt in it | **PARTIALLY WORKING** | Worked out for rear and front cameras and tested on the simulator, with the screen still in portrait at 45° and the phone turned either way at 90°. The bench run checks the 90° turn on a real phone; the 45° steps need people (stage 1) |
 | Printable referral report (one A4 page, or save as PDF) | **WORKING** | Gated output only: never prints SPH/CYL/AXIS. Simulated data is watermarked. A browser test checks that it fits one page in light colours |
@@ -66,7 +68,8 @@ first, then astigmatism later.
 
 There are 240 virtual subjects and 15,360 frames, rendered as 4 simulated phones. The test set is
 split by subject. Spherical-equivalent mean absolute error across all test eyes, using the ungated
-posterior:
+posterior. These figures come from the simulator before its eyes focused on the light, and a rerun will
+move them:
 
 | Model | Subject split | Unseen device (sim-D) |
 | --- | --- | --- |

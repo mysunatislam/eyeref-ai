@@ -37,6 +37,19 @@ def test_summary_contains_no_identifiers_and_only_report_numbers():
     assert -2.5 in allowed and 93 in allowed
 
 
+def test_an_eyes_range_may_be_repeated_but_nothing_else():
+    rep = _report()
+    rep.eyes["OS"] = EyeResult(
+        eye="OS", output_level="screening", focus_limited=True, refraction_range95=(-1.45, 10.5),
+        message="This eye could focus on the light 1.00 m away, which makes it read more myopic than it is "
+                "(here \u22120.91 D) by an amount this capture cannot show. It is no more myopic than \u22121.45 D; "
+                "whether it is emmetropic, mildly myopic or hyperopic needs an eye examination.")
+    s, allowed = report_summary(rep)
+    assert "no more myopic than \u22121.45 D" in s
+    text, n = guard_text("Your left eye is no more myopic than \u22121.45 D, but it could be \u22122.75 D.", allowed)
+    assert "\u22121.45 D" in text and "2.75" not in text and n == 1
+
+
 def _mock(answer: str, seen: list):
     def handler(request: httpx.Request) -> httpx.Response:
         seen.append(request)
