@@ -51,7 +51,7 @@ first, then astigmatism later.
 | Dead-zone gradient gain per device | **REQUIRES TRAINING DATA** | Needs a bench calibration with trial lenses (docs/DEVICE_CALIBRATION.md) |
 | SE accuracy, myopia/hyperopia screening on real people | **REQUIRES CLINICAL VALIDATION** | Protocol in docs/VALIDATION_PROTOCOL.md |
 | CYL / AXIS output | **REQUIRES CLINICAL VALIDATION** | Gated off; research flag only |
-| Research API, encrypted image storage, dataset export, consent enforcement | **WORKING** | Bearer-token access control (required when `EYEREF_ENV=production`), Fernet at rest. SQLite or PostgreSQL, both tested in CI. Versioned migrations upgrade the database on start and keep its data. An audit log records who changed, read or exported research data |
+| Research API, encrypted image storage, dataset export, consent enforcement | **WORKING** | Bearer-token access control (required when `EYEREF_ENV=production`), with roles so a capture phone's token can upload but not read data back. Fernet at rest. SQLite or PostgreSQL, both tested in CI. Versioned migrations upgrade the database on start and keep its data. An audit log records who changed, read or exported research data |
 | Optional AI explanation (local Gemma via Ollama by default; Gigalogy Maira optional) | **PARTIALLY WORKING** | Text-only summary, numeric guard tested against prescription-leaking replies, consent required for any remote provider. Verified against mocks only, because model downloads are blocked in the build sandbox. Run `scripts/check_assistant.py` once on your machine |
 | Error recovery: crash pages, update prompt, unreadable records | **WORKING** | A failed page offers a retry without losing stored data, a new version offers a reload, and records the app cannot read are counted instead of hiding the rest |
 | Installable app (PWA) with offline use | **WORKING** | Manifest, icons and a service worker that caches app code and the MediaPipe model, never results or camera frames. Verified offline in Chromium. Needs HTTPS to install |
@@ -156,7 +156,9 @@ scripts/         export_schemas.py, run-all.sh
   built for (`NEXT_PUBLIC_API_URL`, plus `EYEREF_CSP_CONNECT_SRC`). There are no plugins and no
   framing.
 - **Research API.** Bearer tokens are required in production, along with encrypted image storage, and
-  the interactive docs are hidden. See [API](docs/API.md#authentication).
+  the interactive docs are hidden. Each token has a role: a capture phone gets a collection token,
+  which can upload records but cannot read any back, so a lost phone does not give away the
+  dataset. See [API](docs/API.md#roles).
 - **Audit log.** Every change to research data, and every read or export of it, is recorded with the
   fingerprint of the token that made it, never the token. The log holds no personal data, so it
   outlives a subject's deletion. See [API](docs/API.md#audit-log).

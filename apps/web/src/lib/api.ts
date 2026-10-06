@@ -163,6 +163,37 @@ export function dataUrlToBlob(url: string): Blob {
   return new Blob([bytes], { type });
 }
 
+/** What the research server lets this device's token do (GET /api/access). */
+export interface Access {
+  auth: "token" | "disabled";
+  role: "admin" | "collect" | "analyse";
+  /** The token's fingerprint, as the server's audit log names it. */
+  token: string | null;
+}
+
+/** What a token's role means for this device, in plain words. */
+export function describeAccess(a: Access): { tone: "ok" | "warn"; text: string } {
+  if (a.auth === "disabled")
+    return {
+      tone: "warn",
+      text: "Connected, but the server has no access tokens set, so anyone who can reach it can read and change its data. Set EYEREF_API_TOKENS before collecting real data.",
+    };
+  if (a.role === "collect")
+    return {
+      tone: "ok",
+      text: `Connected with a collection token (${a.token}). This device can upload research records but cannot read any back, which is all a capture phone needs.`,
+    };
+  if (a.role === "analyse")
+    return {
+      tone: "warn",
+      text: `Connected with an analysis token (${a.token}). It can read and export research data but cannot add any, so uploads from this device will be refused.`,
+    };
+  return {
+    tone: "warn",
+    text: `Connected with an admin token (${a.token}). It can read, export and delete all research data. A capture phone only needs a collection token.`,
+  };
+}
+
 export interface AssistantStatus {
   configured: boolean;
   available: boolean;
@@ -174,6 +205,7 @@ export interface AssistantStatus {
 
 export const api = {
   health: (conn: ApiConn) => call<{ status: string; version: string; auth?: string }>(conn, "/health"),
+  access: (conn: ApiConn) => call<Access>(conn, "/api/access"),
   assistantStatus: (conn: ApiConn) => call<AssistantStatus>(conn, "/api/assistant/status"),
   explain: (conn: ApiConn, report: AssessmentReport, question: string | null, consentThirdParty: boolean) =>
     call<{ text: string; redactions: number; provider: string; label: string }>(
