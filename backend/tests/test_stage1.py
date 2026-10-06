@@ -144,6 +144,7 @@ def test_the_no_lens_captures_are_described_as_focusing():
     assert "more myopic" in describe_focus(report["focus"])
     assert "too close to zero" in describe_focus({"shift_d": -0.05, "ci95": [-0.3, 0.2]})
     assert "focusing cannot explain" in describe_focus({"shift_d": 0.8, "ci95": [0.5, 1.1]})
+    assert "-1.06 D from their lines. That is one person" in describe_focus({"shift_d": -1.06, "ci95": None})
 
 
 @needs_fixtures

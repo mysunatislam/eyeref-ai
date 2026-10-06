@@ -44,16 +44,19 @@ test("a stage 1 series measures the change its lenses make, and is never read as
 
   // and it is kept out of the trend and of the research dataset
   await page.goto("/history");
-  await expect(page.getByText(/3 captures are not shown/)).toBeVisible();
+  await expect(page.getByText(/3 captures are not shown here/)).toBeVisible();
+  await expect(page.getByText(/No camera assessments yet/)).toBeVisible();
   await page.goto("/dataset");
   await expect(page.getByText(/3 captures are left out/)).toBeVisible();
 
   await page.goto("/validation/induced");
   await expect(page.getByRole("heading", { name: "Still collecting" })).toBeVisible();
   await expect(page.getByText(/Measured change follows the lens/)).toBeVisible();
-  const slope = await page.getByText(/^Slope [\d.]+ \(95% CI/).textContent();
-  expect(slope).toMatch(/Slope (0\.9|1\.[01])/);
-  await expect(page.getByText(/more myopic than their lines/)).toBeVisible();
+  // one participant carries one vote, so there is no interval across people yet
+  const slope = await page.getByText(/^Slope [\d.]+ from/).textContent();
+  expect(slope).toMatch(/^Slope (0\.9|1\.[01])\d* from 2 eyes of 1 person/);
+  // the simulated adult focuses on the light with no lens, so that capture reads myopic of their line
+  await expect(page.getByText(/read −[01]\.\d\d D from their lines\. That is one person/)).toBeVisible();
   await expect(page.getByLabel("Measured change against the lens's change")).toBeVisible();
   for (const scheme of ["light", "dark"] as const) {
     await page.emulateMedia({ colorScheme: scheme });
@@ -75,7 +78,7 @@ test("a stage 1 series measures the change its lenses make, and is never read as
   expect(JSON.stringify(data)).not.toContain("data:image");
 
   await page.getByLabel("Stage 1 file").setInputFiles(file!);
-  await expect(page.getByText(/^Slope [\d.]+ \(95% CI/)).toHaveText(slope!);
+  await expect(page.getByText(/^Slope [\d.]+ from/)).toHaveText(slope!);
   expect(errors).toEqual([]);
 });
 

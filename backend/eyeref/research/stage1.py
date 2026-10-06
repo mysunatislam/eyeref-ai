@@ -304,8 +304,11 @@ def analyse_stage1(data: dict[str, Any]) -> dict[str, Any]:
 def describe_focus(focus: dict[str, Any]) -> str:
     """Says what the no-lens captures show, in words."""
     shift = focus["shift_d"]
-    lo, hi = focus["ci95"] or (shift, shift)
-    sure = focus["ci95"] is not None and (hi < 0 or lo > 0)
+    if focus["ci95"] is None:
+        return (f"With no added lens the eyes read {shift:+.2f} D from their lines. That is one person, which gives "
+                "no interval: it takes a second to say whether they focused on the light.")
+    lo, hi = focus["ci95"]
+    sure = hi < 0 or lo > 0
     if shift < 0 and sure:
         return (f"With no added lens the eyes read {abs(shift):.2f} D more myopic than their lines: they focused on "
                 "the light by about that much. The app's usual capture, with no lens, does the same to every eye "

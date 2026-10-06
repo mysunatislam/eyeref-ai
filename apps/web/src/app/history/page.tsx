@@ -85,6 +85,17 @@ export default function HistoryPage() {
           />
         )}
       </div>
+      {induced > 0 && (
+        <p className="text-muted mb-4 text-xs">
+          {induced === 1 ? "One capture is" : `${induced} captures are`} not shown here: they were taken
+          through a stage 1 trial lens, so their values include the lens and belong to no one&apos;s trend.
+          They are on the{" "}
+          <Link className="text-accent underline underline-offset-2" href="/validation/induced">
+            stage 1 page
+          </Link>
+          .
+        </p>
+      )}
       {items === null ? (
         <p className="text-muted text-sm">Loading…</p>
       ) : filtered.length === 0 ? (
@@ -153,15 +164,6 @@ export default function HistoryPage() {
               </Link>
             ))}
           </Card>
-          {induced > 0 && (
-            <p className="text-muted text-xs">
-              {induced === 1 ? "One capture is" : `${induced} captures are`} not shown: they were taken
-              through a stage 1 trial lens, so their values include the lens. They are on the{" "}
-              <Link className={buttonVariants({ variant: "ghost", size: "sm" })} href="/validation/induced">
-                stage 1 page
-              </Link>
-            </p>
-          )}
           <p className="text-muted text-xs">
             For research use, link repeated measurements to the same pseudonymous code in{" "}
             <Link className={buttonVariants({ variant: "ghost", size: "sm" })} href="/dataset">

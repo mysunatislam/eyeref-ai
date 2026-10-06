@@ -101,9 +101,9 @@ export function Stage1ReportView({ data, report }: { data: Stage1Data; report: S
             <div className="grid grid-cols-3 gap-3">
               <Stat label="Slope" value={fmt(f?.slope)} sub={f ? interval(f.slopeCi95) : "no fit yet"} />
               <Stat
-                label="At no lens"
+                label="Relaxed baseline"
                 value={f ? formatDiopters(f.intercept) : "—"}
-                sub={f ? interval(f.interceptCi95) : undefined}
+                sub={f ? `${interval(f.interceptCi95)}, each eye's line at no lens` : undefined}
               />
               <Stat label="Within-eye SD" value={fmt(f?.withinSdD)} sub="D, around each eye's line" />
               <Stat label="Repeatability" value={fmt(f?.repeatabilityD)} sub="D between two captures, 95%" />

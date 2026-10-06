@@ -179,6 +179,10 @@ describe("the stage 1 analysis", () => {
     expect(describeFocus({ ...f, shiftD: -0.9, ci95: [-1.1, -0.7] })).toContain("0.90 D more myopic");
     expect(describeFocus({ ...f, shiftD: -0.05, ci95: [-0.3, 0.2] })).toContain("too close to zero");
     expect(describeFocus({ ...f, shiftD: 0.8, ci95: [0.5, 1.1] })).toContain("focusing cannot explain");
+    // one person gives no interval, which is not the same as a shift too small to call
+    expect(describeFocus({ ...f, shiftD: -1.06, ci95: null, people: 1 })).toContain(
+      "−1.06 D from their lines. That is one person",
+    );
   });
 
   it("counts every eye-capture's quality, lens by lens", () => {

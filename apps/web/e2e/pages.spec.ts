@@ -8,6 +8,7 @@ const ROUTES = [
   "/research",
   "/validation",
   "/validation/study",
+  "/validation/induced",
   "/dataset",
   "/calibration",
   "/calibration/bench",

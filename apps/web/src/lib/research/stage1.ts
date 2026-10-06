@@ -605,8 +605,10 @@ export function analyseStage1(d: Stage1Data): Stage1Report {
 
 /** Says what the no-lens captures show, in words. */
 export function describeFocus(f: Stage1Focus): string {
-  const [lo, hi] = f.ci95 ?? [f.shiftD, f.shiftD];
-  const sure = f.ci95 !== null && (hi < 0 || lo > 0);
+  if (f.ci95 === null)
+    return `With no added lens the eyes read ${signed(f.shiftD)} D from their lines. That is one person, which gives no interval: it takes a second to say whether they focused on the light.`;
+  const [lo, hi] = f.ci95;
+  const sure = hi < 0 || lo > 0;
   if (f.shiftD < 0 && sure)
     return `With no added lens the eyes read ${Math.abs(f.shiftD).toFixed(2)} D more myopic than their lines: they focused on the light by about that much. The app's usual capture, with no lens, does the same to every eye that can focus on the light.`;
   if (f.shiftD > 0 && sure)
