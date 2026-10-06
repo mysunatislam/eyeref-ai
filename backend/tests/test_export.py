@@ -1,4 +1,5 @@
-"""GET /api/dataset/export?level=eye: each eye of each visit, with what the product released, for validation."""
+"""GET /api/dataset/export: each frame, for training, and each eye of each visit with what the product released,
+for validation."""
 
 import copy
 import json
@@ -7,6 +8,7 @@ import statistics
 import pytest
 from databases import fresh_database
 from eyeref.api.main import GRADES, create_app
+from eyeref.calibration.device_profiles import BUILTIN_PROFILES
 from eyeref.simulation.cohort import make_subject, run_simulated_assessment
 from fastapi.testclient import TestClient
 
@@ -114,3 +116,27 @@ def test_each_eye_says_how_its_frames_were_graded_and_why_those_not_used_failed(
     assert not any(k.startswith("frames_failed_") for k in rows["OS"])
     header = client.get("/api/dataset/export", params={"level": "eye", "include_simulated": True}).text.splitlines()[0]
     assert "frames_failed_other" in header and "HYPERLINK" not in header
+
+
+def test_each_frame_carries_what_training_needs_from_its_capture(client, released):
+    frames, report = copy.deepcopy(released)
+    frames[0]["quality"].update(grade="reject", hard_failures=["pupil_too_small", "=HYPERLINK(\"x\")"])
+    frames[1]["metadata"]["eccentricity_mm"] = 6.5  # measured for this capture
+    frames[2]["features"]["pupil_diameter_mm"] = None  # no pupil found
+    _upload(client, (frames, report), "visit-t", REFERENCES)
+
+    export = client.get("/api/dataset/export", params={"fmt": "json", "include_simulated": True}).json()
+    rows = {(r["eye"], r["frame_index"]): r for r in export}
+    assert len(export) == len(rows) == len(frames)
+    first, second, third, *rest = ((rows[(f["metadata"]["eye"], f["metadata"]["frame_index"])], f) for f in frames)
+    for row, f in [first, second, third, *rest]:
+        assert row["pupil_diameter_mm"] == f["features"]["pupil_diameter_mm"]
+        assert row["extractor_version"] == f["features"]["extractor_version"] == "pr-features-1.0.0"
+    for row, f in rest:
+        assert row["hard_failures"] == "|".join(sorted(f["quality"]["hard_failures"]))
+        assert row["eccentricity_mm"] == 8.0
+    assert first[0]["hard_failures"] == "other|pupil_too_small"  # a reason that is not a plain name is not passed on
+    # the light source's distance from the lens edge: the phone's, unless the capture measured its own
+    assert second[0]["eccentricity_mm"] == 6.5
+    assert third[0]["eccentricity_mm"] == BUILTIN_PROFILES["simulated-phone"].eccentricity_mm() == 8.0
+    assert third[0]["pupil_diameter_mm"] is None and third[0]["f_pupil_diameter_mm"] == 0.0

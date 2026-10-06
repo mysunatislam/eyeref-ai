@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -168,3 +169,20 @@ def test_simulation_trained_onnx_model_refuses_real_eyes():
     assert out.status == "insufficient" and "SIMULATED" in out.notes[0]
     sim = _frame("OD", 0, -2.0, simulated=True)
     assert est.estimate(sim.features, sim.metadata, DEV).status == "quantitative"
+
+
+@pytest.mark.skipif(not ARTIFACT.exists(), reason="run the ML pipeline to create artifacts")
+def test_a_learned_model_accepts_only_features_from_the_extractor_it_was_trained_on(tmp_path):
+    model = tmp_path / "trained.onnx"
+    model.write_bytes(ARTIFACT.read_bytes())
+    meta = json.loads(ARTIFACT.with_suffix(".json").read_text())
+    model.with_suffix(".json").write_text(json.dumps({**meta, "extractor_version": "pr-features-1.0.0"}))
+    est = OnnxMeridionalEstimator(model)
+    frame = _frame("OD", 0, -2.0, simulated=True)
+    same = frame.features.model_copy(update={"extractor_version": "pr-features-1.0.0"})
+    assert est.estimate(same, frame.metadata, DEV).status == "quantitative"
+    other = frame.features.model_copy(update={"extractor_version": "pr-features-1.1.0"})
+    out = est.estimate(other, frame.metadata, DEV)
+    assert out.status == "insufficient" and out.power_d is None
+    assert out.notes == ["Model was trained on features from extractor pr-features-1.0.0, not pr-features-1.1.0; "
+                         "retrain it on these features."]

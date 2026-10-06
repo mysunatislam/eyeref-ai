@@ -100,6 +100,10 @@ make data             # 240 virtual subjects -> ml/data/synthetic (SIMULATED)
 make ml-train         # baselines + hybrid models, validation report, ONNX export, publish to the web app
 make schemas          # JSON Schemas of the shared contracts -> shared/schemas
 
+# train on a development cohort's data (docs/MODEL_TRAINING.md#training-on-real-data)
+make dataset EXPORT=eyeref_dataset.csv   # the research server's frame export -> ml/data/development
+make ml-train-dev                        # the same models and report, kept out of the web app
+
 # containers
 cp .env.example .env  # optional settings; never commit .env
 docker compose up --build
@@ -127,7 +131,7 @@ scripts/         export_schemas.py, run-all.sh
 - [ARCHITECTURE](docs/ARCHITECTURE.md): system design, data flow, the NIR option
 - [PHOTOREFRACTION](docs/PHOTOREFRACTION.md): the optics, the dead zone, and why distance and pupil size matter
 - [DATASET](docs/DATASET.md): schema, investigator workflow, augmentations
-- [MODEL_TRAINING](docs/MODEL_TRAINING.md): baselines, the hybrid model, splits, versioning
+- [MODEL_TRAINING](docs/MODEL_TRAINING.md): baselines, the hybrid model, splits, versioning, training on real data
 - [VALIDATION_PROTOCOL](docs/VALIDATION_PROTOCOL.md): metrics, comparison against an autorefractor, sample size
 - [RESEARCH_PROTOCOL](docs/RESEARCH_PROTOCOL.md): the first 100 labelled eyes, step by step
 - [DEVICE_CALIBRATION](docs/DEVICE_CALIBRATION.md): geometry, FOV, the gradient-gain bench

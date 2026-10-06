@@ -95,7 +95,8 @@ def _bool(v: Any) -> bool:
     return v.strip().lower() == "true" if isinstance(v, str) else bool(v)
 
 
-def _reference(row: pd.Series, methods: Sequence[str]) -> dict[str, Any]:
+def chosen_reference(row: pd.Series, methods: Sequence[str]) -> dict[str, Any]:
+    """The first of ``methods`` recorded for the row's eye at its visit, as stored (minus cylinder)."""
     for method in methods:
         sph = _num(row, f"gt_{method}_sph")
         if math.isfinite(sph):
@@ -196,7 +197,7 @@ def prepare(export: pd.DataFrame, reference: str = "autorefractor", model_versio
         df = df[df["eye"] == df["subject_id"].astype(str).map(chosen_eye)].reset_index(drop=True)
 
     methods = REFERENCE_PRIORITY if reference == "best" else (reference,)
-    refs = pd.DataFrame([_reference(r, methods) for _, r in df.iterrows()], index=df.index)
+    refs = pd.DataFrame([chosen_reference(r, methods) for _, r in df.iterrows()], index=df.index)
     df = df.join(refs)
     df["outcome"] = [_outcome(r) for _, r in df.iterrows()]
     df["screened"] = df["outcome"].isin(SCREENED)

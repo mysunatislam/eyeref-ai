@@ -3,7 +3,8 @@
 The sidecar JSON carries everything the runtime needs for reproducibility:
 model_name, model_version, feature order + normalisation, conformal scale,
 training-data provenance (and the ``trained_on_simulated`` guard that makes
-the runtime refuse to apply a simulation-trained model to real eyes).
+the runtime refuse to apply a simulation-trained model to real eyes), and the
+feature extractor version the model was trained on, whose features alone it accepts.
 """
 
 from __future__ import annotations
@@ -41,6 +42,7 @@ def export(model: TrainedHybrid, out_path: Path, model_name: str, model_version:
         "feature_names": INPUT_COLUMNS, "feature_mean": np.asarray(model.mean).tolist(),
         "feature_std": np.asarray(model.std).tolist(), "conformal_scale": model.conformal_scale_det,
         "uses_image": model.use_image, "trained_on_simulated": trained_on_simulated,
+        "extractor_version": dataset_manifest.get("extractor_version"),
         "dataset": dataset_manifest, "metrics_summary": metrics_summary,
     }
     out_path.with_suffix(".json").write_text(json.dumps(meta, indent=2))

@@ -205,15 +205,20 @@ GRADES = ("excellent", "acceptable", "poor", "reject")
 _REASON = re.compile(r"[a-z][a-z0-9_]{0,39}")
 
 
+def hard_failures(c: m.Capture) -> list[str]:
+    """The frame's hard failures, each a plain identifier or `other`."""
+    failed = (c.quality_json or {}).get("hard_failures") or []
+    return sorted({r if isinstance(r, str) and _REASON.fullmatch(r) else "other" for r in failed})
+
+
 def frame_quality_columns(captures: Sequence[m.Capture]) -> dict[str, int]:
     """How one eye's frames at a visit were graded, and why those not used failed. A frame rejected outright
     counts once for each hard failure it had; one not used for its overall score alone counts as low_score."""
     out = {f"frames_{g}": sum(c.quality_grade == g for c in captures) for g in GRADES}
     for c in captures:
-        failed = (c.quality_json or {}).get("hard_failures") or []
-        reasons = {r if isinstance(r, str) and _REASON.fullmatch(r) else "other" for r in failed}
+        reasons = hard_failures(c)
         if not reasons and c.quality_grade in ("poor", "reject"):
-            reasons = {"low_score"}
+            reasons = ["low_score"]
         for reason in reasons:
             out[f"frames_failed_{reason}"] = out.get(f"frames_failed_{reason}", 0) + 1
     return out
@@ -676,12 +681,19 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
             ses = c.session
             if ses.simulated and not include_simulated:
                 continue
+            meta, dev = CaptureMetadata.model_validate(c.metadata_json), profiles.get(ses.device_id)
             row: dict[str, Any] = {
                 "capture_id": c.id, "subject_code": ses.subject.code, "subject_id": ses.subject_id,
                 "age_group": ses.subject.age_group, "device_id": ses.device_id, "session_id": ses.id,
                 "session_started_at": utc(ses.started_at).isoformat(), "eye": c.eye,
                 "frame_index": c.frame_index, "meridian_deg": c.meridian_deg, "working_distance_m": c.working_distance_m,
-                "illumination": c.illumination, "quality_score": c.quality_score, "quality_grade": c.quality_grade,
+                # the light source's distance from the lens edge, as the meridian was found: the capture's own
+                # value if it had one, otherwise the phone's profile
+                "eccentricity_mm": meta.effective_eccentricity_mm(dev) if dev else meta.eccentricity_mm,
+                "pupil_diameter_mm": c.pupil_diameter_mm, "illumination": c.illumination,
+                "quality_score": c.quality_score, "quality_grade": c.quality_grade,
+                "hard_failures": "|".join(hard_failures(c)),
+                "extractor_version": (c.features_json or {}).get("extractor_version"),
                 "condition_label": ses.condition_label, "cycloplegia": ses.cycloplegia, "simulated": ses.simulated,
             }
             if c.features_json:

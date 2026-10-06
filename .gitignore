@@ -18,6 +18,9 @@ backend/data/
 # ml
 ml/data/
 ml/runs/
+# trained on study data (make ml-train-dev): the report lists study eyes, so neither is committed
+ml/reports/development/
+ml/artifacts/development/
 
 # web
 node_modules/

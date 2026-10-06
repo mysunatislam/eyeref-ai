@@ -189,6 +189,10 @@ class OnnxMeridionalEstimator:
             return _insufficient(self, meridian, f"Model file {self.model_path.name} not found: train and export a model first.")
         if self.meta.get("trained_on_simulated", False) and not metadata.simulated:
             return _insufficient(self, meridian, "Model was trained on SIMULATED data only; refusing to apply it to real eyes.")
+        trained_on = self.meta.get("extractor_version")
+        if trained_on and features.extractor_version != trained_on:
+            return _insufficient(self, meridian, f"Model was trained on features from extractor {trained_on}, not "
+                                                 f"{features.extractor_version}; retrain it on these features.")
         out = self.session.run(None, self._inputs(features, metadata, device))  # type: ignore[union-attr]
         mean, log_var = float(out[0][0][0]), float(out[1][0][0])
         sigma = math.sqrt(math.exp(log_var)) * float(self.meta.get("conformal_scale", 1.0))

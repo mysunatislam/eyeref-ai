@@ -33,8 +33,11 @@
 JSON Schemas of the exchange models live in `shared/schemas` and are regenerated with `make schemas`.
 
 `GET /api/dataset/export?fmt=csv` produces one row per capture. Each row holds the flattened `f_*`
-features, `session_started_at`, and the `gt_<method>_{sph,cyl,axis,se,vertex_mm}` columns for that eye. This
-is the training table format used by `ml/`.
+features, `session_started_at`, and the `gt_<method>_{sph,cyl,axis,se,vertex_mm}` columns for that eye.
+For training it also has the light source's distance from the lens edge (`eccentricity_mm`: the
+capture's own value if it recorded one, otherwise the phone's profile), the pupil diameter, the frame's
+hard failures (`hard_failures`, separated by `|`) and the feature extractor version. `make dataset`
+turns it into the training table that `ml/` reads ([Model training](MODEL_TRAINING.md#training-on-real-data)).
 
 `level=eye` produces one row per eye per visit instead: the result the product released (outcome, SE
 and its interval, power vector, class and astigmatism probabilities, frame counts, model version) next

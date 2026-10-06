@@ -4,7 +4,7 @@
 
 Experiments
   1. subject-level split (all devices)                    -> main comparison table
-  2. leave-one-device-out (unseen phone + unseen subjects) -> cross-device degradation
+  2. leave-one-device-out (unseen phone + unseen subjects) -> cross-device degradation, with --holdout-device
 Models
   physics_only, ridge, poly2_ridge, random_forest, gradient_boosting   (classical baselines)
   hybrid_features (MLP, physics residual), hybrid_cnn (+ image branch)  (deep)
@@ -18,6 +18,7 @@ import argparse
 import json
 import shutil
 import time
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -76,49 +77,73 @@ def _evaluate(name, test, mu, sd, gating, with_subgroups, seconds):
     return out
 
 
-def main() -> None:
+def splits(df: pd.DataFrame, holdout_device: str | None) -> tuple[Split, Split | None]:
+    """The subject-level split, and the leave-device-out split when a device is held out. Refuses data that cannot
+    give every part of a split some subjects, before anything is trained."""
+    devices = sorted(df.device_id.astype(str).unique())
+    if holdout_device is not None and holdout_device not in devices:
+        raise SystemExit(f"--holdout-device {holdout_device} is not in the data, which come from {', '.join(devices)}")
+    if holdout_device is not None and len(devices) < 2:
+        raise SystemExit(f"the data come from {holdout_device} only, so no device can be held out")
+    out = (subject_split(df), device_holdout_split(df, holdout_device) if holdout_device is not None else None)
+    for sp in out:
+        if sp is not None and min(part.subject_id.nunique() for part in (sp.train, sp.calib, sp.test)) == 0:
+            raise SystemExit(f"{sp.description}: too few subjects to train, calibrate and test on "
+                             f"({sp.train.subject_id.nunique()}, {sp.calib.subject_id.nunique()} and "
+                             f"{sp.test.subject_id.nunique()}; data from {df.subject_id.nunique()} subjects)")
+    return out
+
+
+def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", type=Path, default=Path("data/synthetic"))
     ap.add_argument("--out", type=Path, default=Path("reports/latest"))
     ap.add_argument("--artifacts", type=Path, default=Path("artifacts"))
     ap.add_argument("--epochs", type=int, default=25)
-    ap.add_argument("--holdout-device", default="sim-D")
+    ap.add_argument("--holdout-device", help="also train without this device and test on it (sim-D in the simulated "
+                                             "dataset)")
     ap.add_argument("--no-images", action="store_true")
     ap.add_argument("--publish-web", action="store_true", help="copy report into apps/web/public/reports")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
 
     manifest = json.loads((a.data / "MANIFEST.json").read_text())
     simulated = bool(manifest.get("simulated", False))
+    if a.publish_web and not simulated:
+        raise SystemExit("--publish-web puts the report in the web app, whose benchmark is simulated; a report on "
+                         "real data lists study eyes, so it is not published")
     print(f"loading {a.data} ({'SIMULATED' if simulated else 'REAL'} data)")
     df = add_physics_columns(pd.read_csv(a.data / "frames.csv"))
+    sp, dv = splits(df, a.holdout_device)
     crops = None if a.no_images or not (a.data / "crops.npz").exists() else np.load(a.data / "crops.npz")["crops"]
     gating = GatingConfig()
+    # a model trained on real data gets a version of its own, so results from two such models are never mixed up
+    model_version = f"{__version__}-sim" if simulated else f"{__version__}+{datetime.now(UTC):%Y%m%dT%H%M%SZ}"
 
     report: dict[str, Any] = {
         "generated_at": pd.Timestamp.utcnow().isoformat(), "eyeref_ml_version": __version__,
-        "simulated": simulated, "dataset": manifest,
+        "simulated": simulated, "dataset": manifest, "model_version": model_version,
         "warning": "SIMULATED DATA - metrics demonstrate the pipeline only and are NOT evidence of clinical accuracy."
-        if simulated else "",
-        "gating": gating.model_dump(), "experiments": {},
+        if simulated else manifest.get("warning", ""),
+        "gating": gating.model_dump(), "experiments": {}, "cross_device_degradation": {},
     }
     print("experiment 1: subject-level split")
-    sp = subject_split(df)
     res, hybrids = run_split(sp, crops, a.epochs, gating, with_subgroups=True)
     report["experiments"]["subject_split"] = {"description": sp.description, "n_train_subjects": int(sp.train.subject_id.nunique()),
                                               "n_test_subjects": int(sp.test.subject_id.nunique()), "models": res}
-    print(f"experiment 2: leave-device-out ({a.holdout_device})")
-    dv = device_holdout_split(df, a.holdout_device)
-    res2, _ = run_split(dv, crops, max(5, a.epochs // 2), gating, with_subgroups=False)
-    report["experiments"]["device_holdout"] = {"description": dv.description, "held_out_device": a.holdout_device,
-                                               "n_test_subjects": int(dv.test.subject_id.nunique()), "models": res2}
-    # degradation table
-    deg = {}
-    for name in res2:
-        a1 = res[name]["eye"]["se_all_eyes"].get("mae")
-        a2 = res2[name]["eye"]["se_all_eyes"].get("mae")
-        deg[name] = {"in_distribution_mae": a1, "unseen_device_mae": a2,
-                     "degradation_d": (a2 - a1) if a1 is not None and a2 is not None else None}
-    report["cross_device_degradation"] = deg
+    if dv is None:
+        print("experiment 2: skipped, no device held out (--holdout-device)")
+    else:
+        print(f"experiment 2: leave-device-out ({a.holdout_device})")
+        res2, _ = run_split(dv, crops, max(5, a.epochs // 2), gating, with_subgroups=False)
+        report["experiments"]["device_holdout"] = {"description": dv.description, "held_out_device": a.holdout_device,
+                                                   "n_test_subjects": int(dv.test.subject_id.nunique()), "models": res2}
+        # degradation table
+        for name in res2:
+            a1 = res[name]["eye"]["se_all_eyes"].get("mae")
+            a2 = res2[name]["eye"]["se_all_eyes"].get("mae")
+            report["cross_device_degradation"][name] = {
+                "in_distribution_mae": a1, "unseen_device_mae": a2,
+                "degradation_d": (a2 - a1) if a1 is not None and a2 is not None else None}
 
     a.out.mkdir(parents=True, exist_ok=True)
     path = a.out / "validation_report.json"
@@ -130,7 +155,7 @@ def main() -> None:
     for name, th in hybrids.items():
         summary = {"se_mae_subject_split": res[name]["eye"]["se_all_eyes"].get("mae")}
         fname = "meridional_mlp.onnx" if not th.use_image else "hybrid_cnn.onnx"
-        export(th, a.artifacts / fname, f"eyeref-{name}", __version__ + ("-sim" if simulated else ""), simulated, manifest, summary)
+        export(th, a.artifacts / fname, f"eyeref-{name}", model_version, simulated, manifest, summary)
         print(f"exported {a.artifacts / fname}")
 
     if a.publish_web:
