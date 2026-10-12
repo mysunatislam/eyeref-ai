@@ -51,7 +51,7 @@ Consequences that are built into the software:
    trigger an advisory, and under about 3 mm the frame is rejected.
 3. **Greater distance narrows the dead zone but costs pixels.** At 1 m through a 1080p browser stream,
    a 6 mm pupil spans only about 9–17 px. That is enough to see a crescent, but not to measure its width
-   to ±0.25 D. The native app (FUTURE WORK) should use full-resolution stills and optical zoom.
+   to ±0.25 D (section 7). The native app (FUTURE WORK) should use full-resolution stills and optical zoom.
 4. **A smaller eccentricity** (an external LED 3–4 mm from the lens, so that e < p) moves emmetropia
    out of the dead zone. This is the development rig profile `external-led-rig`.
 5. Inside the dead zone, the **brightness gradient** across the pupil still varies with defocus.
@@ -165,6 +165,37 @@ room to spare, and its median sits a little on the myopic side of them.
 - **Spectacles and contact lenses** add their own power. Glasses must be removed.
 - **Media opacities** (cataract) and **strabismus** can make the reflexes asymmetric. The OD/OS
   brightness ratio is flagged at 1.35 or above, and that is a referral reason, not a refraction.
+
+## 7. Camera resolution (SIMULATED DATA)
+
+The live app crops each eye 3.2 iris radii across and enlarges a crop narrower than 96 px, so that
+segmentation has room to work (`cropEyes`, `eyeref.cv.crop`). Enlarging adds no detail, so each frame
+records how far it was enlarged (`crop_upsample`) and the quality check works on the camera's own pixels:
+
+- sharpness is the Laplacian taken across whole camera pixels, so a sharp but enlarged crop is not called
+  blurred;
+- a frame with fewer than 9 camera pixels across the pupil is rejected as `too_few_pixels`.
+
+The simulator can draw an eye with a given number of camera pixels across the iris
+(`SessionConfig.camera_iris_px`): its light is averaged onto the camera's pixels, which add their noise,
+and the crop is enlarged as the app enlarges it. Ten simulated subjects on the simulated phone, 240
+frames each row:
+
+| Camera pixels across the iris | Example at 1 m | Frames usable | Crescent error (mean) | Crescent readings > 1 D off |
+| --- | --- | --- | --- | --- |
+| 104 (rendered) | | 89% | 0.05 D | 0.5% |
+| 48 | about 2× zoom on 4K | 88% | 0.07 D | 0.9% |
+| 34 | 4K video | 84% | 0.10 D | 1% |
+| 24 | | 33% | 0.19 D | 3.8% |
+| 17 | 1080p video | 2% | 1.03 D | 75% |
+
+So at 1 m a browser's 1080p video is not enough: the method needs about 30 camera pixels across the
+iris, which is 4K video or about 2× optical zoom. The live view warns below 30 px. Below about 24 px most
+frames fail on glare, because the flash's reflex on the cornea fills a larger share of the pupil's few
+pixels. How bright that reflex is on a real sensor is a guess in the simulator (it fills about one camera
+pixel), so the glare rate at low resolution must be measured on real phones. Letting more glare through
+does not rescue 1080p: with the glare limit at 70% of the pupil, the 17 px frames were 0.70 D off on
+average and 27% were more than 1 D off.
 
 ## References
 

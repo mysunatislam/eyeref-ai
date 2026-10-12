@@ -122,6 +122,9 @@ class SessionConfig:
     rgb_gain: tuple[float, float, float] = (1.0, 1.0, 1.0)
     noise_scale: float = 1.0
     iris_radius_px: float = 52.0
+    #: the iris's width in the camera's own pixels at 1 m (about 17 px for a phone's 1080p video, 34 px for 4K);
+    #: None draws the camera's pixels at iris_radius_px
+    camera_iris_px: Optional[float] = None
 
 
 @dataclass
@@ -162,6 +165,7 @@ def simulate_session(subject: VirtualSubject, device: Optional[DeviceProfile] = 
                     motion_blur_px=9.0 if motion else 0.0, motion_angle_deg=float(rng.uniform(0, 180)),
                     exposure=float(rng.uniform(0.9, 1.1)), noise_sd=float(rng.uniform(2.0, 4.0)) * cfg.noise_scale,
                     rgb_gain=cfg.rgb_gain, iris_radius_px=cfg.iris_radius_px,
+                    camera_iris_radius_px=cfg.camera_iris_px / 2 / true_d if cfg.camera_iris_px else None,
                     seed=int(rng.integers(0, 2**31)),
                 )
                 img, gt = render_eye(params)
@@ -172,9 +176,12 @@ def simulate_session(subject: VirtualSubject, device: Optional[DeviceProfile] = 
                                                                 pitch_deg=float(rng.normal(0, 3))),
                     illumination="flash", age_group=subject.age_group, frame_index=idx, simulated=True,
                     motion_px_per_frame=6.0 if motion else float(abs(rng.normal(0.6, 0.3))),
+                    crop_upsample=gt.crop_upsample,
                 )
                 c = (img.shape[1] - 1) / 2.0
-                hint = Circle(cx=c + float(rng.normal(0, 1.0)), cy=c + float(rng.normal(0, 1.0)),
+                # the face tracker's iris circle is good to about a camera pixel
+                px = gt.crop_upsample
+                hint = Circle(cx=c + float(rng.normal(0, 1.0)) * px, cy=c + float(rng.normal(0, 1.0)) * px,
                               r=gt.iris_radius_px * float(rng.normal(1.0, 0.03)))
                 ses.frames.append(SimulatedFrame(img, meta, gt.power_in_meridian_d, gt.meridian_eye_deg, hint))
                 idx += 1

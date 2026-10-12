@@ -62,6 +62,8 @@ export interface CaptureMetadata {
   frameIndex: number;
   simulated: boolean;
   motionPxPerFrame: number | null;
+  /** how many times the camera's pixels were enlarged into the eye crop (1 when not enlarged) */
+  cropUpsample: number;
 }
 
 export interface PhotorefractionFeatures {

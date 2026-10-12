@@ -86,6 +86,9 @@ class CaptureMetadata(BaseModel):
     simulated: bool = False
     ambient_luma: Optional[float] = None
     motion_px_per_frame: Optional[float] = None
+    #: how many times the eye crop was enlarged before processing: one of the camera's own pixels spans this
+    #: many of the crop's (eyeref.cv.crop)
+    crop_upsample: float = Field(1.0, ge=1.0)
 
     def effective_source_angle_image(self, device: DeviceProfile) -> Optional[float]:
         if self.source_angle_image_deg is not None:

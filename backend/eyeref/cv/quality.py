@@ -12,7 +12,6 @@ import math
 from dataclasses import dataclass
 from typing import Optional
 
-import cv2
 import numpy as np
 
 from ..types import CaptureMetadata, PhotorefractionFeatures, QualityAssessment, QualitySubscores
@@ -32,6 +31,11 @@ class QualityConfig:
     good_sharpness: float = 0.004
     max_motion_px: float = 4.0
     min_pupil_coverage: float = 0.75
+    #: the pupil's width in the camera's own pixels below which the crescent cannot be measured. Simulated, a
+    #: phone's 1080p video at 1 m (about 17 px across the iris, 7-9 px across the pupil) misreads a frame by
+    #: 0.7 D on average and one in four by more than 1 D; at 24 px across the iris it is 0.2 D (docs/PHOTOREFRACTION.md)
+    min_pupil_camera_px: float = 9.0
+    max_glare_fraction: float = 0.25
 
 
 def _ramp(x: float, bad: float, good: float) -> float:
@@ -41,11 +45,24 @@ def _ramp(x: float, bad: float, good: float) -> float:
     return float(min(1.0, max(0.0, t)))
 
 
-def sharpness_metric(img_rgb: np.ndarray, region: Optional[np.ndarray] = None) -> float:
+def sharpness_metric(img_rgb: np.ndarray, region: Optional[np.ndarray] = None, upsample: float = 1.0) -> float:
+    """Variance of the 4-neighbour Laplacian of luma over the region's interior pixels, at the camera's own pixel
+    spacing.
+
+    An enlarged crop's smooth in-between pixels would otherwise read as blur in a sharp picture, so the Laplacian
+    takes pixels round(upsample) apart, and the rest of the enlargement is scaled out (a second difference falls
+    with the square of the spacing). Twin of laplacianVariance in apps/web/src/lib/cv/image.ts.
+    """
     g = luma(img_rgb).astype(np.float64)
-    lap = cv2.Laplacian(g, cv2.CV_64F)
-    v = lap[region] if region is not None and region.any() else lap
-    return float(v.var())
+    s = max(1, round(upsample))
+    h, w = g.shape
+    if h <= 2 * s or w <= 2 * s:
+        return 0.0
+    c = g[s:h - s, s:w - s]
+    lap = g[s:h - s, : w - 2 * s] + g[s:h - s, 2 * s:] + g[: h - 2 * s, s:w - s] + g[2 * s:, s:w - s] - 4 * c
+    if region is not None and region[s:h - s, s:w - s].any():
+        lap = lap[region[s:h - s, s:w - s]]
+    return float(lap.var()) * (max(upsample, 1.0) / s) ** 4 if lap.size else 0.0
 
 
 def assess_quality(
@@ -67,7 +84,7 @@ def assess_quality(
     yy, xx = np.mgrid[0:h, 0:w]
     iris_region = (xx - seg.iris.cx) ** 2 + (yy - seg.iris.cy) ** 2 <= (1.1 * seg.iris.r) ** 2
 
-    sharp = sharpness_metric(img_rgb, iris_region)
+    sharp = sharpness_metric(img_rgb, iris_region, meta.crop_upsample)
     s.sharpness = _ramp(sharp, cfg.min_sharpness, cfg.good_sharpness)
     if sharp < cfg.min_sharpness:
         hard.append("image_blurred")
@@ -84,13 +101,17 @@ def assess_quality(
 
     glare_frac = float((seg.glint_mask & seg.pupil_mask).sum() / max(seg.pupil_mask.sum(), 1))
     s.glare = _ramp(-glare_frac, -0.25, -0.06)
-    if glare_frac > 0.25:
+    if glare_frac > cfg.max_glare_fraction:
         hard.append("excessive_glare")
 
     s.pupil_visibility = _ramp(seg.pupil_coverage, 0.6, 0.92)
     if seg.pupil_coverage < cfg.min_pupil_coverage:
         hard.append("pupil_occluded")
         adv.append("Pupil partly covered (eyelid/lashes). Ask the subject to open eyes wide.")
+
+    if 2 * features.pupil.r / meta.crop_upsample < cfg.min_pupil_camera_px:
+        hard.append("too_few_pixels")
+        adv.append("Too few camera pixels across the pupil: zoom in, or use a higher camera resolution.")
 
     pd = features.pupil_diameter_mm or 0.0
     s.pupil_size = _ramp(pd, cfg.min_pupil_mm, cfg.good_pupil_mm)

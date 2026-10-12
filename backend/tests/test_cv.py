@@ -117,3 +117,17 @@ def test_invalid_image_rejected():
     f, seg = extract_features(img, 270.0)
     q = assess_quality(img, seg, f, _meta())
     assert q.grade == "reject"
+
+
+def test_quality_judges_an_enlarged_crop_on_the_camera_pixels():
+    # 34 camera pixels across the iris (4K video at 1 m): enlarged for segmentation, still sharp
+    img, gt, iris = _render(camera_iris_radius_px=17.0, seed=7)
+    assert gt.crop_upsample > 1
+    f, seg = extract_features(img, 270.0, iris_hint=iris)
+    q = assess_quality(img, seg, f, _meta(motion_px_per_frame=0.5, crop_upsample=gt.crop_upsample))
+    assert "image_blurred" not in q.hard_failures and "too_few_pixels" not in q.hard_failures, q
+    # 1080p video at 1 m: about 8 camera pixels across the pupil
+    img, gt, iris = _render(camera_iris_radius_px=8.0, seed=7)
+    f, seg = extract_features(img, 270.0, iris_hint=iris)
+    q = assess_quality(img, seg, f, _meta(motion_px_per_frame=0.5, crop_upsample=gt.crop_upsample))
+    assert "too_few_pixels" in q.hard_failures and not q.usable

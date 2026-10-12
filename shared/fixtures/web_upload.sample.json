@@ -61,7 +61,8 @@
      "age_group": "adult_18_39",
      "frame_index": 0,
      "simulated": true,
-     "motion_px_per_frame": 0.52406205534504
+     "motion_px_per_frame": 0.52406205534504,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -212,7 +213,8 @@
      "age_group": "adult_18_39",
      "frame_index": 0,
      "simulated": true,
-     "motion_px_per_frame": 0.5586130078724307
+     "motion_px_per_frame": 0.5586130078724307,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -363,7 +365,8 @@
      "age_group": "adult_18_39",
      "frame_index": 1,
      "simulated": true,
-     "motion_px_per_frame": 0.5455577617532046
+     "motion_px_per_frame": 0.5455577617532046,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -514,7 +517,8 @@
      "age_group": "adult_18_39",
      "frame_index": 1,
      "simulated": true,
-     "motion_px_per_frame": 0.4322697758264451
+     "motion_px_per_frame": 0.4322697758264451,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -665,7 +669,8 @@
      "age_group": "adult_18_39",
      "frame_index": 2,
      "simulated": true,
-     "motion_px_per_frame": 0.6657610207072717
+     "motion_px_per_frame": 0.6657610207072717,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -816,7 +821,8 @@
      "age_group": "adult_18_39",
      "frame_index": 2,
      "simulated": true,
-     "motion_px_per_frame": 0.7139917335326229
+     "motion_px_per_frame": 0.7139917335326229,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -967,7 +973,8 @@
      "age_group": "adult_18_39",
      "frame_index": 3,
      "simulated": true,
-     "motion_px_per_frame": 0.5142792121949915
+     "motion_px_per_frame": 0.5142792121949915,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -1118,7 +1125,8 @@
      "age_group": "adult_18_39",
      "frame_index": 3,
      "simulated": true,
-     "motion_px_per_frame": 0.4449457655340672
+     "motion_px_per_frame": 0.4449457655340672,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -1269,7 +1277,8 @@
      "age_group": "adult_18_39",
      "frame_index": 450,
      "simulated": true,
-     "motion_px_per_frame": 0.37167079891876004
+     "motion_px_per_frame": 0.37167079891876004,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -1420,7 +1429,8 @@
      "age_group": "adult_18_39",
      "frame_index": 450,
      "simulated": true,
-     "motion_px_per_frame": 0.39426492319951123
+     "motion_px_per_frame": 0.39426492319951123,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -1571,7 +1581,8 @@
      "age_group": "adult_18_39",
      "frame_index": 451,
      "simulated": true,
-     "motion_px_per_frame": 0.8804928962475576
+     "motion_px_per_frame": 0.8804928962475576,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -1722,7 +1733,8 @@
      "age_group": "adult_18_39",
      "frame_index": 451,
      "simulated": true,
-     "motion_px_per_frame": 0.29861645845869145
+     "motion_px_per_frame": 0.29861645845869145,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -1873,7 +1885,8 @@
      "age_group": "adult_18_39",
      "frame_index": 452,
      "simulated": true,
-     "motion_px_per_frame": 0.23461446981774986
+     "motion_px_per_frame": 0.23461446981774986,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -2024,7 +2037,8 @@
      "age_group": "adult_18_39",
      "frame_index": 452,
      "simulated": true,
-     "motion_px_per_frame": 0.6521283978524446
+     "motion_px_per_frame": 0.6521283978524446,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -2175,7 +2189,8 @@
      "age_group": "adult_18_39",
      "frame_index": 453,
      "simulated": true,
-     "motion_px_per_frame": 0.6245050606767941
+     "motion_px_per_frame": 0.6245050606767941,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -2326,7 +2341,8 @@
      "age_group": "adult_18_39",
      "frame_index": 453,
      "simulated": true,
-     "motion_px_per_frame": 0.5861701086187212
+     "motion_px_per_frame": 0.5861701086187212,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -2477,7 +2493,8 @@
      "age_group": "adult_18_39",
      "frame_index": 900,
      "simulated": true,
-     "motion_px_per_frame": 0.36391494598593216
+     "motion_px_per_frame": 0.36391494598593216,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -2628,7 +2645,8 @@
      "age_group": "adult_18_39",
      "frame_index": 900,
      "simulated": true,
-     "motion_px_per_frame": 0.9201861466336139
+     "motion_px_per_frame": 0.9201861466336139,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -2779,7 +2797,8 @@
      "age_group": "adult_18_39",
      "frame_index": 901,
      "simulated": true,
-     "motion_px_per_frame": 0.5876346245126275
+     "motion_px_per_frame": 0.5876346245126275,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -2930,7 +2949,8 @@
      "age_group": "adult_18_39",
      "frame_index": 901,
      "simulated": true,
-     "motion_px_per_frame": 1.004910532079796
+     "motion_px_per_frame": 1.004910532079796,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -3081,7 +3101,8 @@
      "age_group": "adult_18_39",
      "frame_index": 902,
      "simulated": true,
-     "motion_px_per_frame": 0.24370986237869197
+     "motion_px_per_frame": 0.24370986237869197,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -3232,7 +3253,8 @@
      "age_group": "adult_18_39",
      "frame_index": 902,
      "simulated": true,
-     "motion_px_per_frame": 0.32762383879122375
+     "motion_px_per_frame": 0.32762383879122375,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -3383,7 +3405,8 @@
      "age_group": "adult_18_39",
      "frame_index": 903,
      "simulated": true,
-     "motion_px_per_frame": 0.7079493330306934
+     "motion_px_per_frame": 0.7079493330306934,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -3534,7 +3557,8 @@
      "age_group": "adult_18_39",
      "frame_index": 903,
      "simulated": true,
-     "motion_px_per_frame": 0.9316013626692355
+     "motion_px_per_frame": 0.9316013626692355,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -3685,7 +3709,8 @@
      "age_group": "adult_18_39",
      "frame_index": 1350,
      "simulated": true,
-     "motion_px_per_frame": 0.8191805900393219
+     "motion_px_per_frame": 0.8191805900393219,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -3836,7 +3861,8 @@
      "age_group": "adult_18_39",
      "frame_index": 1350,
      "simulated": true,
-     "motion_px_per_frame": 0.6785930363886538
+     "motion_px_per_frame": 0.6785930363886538,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -3987,7 +4013,8 @@
      "age_group": "adult_18_39",
      "frame_index": 1351,
      "simulated": true,
-     "motion_px_per_frame": 1.3324635845226718
+     "motion_px_per_frame": 1.3324635845226718,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -4138,7 +4165,8 @@
      "age_group": "adult_18_39",
      "frame_index": 1351,
      "simulated": true,
-     "motion_px_per_frame": 0.16242834629536035
+     "motion_px_per_frame": 0.16242834629536035,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -4289,7 +4317,8 @@
      "age_group": "adult_18_39",
      "frame_index": 1352,
      "simulated": true,
-     "motion_px_per_frame": 0.7160011573800991
+     "motion_px_per_frame": 0.7160011573800991,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -4440,7 +4469,8 @@
      "age_group": "adult_18_39",
      "frame_index": 1352,
      "simulated": true,
-     "motion_px_per_frame": 0.4542403347538486
+     "motion_px_per_frame": 0.4542403347538486,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -4591,7 +4621,8 @@
      "age_group": "adult_18_39",
      "frame_index": 1353,
      "simulated": true,
-     "motion_px_per_frame": 0.6147168281640544
+     "motion_px_per_frame": 0.6147168281640544,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {
@@ -4742,7 +4773,8 @@
      "age_group": "adult_18_39",
      "frame_index": 1353,
      "simulated": true,
-     "motion_px_per_frame": 0.37128598266926993
+     "motion_px_per_frame": 0.37128598266926993,
+     "crop_upsample": 1
     },
     "features": {
      "pupil": {

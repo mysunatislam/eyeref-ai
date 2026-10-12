@@ -162,6 +162,7 @@ export function benchMetadata(
     frameIndex,
     simulated: how.simulated,
     motionPxPerFrame: null,
+    cropUpsample: 1,
   };
 }
 

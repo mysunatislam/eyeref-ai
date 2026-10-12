@@ -193,6 +193,7 @@ export function simulateFrame(
     frameIndex,
     simulated: true,
     motionPxPerFrame: motion ? 6 : Math.abs(normal(rng, 0.6, 0.3)),
+    cropUpsample: 1,
   };
   return {
     image,

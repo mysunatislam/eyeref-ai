@@ -12,6 +12,7 @@ import { circularAxisError } from "../optics/powerVector";
 import { renderEye } from "../simulation/renderer";
 import { makeSubject, SIM_DEVICE, simulateFrame } from "../simulation/session";
 import { assignSides, headPoseFromMatrix, rollFromEyes } from "../tracking/eyeGeometry";
+import { laplacianVariance, type RgbaImage } from "../cv/image";
 import type { CaptureMetadata } from "../types";
 import { frame, IRIS, meta } from "./fixtures";
 
@@ -202,5 +203,47 @@ describe("tracking geometry", () => {
     const m = unmirrorMetadata(meta({ mirrored: true, sourceAngleImageDeg: 30 }));
     expect(m.sourceAngleImageDeg).toBeCloseTo(150);
     expect(circularAxisError(m.sourceAngleImageDeg!, 150)).toBe(0);
+  });
+});
+
+describe("camera resolution", () => {
+  // bilinear enlargement, as a camera's few pixels are smoothed into a bigger crop
+  const enlarge = (img: RgbaImage, k: number): RgbaImage => {
+    const w = img.width * k;
+    const h = img.height * k;
+    const data = new Uint8ClampedArray(w * h * 4);
+    const px = (x: number, y: number, c: number) =>
+      img.data[4 * (Math.min(y, img.height - 1) * img.width + Math.min(x, img.width - 1)) + c]!;
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        const u = Math.max((x + 0.5) / k - 0.5, 0);
+        const v = Math.max((y + 0.5) / k - 0.5, 0);
+        const x0 = Math.floor(u);
+        const y0 = Math.floor(v);
+        const fx = u - x0;
+        const fy = v - y0;
+        for (let c = 0; c < 4; c++)
+          data[4 * (y * w + x) + c] =
+            (px(x0, y0, c) * (1 - fx) + px(x0 + 1, y0, c) * fx) * (1 - fy) +
+            (px(x0, y0 + 1, c) * (1 - fx) + px(x0 + 1, y0 + 1, c) * fx) * fy;
+      }
+    return { width: w, height: h, data };
+  };
+  it("judges sharpness on the camera's own pixels", () => {
+    const { image } = renderEye({ seed: 7 });
+    const native = laplacianVariance(image);
+    const big = enlarge(image, 3);
+    expect(laplacianVariance(big)).toBeLessThan(native / 4);
+    const judged = laplacianVariance(big, undefined, 3);
+    expect(judged).toBeGreaterThan(native / 3);
+    expect(judged).toBeLessThan(native * 2);
+  });
+  it("refuses a pupil spanning too few camera pixels", () => {
+    const { image } = renderEye({ seed: 7 });
+    const { features, segmentation } = extractFeatures(image, 270, IRIS, true);
+    const at = (cropUpsample: number) =>
+      assessQuality(image, segmentation, features, meta({ cropUpsample })).hardFailures;
+    expect(at(1)).not.toContain("too_few_pixels");
+    expect(at(8)).toContain("too_few_pixels");
   });
 });
