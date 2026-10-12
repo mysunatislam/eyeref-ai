@@ -52,23 +52,30 @@ export function saturationMap(img: RgbaImage): Float32Array {
 }
 
 /** Variance of the 4-neighbour Laplacian of luma inside an optional mask (focus measure). */
-export function laplacianVariance(img: RgbaImage, mask?: Uint8Array): number {
+/**
+ * Variance of the 4-neighbour Laplacian of luma, over `mask` when given. `upsample` is how many times the
+ * camera's pixels were enlarged into the image (CaptureMetadata.cropUpsample): the Laplacian then steps over
+ * whole camera pixels and is scaled back to the image's pixels, so an enlarged sharp crop is not judged blurred.
+ * Twin of sharpness_metric in backend/eyeref/cv/quality.py.
+ */
+export function laplacianVariance(img: RgbaImage, mask?: Uint8Array, upsample = 1): number {
   const L = lumaMap(img);
   const w = img.width;
+  const st = Math.max(1, Math.round(upsample));
   let s = 0;
   let s2 = 0;
   let n = 0;
-  for (let y = 1; y < img.height - 1; y++) {
-    for (let x = 1; x < w - 1; x++) {
+  for (let y = st; y < img.height - st; y++) {
+    for (let x = st; x < w - st; x++) {
       const i = y * w + x;
       if (mask && !mask[i]) continue;
-      const v = L[i - 1]! + L[i + 1]! + L[i - w]! + L[i + w]! - 4 * L[i]!;
+      const v = L[i - st]! + L[i + st]! + L[i - st * w]! + L[i + st * w]! - 4 * L[i]!;
       s += v;
       s2 += v * v;
       n++;
     }
   }
-  return n ? s2 / n - (s / n) ** 2 : 0;
+  return n ? (s2 / n - (s / n) ** 2) * (Math.max(upsample, 1) / st) ** 4 : 0;
 }
 
 /** Otsu threshold on values (0..1-ish); returns threshold and eta = sigma_b^2 / sigma_t^2. */

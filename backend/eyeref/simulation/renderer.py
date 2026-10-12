@@ -18,10 +18,12 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
+from typing import Optional
 
 import cv2
 import numpy as np
 
+from ..cv.crop import enlarge_crop
 from ..optics.photorefraction import (
     EccentricGeometry,
     crescent_width_m,
@@ -58,6 +60,11 @@ class SyntheticEyeParams:
     noise_sd: float = 3.0
     flash_on: bool = True
     rgb_gain: tuple[float, float, float] = (1.0, 1.0, 1.0)  # device colour response
+    #: the iris radius in the camera's own pixels; None draws the camera's pixels at iris_radius_px. A phone's
+    #: video at 1 m gives about 8 px (1080p) to 16 px (4K): the eye is drawn at iris_radius_px, its light is
+    #: averaged onto the camera's pixels, which add their noise, and the crop is enlarged as the live app
+    #: enlarges it (eyeref.cv.crop). blur_sigma_px is then the camera's blur in its own pixels.
+    camera_iris_radius_px: Optional[float] = None
     seed: int = 0
 
 
@@ -73,6 +80,8 @@ class SyntheticGroundTruth:
     crescent_width_px: float
     crescent_side: int
     in_dead_zone: bool
+    #: how many times the camera's pixels were enlarged into the crop (CaptureMetadata.crop_upsample)
+    crop_upsample: float = 1.0
 
 
 def _soft_step(x: np.ndarray, width: float) -> np.ndarray:
@@ -82,6 +91,8 @@ def _soft_step(x: np.ndarray, width: float) -> np.ndarray:
 def render_eye(p: SyntheticEyeParams) -> tuple[np.ndarray, SyntheticGroundTruth]:
     rng = np.random.default_rng(p.seed)
     n = p.size_px
+    # how many drawn pixels one of the camera's spans
+    per_cam = max(p.iris_radius_px / p.camera_iris_radius_px, 1.0) if p.camera_iris_radius_px else 1.0
     cy = cx = (n - 1) / 2.0
     yy, xx = np.mgrid[0:n, 0:n].astype(np.float64)
     dx, dy = xx - cx, yy - cy
@@ -144,13 +155,14 @@ def render_eye(p: SyntheticEyeParams) -> tuple[np.ndarray, SyntheticGroundTruth]
         gy = cy + p.gaze_offset[1] * pupil_r + 0.04 * pupil_r * uy
         gsig = max(1.1, 0.07 * pupil_r)
         gl = np.exp(-((xx - gx) ** 2 + (yy - gy) ** 2) / (2 * gsig**2))
-        img = img + gl[..., None] * np.array([255.0, 255.0, 255.0]) * 1.4
+        # the reflex of the flash is far brighter than the sensor can hold, so it still fills a camera pixel
+        img = img + gl[..., None] * np.array([255.0, 255.0, 255.0]) * 1.4 * per_cam**2
         glint = (gx, gy)
 
     # --- optics / sensor degradations --------------------------------------
     img = img * p.exposure * np.array(p.rgb_gain, np.float64)[None, None, :]
     if p.blur_sigma_px > 0:
-        img = cv2.GaussianBlur(img, (0, 0), p.blur_sigma_px)
+        img = cv2.GaussianBlur(img, (0, 0), p.blur_sigma_px * per_cam)
     if p.motion_blur_px >= 1.0:
         k = int(round(p.motion_blur_px)) | 1
         kernel = np.zeros((k, k))
@@ -159,20 +171,32 @@ def render_eye(p: SyntheticEyeParams) -> tuple[np.ndarray, SyntheticGroundTruth]
         kernel = cv2.warpAffine(kernel, rot, (k, k))
         kernel /= max(kernel.sum(), 1e-9)
         img = cv2.filter2D(img, -1, kernel)
+    if per_cam > 1:
+        # each of the camera's pixels collects the light falling on it
+        m = max(8, int(round(n / per_cam)))
+        img = cv2.resize(img, (m, m), interpolation=cv2.INTER_AREA)
     shot = rng.normal(0, 1, img.shape) * np.sqrt(np.clip(img, 0, None)) * 0.25
     img = img + shot + rng.normal(0, p.noise_sd, img.shape)
     out = np.clip(img, 0, 255).astype(np.uint8)
+    upsample = 1.0
+    if per_cam > 1:
+        out, upsample = enlarge_crop(out)
+    s = out.shape[1] / n  # crop pixels per drawn pixel
+
+    def at(u: float) -> float:
+        return u if s == 1 else (u + 0.5) * s - 0.5
 
     gt = SyntheticGroundTruth(
-        pupil_center=(cx, cy),
-        pupil_radius_px=pupil_r,
-        iris_radius_px=iris_r,
-        glint=glint,
+        pupil_center=(at(cx), at(cy)),
+        pupil_radius_px=pupil_r * s,
+        iris_radius_px=iris_r * s,
+        glint=(at(glint[0]), at(glint[1])) if glint else None,
         meridian_eye_deg=eye_meridian,
         power_in_meridian_d=power,
         defocus_d=defocus,
-        crescent_width_px=s_px,
+        crescent_width_px=s_px * s,
         crescent_side=int(side),
         in_dead_zone=side == 0,
+        crop_upsample=upsample,
     )
     return out, gt

@@ -18,7 +18,8 @@
   "age_group": "adult_18_39",
   "frame_index": 0,
   "simulated": true,
-  "motion_px_per_frame": 0.52406205534504
+  "motion_px_per_frame": 0.52406205534504,
+  "crop_upsample": 1
  },
  "features": {
   "pupil": {

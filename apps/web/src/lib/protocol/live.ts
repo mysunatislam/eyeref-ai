@@ -111,6 +111,7 @@ export function buildMetadata(args: {
     frameIndex: args.frameIndex,
     simulated: false,
     motionPxPerFrame: args.motionPx,
+    cropUpsample: 1,
   };
 }
 
@@ -130,7 +131,13 @@ export function processLive(
   estimator: PhotorefractionEstimator,
 ): LiveProcessed[] {
   return crops.map((c) => {
-    const { record, segmentation } = processFrame(c.image, c.iris, metaFor(c.eye), device, estimator);
+    const { record, segmentation } = processFrame(
+      c.image,
+      c.iris,
+      { ...metaFor(c.eye), cropUpsample: c.upsample },
+      device,
+      estimator,
+    );
     return { eye: c.eye, image: c.image, segmentation, record, rect: c.rect, upsample: c.upsample };
   });
 }

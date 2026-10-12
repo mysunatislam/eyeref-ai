@@ -21,6 +21,9 @@ export interface QualityConfig {
   goodSharpness: number;
   maxMotionPx: number;
   minPupilCoverage: number;
+  /** fewest of the camera's own pixels across the pupil; see docs/PHOTOREFRACTION.md (camera resolution) */
+  minPupilCameraPx: number;
+  maxGlareFraction: number;
 }
 
 export const DEFAULT_QUALITY: QualityConfig = {
@@ -35,6 +38,8 @@ export const DEFAULT_QUALITY: QualityConfig = {
   goodSharpness: 0.004,
   maxMotionPx: 4,
   minPupilCoverage: 0.75,
+  minPupilCameraPx: 9,
+  maxGlareFraction: 0.25,
 };
 
 export const ramp = (x: number, bad: number, good: number) =>
@@ -43,6 +48,7 @@ export const ramp = (x: number, bad: number, good: number) =>
 export const HARD_FAILURE_TEXT: Record<string, string> = {
   pupil_not_found: "Pupil not found",
   image_blurred: "Image blurred / out of focus",
+  too_few_pixels: "Too few camera pixels across the pupil",
   reflex_saturated: "Red reflex over-exposed",
   excessive_glare: "Corneal glare covers the pupil",
   pupil_occluded: "Pupil partly covered by eyelid",
@@ -125,7 +131,7 @@ export function assessQuality(
         lumN++;
       }
     }
-  const sharp = laplacianVariance(img, irisRegion);
+  const sharp = laplacianVariance(img, irisRegion, meta.cropUpsample);
   s.sharpness = ramp(sharp, cfg.minSharpness, cfg.goodSharpness);
   if (sharp < cfg.minSharpness) hard.push("image_blurred");
 
@@ -149,12 +155,16 @@ export function assessQuality(
   }
   const glareFrac = glareN / Math.max(pupilN, 1);
   s.glare = ramp(-glareFrac, -0.25, -0.06);
-  if (glareFrac > 0.25) hard.push("excessive_glare");
+  if (glareFrac > cfg.maxGlareFraction) hard.push("excessive_glare");
 
   s.pupilVisibility = ramp(seg.pupilCoverage, 0.6, 0.92);
   if (seg.pupilCoverage < cfg.minPupilCoverage) {
     hard.push("pupil_occluded");
     adv.push("Pupil partly covered (eyelid/lashes). Ask the subject to open eyes wide.");
+  }
+  if ((2 * f.pupil.r) / meta.cropUpsample < cfg.minPupilCameraPx) {
+    hard.push("too_few_pixels");
+    adv.push("Too few camera pixels across the pupil: zoom in, or use a higher camera resolution.");
   }
   const pd = f.pupilDiameterMm ?? 0;
   s.pupilSize = ramp(pd, cfg.minPupilMm, cfg.goodPupilMm);

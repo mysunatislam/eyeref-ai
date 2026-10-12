@@ -21,6 +21,7 @@ export const meta = (o: Partial<CaptureMetadata> = {}): CaptureMetadata => ({
   frameIndex: 0,
   simulated: true,
   motionPxPerFrame: 0.5,
+  cropUpsample: 1,
   ...o,
 });
 export const IRIS = { cx: 79.5, cy: 79.5, r: 52 };
