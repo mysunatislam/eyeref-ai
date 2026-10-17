@@ -2,7 +2,9 @@
  * Capture-readiness indicators shared by the live camera and Simulation Mode.
  * Thresholds deliberately mirror the quality model so the guidance predicts acceptance.
  */
-import type { QualityGrade } from "../types";
+import { DEFAULT_GATING } from "../inference/fusion";
+import { HARD_FAILURE_TEXT, isUsable } from "../cv/quality";
+import type { FrameRecord, QualityGrade } from "../types";
 
 export type IndicatorState = "ok" | "warn" | "bad" | "idle";
 
@@ -28,6 +30,8 @@ export interface ReadinessInput {
   pupilMm: number | null;
   grade: QualityGrade | null;
   flashAvailable: boolean;
+  /** why there is no light beside the lens, in words the person can act on */
+  flashMissingHint?: string;
   /** the probed rotation less the step's, on the meridian circle */
   deviceRotationErrorDeg: number | null;
   /** which way to turn the phone, as you look at its screen, to reach the step's angle */
@@ -36,6 +40,21 @@ export interface ReadinessInput {
 
 const f = (v: number | null, d = 1, unit = "") =>
   v === null || !Number.isFinite(v) ? "—" : `${v.toFixed(d)}${unit}`;
+
+/** Why a live camera has no light beside its lens, or null when it has one. */
+export function flashMissing(args: {
+  hasSource: boolean;
+  facing: "user" | "environment";
+  torch: boolean;
+  deviceCamera: string;
+}): string | null {
+  if (!args.hasSource) return "This device profile has no light beside the lens: choose a phone profile";
+  if (args.deviceCamera !== "rear") return null;
+  if (args.facing === "user") return "The front camera has no flash beside it: switch to the back camera";
+  if (!args.torch)
+    return "This browser does not let the app switch on the flash. Try Chrome on an Android phone";
+  return null;
+}
 
 export function evaluateReadiness(r: ReadinessInput): { indicators: Indicator[]; ready: boolean } {
   const ind: Indicator[] = [];
@@ -47,7 +66,11 @@ export function evaluateReadiness(r: ReadinessInput): { indicators: Indicator[];
     "Face",
     r.face ? "Tracked" : "Not found",
     r.face ? "ok" : "bad",
-    r.face ? undefined : "Centre the face in the frame",
+    r.face
+      ? undefined
+      : r.luma !== null && r.luma < 0.08
+        ? "Too dark to find the face: put a lamp or a screen behind the phone"
+        : "Centre the face in the frame",
   );
 
   if (r.distanceM === null) add("distance", "Distance", "—", "idle");
@@ -57,15 +80,30 @@ export function evaluateReadiness(r: ReadinessInput): { indicators: Indicator[];
     add("distance", "Distance", f(r.distanceM, 2, " m"), st, distanceAdvice(r.distanceM, r.targetDistanceM));
   }
 
-  if (r.luma === null) add("light", "Room light", "—", "idle");
-  else {
-    const st = r.luma > 0.55 ? "bad" : r.luma > 0.4 ? "warn" : r.luma < 0.04 ? "warn" : "ok";
+  // The camera brightens a dim face by itself, so the face's brightness says little about the room: the
+  // pupil, which is what the room's light changes, decides when it is measured, and light never blocks.
+  if (r.pupilMm !== null)
     add(
       "light",
       "Room light",
-      r.luma > 0.4 ? "Too bright" : r.luma < 0.04 ? "Very dark" : "Dim",
-      st,
-      r.luma > 0.4 ? "Dim the room so the pupils dilate" : undefined,
+      r.pupilMm >= 4 ? "Dim enough" : "Too bright",
+      r.pupilMm >= 4 ? "ok" : "warn",
+      r.pupilMm >= 4 ? undefined : "Dim the room so the pupils widen",
+    );
+  else if (r.luma === null) add("light", "Room light", "—", "idle");
+  else {
+    const dark = r.luma < 0.04;
+    const bright = r.luma > 0.5;
+    add(
+      "light",
+      "Room light",
+      dark ? "Very dark" : bright ? "Bright" : "Dim",
+      dark || bright ? "warn" : "ok",
+      dark
+        ? "Too dark to see the face: put a lamp or a screen behind the phone"
+        : bright
+          ? "Dim the room so the pupils widen"
+          : undefined,
     );
   }
 
@@ -114,7 +152,9 @@ export function evaluateReadiness(r: ReadinessInput): { indicators: Indicator[];
     "Light source",
     r.flashAvailable ? "Available" : "Missing",
     r.flashAvailable ? "ok" : "bad",
-    r.flashAvailable ? undefined : "No eccentric source: photorefraction impossible",
+    r.flashAvailable
+      ? undefined
+      : (r.flashMissingHint ?? "No light beside the lens: the eyes cannot be measured"),
   );
 
   if (r.deviceRotationErrorDeg !== null) {
@@ -163,4 +203,32 @@ export function distanceAdvice(distanceM: number, targetM: number): string | und
   if (Math.abs(gap) <= 0.05 * targetM) return undefined;
   const cm = Math.max(5, Math.round((Math.abs(gap) * 100) / 5) * 5);
   return gap > 0 ? `Move closer, about ${cm} cm` : `Move back, about ${cm} cm`;
+}
+
+export interface BurstSummary {
+  usable: number;
+  total: number;
+  /** usable images needed from each eye */
+  needed: number;
+  /** the commonest reasons images were rejected, most frequent first */
+  reasons: string[];
+}
+
+/** What one capture gave: usable eye images, and why the others were rejected. */
+export function burstSummary(recs: FrameRecord[], framesPerEye: number): BurstSummary {
+  const counts = new Map<string, number>();
+  for (const r of recs)
+    if (!isUsable(r.quality)) for (const h of r.quality.hardFailures) counts.set(h, (counts.get(h) ?? 0) + 1);
+  const reasons = [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([k]) => HARD_FAILURE_TEXT[k] ?? k);
+  // frames the tracker lost the face in never become records
+  if (recs.length < 2 * framesPerEye) reasons.push("Face lost in some frames");
+  return {
+    usable: recs.filter((r) => isUsable(r.quality)).length,
+    total: 2 * framesPerEye,
+    needed: 2 * DEFAULT_GATING.minUsableFramesPerMeridian,
+    reasons,
+  };
 }

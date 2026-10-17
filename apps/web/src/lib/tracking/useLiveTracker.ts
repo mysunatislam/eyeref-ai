@@ -24,7 +24,7 @@ import {
 } from "../protocol/live";
 import { FRAME_INTERVAL_MS, TORCH_SETTLE_MS } from "../protocol/protocol";
 import type { EyeSide, QualityGrade } from "../types";
-import { loadFaceLandmarker, observe, type FaceObservation } from "./faceTracker";
+import { brightenedFrame, loadFaceLandmarker, observe, type FaceObservation } from "./faceTracker";
 
 export interface Telemetry {
   face: boolean;
@@ -42,6 +42,8 @@ export interface Telemetry {
   crescent: Record<EyeSide, boolean>;
   irisPx: number | null;
   fps: number;
+  /** the face is found only in a brightened copy of the frame: the room is darker than the tracker needs */
+  lowLight: boolean;
 }
 
 const EMPTY: Telemetry = {
@@ -60,9 +62,33 @@ const EMPTY: Telemetry = {
   crescent: { OD: false, OS: false },
   irisPx: null,
   fps: 0,
+  lowLight: false,
 };
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * One tracker pass. While the face is lost, passes alternate between the plain and a brightened frame, and
+ * stay with whichever finds it. With `both`, a pass that misses tries the other at once (for captures).
+ */
+function track(
+  lm: FaceLandmarker,
+  video: HTMLVideoElement,
+  st: { lowLight: { current: boolean }; canvas: { current: HTMLCanvasElement | null }; ts: () => number },
+  both = false,
+): FaceObservation | null {
+  const boosted = () =>
+    brightenedFrame(video, st.canvas.current ?? (st.canvas.current = document.createElement("canvas")));
+  const first = st.lowLight.current;
+  let obs = observe(lm, video, st.ts(), first ? boosted() : null);
+  if (obs) return obs;
+  if (both) {
+    obs = observe(lm, video, st.ts(), first ? null : boosted());
+    if (obs) return obs;
+  }
+  if (!both) st.lowLight.current = !first;
+  return null;
+}
 
 /**
  * `screenAngleDeg` is how far the screen is turned (`useScreenAngle`). The browser turns the camera's
@@ -84,6 +110,9 @@ export function useLiveTracker(
   const [telemetry, setTelemetry] = useState<Telemetry>(EMPTY);
   const [showLandmarks, setShowLandmarks] = useState(true);
   const busy = useRef(false);
+  // track on a brightened copy of the frame while that finds the face and the plain frame does not
+  const lowLight = useRef(false);
+  const boostCanvas = useRef<HTMLCanvasElement | null>(null);
   const lastTs = useRef(0);
   const lastIris = useRef<{ x: number; y: number } | null>(null);
   const latest = useRef<{ obs: FaceObservation | null; processed: LiveProcessed[] | null }>({
@@ -144,7 +173,7 @@ export function useLiveTracker(
       const lm = lmRef.current;
       if (!video || !lm || busy.current || video.readyState < 2) return;
       const now = performance.now();
-      const obs = observe(lm, video, nextTs());
+      const obs = track(lm, video, { lowLight, canvas: boostCanvas, ts: nextTs });
       frames++;
       if (now - fpsT0 > 1000) {
         fps = (frames * 1000) / (now - fpsT0);
@@ -245,6 +274,7 @@ export function useLiveTracker(
           crescent: pick((p) => p.record.features.crescentPresent, false),
           irisPx: obs.eyes.OD.iris.r * 2,
           fps,
+          lowLight: lowLight.current,
         });
       }
     };
@@ -269,7 +299,7 @@ export function useLiveTracker(
         }
         let prev: { x: number; y: number } | null = null;
         for (let i = 0; i < n; i++) {
-          const obs = observe(lm, video, nextTs());
+          const obs = track(lm, video, { lowLight, canvas: boostCanvas, ts: nextTs }, true);
           const g = grabFrame(
             video,
             frameCanvas.current ?? (frameCanvas.current = document.createElement("canvas")),

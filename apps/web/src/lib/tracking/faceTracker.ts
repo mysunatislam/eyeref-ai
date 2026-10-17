@@ -51,11 +51,44 @@ export function loadFaceLandmarker(): Promise<FaceLandmarkerT> {
   return landmarkerPromise;
 }
 
-export function observe(lm: FaceLandmarkerT, video: HTMLVideoElement, tsMs: number): FaceObservation | null {
+/** How much a brightened frame is lifted for the tracker when the face cannot be found in a dim room. */
+export const LOW_LIGHT_GAIN = 3;
+
+/**
+ * A brightened copy of the video frame, for the face tracker only: in a dim room (which the method needs, so the
+ * pupils are wide) a face a metre away is too dark for it. Measurements always read the raw frame.
+ */
+export function brightenedFrame(
+  video: HTMLVideoElement,
+  canvas: HTMLCanvasElement,
+): HTMLCanvasElement | null {
   const w = video.videoWidth;
   const h = video.videoHeight;
   if (!w || !h) return null;
-  const r = lm.detectForVideo(video, tsMs);
+  if (canvas.width !== w) canvas.width = w;
+  if (canvas.height !== h) canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  ctx.filter = `brightness(${LOW_LIGHT_GAIN}) contrast(1.1)`;
+  ctx.drawImage(video, 0, 0, w, h);
+  ctx.filter = "none";
+  return canvas;
+}
+
+/**
+ * Face landmarks from the video, or from `source` (a brightened copy of the same frame) when given. Landmark
+ * coordinates are in the video's pixels either way.
+ */
+export function observe(
+  lm: FaceLandmarkerT,
+  video: HTMLVideoElement,
+  tsMs: number,
+  source?: HTMLCanvasElement | null,
+): FaceObservation | null {
+  const w = video.videoWidth;
+  const h = video.videoHeight;
+  if (!w || !h) return null;
+  const r = lm.detectForVideo(source ?? video, tsMs);
   const face = r.faceLandmarks?.[0];
   if (!face) return null;
   const eyes = eyesFromLandmarks(face, w, h, false);

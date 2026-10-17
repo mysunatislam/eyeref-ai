@@ -12,7 +12,15 @@ import { isUsable } from "@/lib/cv/quality";
 import { DEFAULT_GATING } from "@/lib/inference/fusion";
 import { IRIS_MIN_PX, nextZoom } from "@/lib/protocol/live";
 import { activeDevice, buildProtocol, COUNTDOWN_S, estimatorFor } from "@/lib/protocol/protocol";
-import { distanceAdvice, evaluateReadiness, rotationError } from "@/lib/protocol/readiness";
+import { beep, TONES, unlockAudio } from "@/lib/protocol/beep";
+import {
+  burstSummary,
+  distanceAdvice,
+  evaluateReadiness,
+  flashMissing,
+  rotationError,
+  type BurstSummary,
+} from "@/lib/protocol/readiness";
 import { useSettings } from "@/lib/settings";
 import { HVID_MM } from "@/lib/tracking/eyeGeometry";
 import { useLiveTracker } from "@/lib/tracking/useLiveTracker";
@@ -24,6 +32,10 @@ import { PrepareChecklist } from "./PrepareChecklist";
 import { StepSummary } from "./StepSummary";
 
 export type Phase = "prepare" | "distance" | "capture";
+
+/** how long everything must stay ready before a hands-free capture, and the pause after one */
+const AUTO_HOLD_MS = 1500;
+const AUTO_PAUSE_MS = 4000;
 
 export function LiveStage({
   phase,
@@ -84,6 +96,10 @@ export function LiveStage({
   const [count, setCount] = useState<number | null>(null);
   const [capturing, setCapturing] = useState(false);
   const [prepOk, setPrepOk] = useState(false);
+  const [auto, setAuto] = useState(false);
+  const [lastBurst, setLastBurst] = useState<BurstSummary | null>(null);
+  const readySince = useRef<number | null>(null);
+  const lastAuto = useRef(0);
   const frameCounter = useRef(0);
   // zoom in until the iris has enough camera pixels, between bursts and at most every 1.5 s, so each change
   // shows in the picture before the next is judged
@@ -95,12 +111,33 @@ export function LiveStage({
     void setZoom(zoomTo);
   }, [zoomTo, capturing, status, setZoom]);
 
+  // a face lost while zoomed in may be outside the cropped view: zoom back out after a few seconds
+  const faceSeen = useRef(0);
+  useEffect(() => {
+    if (t.face) {
+      faceSeen.current = Date.now();
+      return;
+    }
+    const zmin = caps?.zoom?.min ?? 1;
+    if (status !== "live" || capturing || zoom <= zmin + 0.01) return;
+    const id = setTimeout(() => {
+      if (Date.now() - faceSeen.current >= 3000) void setZoom(zmin);
+    }, 3000);
+    return () => clearTimeout(id);
+  }, [t.face, zoom, caps, status, capturing, setZoom]);
+
   const startCamera = useCallback(async () => {
     await ensureLandmarker();
     await start(device.camera === "rear" ? "environment" : "user");
   }, [ensureLandmarker, start, device.camera]);
 
-  const flashAvailable = device.flashOffsetMm !== null && (device.camera !== "rear" || Boolean(caps?.torch));
+  const flashHint = flashMissing({
+    hasSource: device.flashOffsetMm !== null,
+    facing,
+    torch: Boolean(caps?.torch),
+    deviceCamera: device.camera,
+  });
+  const flashAvailable = flashHint === null;
   const readiness = evaluateReadiness({
     face: t.face,
     distanceM: t.distanceM,
@@ -115,6 +152,7 @@ export function LiveStage({
     pupilMm: t.pupilMm.OD ?? t.pupilMm.OS,
     grade: t.grade.OD,
     flashAvailable,
+    flashMissingHint: flashHint ?? undefined,
     deviceRotationErrorDeg: rotationOff,
     deviceTurn: rotationOff === null ? null : turnToTarget(rotationOff, facing),
   });
@@ -123,6 +161,7 @@ export function LiveStage({
     setCapturing(true);
     for (let c = COUNTDOWN_S; c > 0; c--) {
       setCount(c);
+      beep(TONES.tick);
       await new Promise((r) => setTimeout(r, 800));
     }
     setCount(null);
@@ -139,13 +178,42 @@ export function LiveStage({
       const good = (eye: "OD" | "OS") =>
         recs.filter((r) => r.metadata.eye === eye && isUsable(r.quality)).length >=
         DEFAULT_GATING.minUsableFramesPerMeridian;
-      if (good("OD") && good("OS") && stepIdx < steps.length - 1) setStepIdx((i) => i + 1);
+      const passed = good("OD") && good("OS");
+      setLastBurst(burstSummary(recs, s.framesPerMeridian));
+      if (passed) {
+        beep(TONES.good);
+        setTimeout(() => beep(TONES.good), 180);
+      } else beep(TONES.retake, 400);
+      if (passed && stepIdx < steps.length - 1) setStepIdx((i) => i + 1);
     } finally {
       setCapturing(false);
+      lastAuto.current = Date.now();
     }
   };
 
   const allDone = steps.every((st) => frames.some((f) => f.protocolRotationDeg === st.rotationDeg));
+  // hands-free: capture once everything has been ready for a moment, for someone with no helper to tap
+  const stepGood = (["OD", "OS"] as const).every(
+    (eye) =>
+      frames.filter(
+        (f) => f.protocolRotationDeg === step.rotationDeg && f.metadata.eye === eye && isUsable(f.quality),
+      ).length >= DEFAULT_GATING.minUsableFramesPerMeridian,
+  );
+  useEffect(() => {
+    if (!auto || phase !== "capture" || capturing || !readiness.ready) {
+      readySince.current = null;
+      return;
+    }
+    if (stepGood) return;
+    readySince.current ??= Date.now();
+    const id = setTimeout(
+      () => {
+        if (readySince.current !== null && Date.now() - lastAuto.current > AUTO_PAUSE_MS) void capture();
+      },
+      Math.max(0, AUTO_HOLD_MS - (Date.now() - readySince.current)),
+    );
+    return () => clearTimeout(id);
+  });
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
@@ -204,6 +272,9 @@ export function LiveStage({
                   </Badge>
                 )}
                 {zoom > 1.01 && <Badge className="bg-black/60 text-white">{zoom.toFixed(1)}× zoom</Badge>}
+                {t.lowLight && t.face && (
+                  <Badge className="bg-black/60 text-white">dim: face found on a brightened view</Badge>
+                )}
                 {torchOn && (
                   <Badge className="bg-warn text-white">
                     <Flashlight className="size-3" /> pulse
@@ -345,7 +416,8 @@ export function LiveStage({
                 </CardTitle>
                 <CardDescription>
                   Turn the phone around its lens until the two lines on the dial meet, keep it pointed at the
-                  eyes, then capture.
+                  eyes, then capture. The person looks at the flash and holds still through the countdown; the
+                  flash blinks once.
                 </CardDescription>
               </div>
               <MeridianDial target={step.rotationDeg} measured={measuredRot} facing={facing} size={92} />
@@ -361,6 +433,28 @@ export function LiveStage({
                 </p>
               )}
               <Indicators compact items={readiness.indicators} />
+              <Switch
+                checked={auto}
+                onChange={(on) => {
+                  if (on) unlockAudio();
+                  setAuto(on);
+                }}
+                label="Capture by itself"
+                description="For measuring yourself: it captures once everything is green, beeps through the countdown, then two high beeps for a good capture or one low beep for a retake."
+              />
+              {lastBurst && (
+                <p
+                  className={
+                    lastBurst.usable >= lastBurst.needed
+                      ? "text-ok text-xs"
+                      : "border-warn/40 bg-warn-soft text-ink-2 rounded-xl border px-3 py-2 text-xs"
+                  }
+                  data-testid="last-burst"
+                >
+                  Last capture: {lastBurst.usable} of {lastBurst.total} eye images usable.
+                  {lastBurst.reasons.length > 0 && <> Rejected for: {lastBurst.reasons.join("; ")}.</>}
+                </p>
+              )}
               <Button size="lg" className="w-full" disabled={!readiness.ready || capturing} onClick={capture}>
                 {capturing ? <Loader2 className="animate-spin" /> : <Eye />}
                 {capturing ? "Capturing…" : `Capture ${s.framesPerMeridian} frames`}
