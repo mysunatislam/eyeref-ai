@@ -22,7 +22,19 @@ BASELINE_REVISION = "0001"
 
 
 def database_url(url: str | None = None) -> str:
-    return url or os.environ.get("EYEREF_DATABASE_URL", DEFAULT_URL)
+    """The database's SQLAlchemy URL. A plain postgres:// or postgresql:// URL, as Supabase and most hosts give
+    it, is read with psycopg 3, the driver EyeRef ships with."""
+    url = url or os.environ.get("EYEREF_DATABASE_URL", DEFAULT_URL)
+    for plain in ("postgres://", "postgresql://"):
+        if url.startswith(plain):
+            return "postgresql+psycopg://" + url[len(plain):]
+    return url
+
+
+def _behind_transaction_pooler(url: str) -> bool:
+    """Supabase's transaction pooler (port 6543) hands each transaction to any server connection, so the
+    driver must not keep prepared statements, and the pooler, not SQLAlchemy, holds connections open."""
+    return url.startswith("postgresql") and make_url(url).port == 6543
 
 
 def connect(url: str | None = None) -> Engine:
@@ -31,6 +43,10 @@ def connect(url: str | None = None) -> Engine:
     if url.startswith("sqlite:///") and not url.endswith(":memory:"):
         os.makedirs(os.path.dirname(url.replace("sqlite:///", "")) or ".", exist_ok=True)
     kwargs = {"connect_args": {"check_same_thread": False}} if url.startswith("sqlite") else {}
+    if _behind_transaction_pooler(url):
+        from sqlalchemy.pool import NullPool
+
+        kwargs = {"poolclass": NullPool, "connect_args": {"prepare_threshold": None}}
     if url == "sqlite://" or url.endswith(":memory:"):
         from sqlalchemy.pool import StaticPool
 

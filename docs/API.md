@@ -297,7 +297,8 @@ rebuilding `subjects` would delete every session that refers to it) and checked 
 
 ## Looking after stored images
 
-Each stored eye image is a file under `$EYEREF_DATA_DIR/objects`, and the database records which file
+Each stored eye image is a file under `$EYEREF_DATA_DIR/objects` (or an object in a Supabase Storage bucket,
+[DEPLOY](DEPLOY.md)), and the database records which file
 belongs to which capture. Two commands look after them. Run them beside the server, with its
 `EYEREF_DATABASE_URL`, `EYEREF_DATA_DIR` and `EYEREF_STORAGE_KEY`, from `backend/` or in its container:
 

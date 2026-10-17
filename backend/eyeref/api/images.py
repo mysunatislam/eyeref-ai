@@ -28,7 +28,7 @@ from sqlalchemy.orm import Session
 
 from ..db import models as m
 from ..db.session import Database, DatabaseNotSetUpError, existing_engine
-from ..storage import LocalStorage, ObjectStorage, StorageKeyError
+from ..storage import ObjectStorage, StorageKeyError, storage_from_env
 from .auth import UnsafeConfigError
 
 RETENTION_ENV = "EYEREF_IMAGE_RETENTION_DAYS"
@@ -279,11 +279,13 @@ def main(argv: Optional[list[str]] = None) -> int:
     commands.add_parser("encrypt", help="encrypt every image with the first key in EYEREF_STORAGE_KEY")
     args = parser.parse_args(argv)
 
-    objects = Path(os.environ.get("EYEREF_DATA_DIR", "./data")) / "objects"  # as the server's
+    data_dir = Path(os.environ.get("EYEREF_DATA_DIR", "./data"))  # as the server's
     try:
-        if not objects.is_dir():
-            raise DatabaseNotSetUpError(f"there is no image store at {objects}; set EYEREF_DATA_DIR to the server's")
-        storage = LocalStorage(objects)
+        storage = storage_from_env(data_dir) if os.environ.get("EYEREF_SUPABASE_URL") else None
+        if storage is None and not (data_dir / "objects").is_dir():
+            raise DatabaseNotSetUpError(f"there is no image store at {data_dir / 'objects'}; set EYEREF_DATA_DIR to "
+                                        "the server's")
+        storage = storage or storage_from_env(data_dir)
         if args.command == "encrypt" and not storage.encrypted:
             raise ValueError("EYEREF_STORAGE_KEY is not set, so there is no key to encrypt the images with")
         engine = existing_engine()

@@ -157,6 +157,7 @@ scripts/         export_schemas.py, run-all.sh
 
 - [ARCHITECTURE](docs/ARCHITECTURE.md): system design, data flow, the NIR option
 - [PHOTOREFRACTION](docs/PHOTOREFRACTION.md): the optics, the dead zone, and why distance and pupil size matter
+- [DEPLOY](docs/DEPLOY.md): hosting the web app on Vercel and the study data in Supabase
 - [DATASET](docs/DATASET.md): schema, investigator workflow, augmentations
 - [MODEL_TRAINING](docs/MODEL_TRAINING.md): baselines, the hybrid model, splits, versioning, training on real data
 - [VALIDATION_PROTOCOL](docs/VALIDATION_PROTOCOL.md): metrics, comparison against an autorefractor, sample size
