@@ -216,7 +216,10 @@ export function SimStage({
               <div>
                 <CardTitle>Distance calibration</CardTitle>
                 <CardDescription>
-                  Target {s.targetDistanceM.toFixed(1)} m. Simulated helper walking into position.
+                  Target {s.targetDistanceM.toFixed(1)} m. Simulated: a virtual helper walks to the target, so
+                  this always ends at {s.targetDistanceM.toFixed(1)} m. The phone&apos;s real distance is not
+                  measured in Simulation Mode; choose &ldquo;Real eyes, with the camera&rdquo; on the first
+                  step for that.
                 </CardDescription>
               </div>
             </CardHeader>

@@ -54,13 +54,7 @@ export function evaluateReadiness(r: ReadinessInput): { indicators: Indicator[];
   else {
     const rel = (r.distanceM - r.targetDistanceM) / r.targetDistanceM;
     const st = Math.abs(rel) <= 0.1 ? "ok" : Math.abs(rel) <= 0.2 ? "warn" : "bad";
-    add(
-      "distance",
-      "Distance",
-      f(r.distanceM, 2, " m"),
-      st,
-      rel > 0 ? "Move closer" : rel < 0 ? "Move back" : undefined,
-    );
+    add("distance", "Distance", f(r.distanceM, 2, " m"), st, distanceAdvice(r.distanceM, r.targetDistanceM));
   }
 
   if (r.luma === null) add("light", "Room light", "—", "idle");
@@ -158,4 +152,15 @@ export function evaluateReadiness(r: ReadinessInput): { indicators: Indicator[];
 /** Signed smallest difference between two device rotations on the 180° meridian circle. */
 export function rotationError(measuredDeg: number, targetDeg: number): number {
   return ((((measuredDeg - targetDeg) % 180) + 270) % 180) - 90;
+}
+
+/**
+ * Which way to move, and roughly how far, to reach the target distance; undefined within 5%. Steps are in
+ * 5 cm, as a person can judge them.
+ */
+export function distanceAdvice(distanceM: number, targetM: number): string | undefined {
+  const gap = distanceM - targetM;
+  if (Math.abs(gap) <= 0.05 * targetM) return undefined;
+  const cm = Math.max(5, Math.round((Math.abs(gap) * 100) / 5) * 5);
+  return gap > 0 ? `Move closer, about ${cm} cm` : `Move back, about ${cm} cm`;
 }

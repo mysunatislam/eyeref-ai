@@ -12,7 +12,7 @@ import { isUsable } from "@/lib/cv/quality";
 import { DEFAULT_GATING } from "@/lib/inference/fusion";
 import { IRIS_MIN_PX, nextZoom } from "@/lib/protocol/live";
 import { activeDevice, buildProtocol, COUNTDOWN_S, estimatorFor } from "@/lib/protocol/protocol";
-import { evaluateReadiness, rotationError } from "@/lib/protocol/readiness";
+import { distanceAdvice, evaluateReadiness, rotationError } from "@/lib/protocol/readiness";
 import { useSettings } from "@/lib/settings";
 import { HVID_MM } from "@/lib/tracking/eyeGeometry";
 import { useLiveTracker } from "@/lib/tracking/useLiveTracker";
@@ -279,8 +279,8 @@ export function LiveStage({
               <div>
                 <CardTitle>Distance calibration</CardTitle>
                 <CardDescription>
-                  Target {s.targetDistanceM.toFixed(1)} m, estimated from iris size (±4% person-to-person). A
-                  tape measure is more accurate.
+                  Target {s.targetDistanceM.toFixed(1)} m between the phone and the eyes, read from the size
+                  of the iris (±4% person-to-person). A tape measure is more accurate.
                 </CardDescription>
               </div>
             </CardHeader>
@@ -293,6 +293,21 @@ export function LiveStage({
                   ± {(t.distanceSdM * 100).toFixed(0)} cm (1 SD)
                 </div>
               )}
+              {t.distanceM !== null && (
+                <p
+                  className="text-center text-lg font-semibold"
+                  data-testid="distance-advice"
+                  aria-live="polite"
+                >
+                  {distanceAdvice(t.distanceM, s.targetDistanceM) ?? "Good distance: hold here"}
+                </p>
+              )}
+              <p className="text-ink-2 text-xs">
+                {s.targetDistanceM.toFixed(1)} m is farther than you can hold a phone from your own face (an
+                outstretched arm is about 0.6 m). Stand the phone at eye height on a shelf or a stack of
+                books, or ask someone to hold it, then move until this says to hold. A{" "}
+                {s.targetDistanceM.toFixed(1)} m string or tape from the phone to your cheekbone checks it.
+              </p>
               <Switch
                 checked={useManual}
                 onChange={setUseManual}

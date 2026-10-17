@@ -175,6 +175,7 @@ export function useLiveTracker(
                 eye,
                 obs,
                 frameWidth: video.videoWidth,
+                frameHeight: video.videoHeight,
                 ctx: lctx,
                 deviceRotationDeg: rot,
                 illumination: ill,
@@ -209,7 +210,7 @@ export function useLiveTracker(
           setTelemetry({ ...EMPTY, luma, fps });
           return;
         }
-        const d = estimateDistance(obs, video.videoWidth, lctx);
+        const d = estimateDistance(obs, video.videoWidth, video.videoHeight, lctx);
         const pick = <T>(f: (p: LiveProcessed) => T, fallback: T) => ({
           OD: processed?.find((p) => p.eye === "OD") ? f(processed.find((p) => p.eye === "OD")!) : fallback,
           OS: processed?.find((p) => p.eye === "OS") ? f(processed.find((p) => p.eye === "OS")!) : fallback,
@@ -218,6 +219,7 @@ export function useLiveTracker(
           eye: "OD",
           obs,
           frameWidth: video.videoWidth,
+          frameHeight: video.videoHeight,
           ctx: lctx,
           deviceRotationDeg: rot,
           illumination: "none",
@@ -287,6 +289,7 @@ export function useLiveTracker(
                   eye,
                   obs,
                   frameWidth: video.videoWidth,
+                  frameHeight: video.videoHeight,
                   ctx: lctx,
                   deviceRotationDeg: rot,
                   illumination: ill,

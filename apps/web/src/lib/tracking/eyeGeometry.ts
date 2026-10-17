@@ -113,6 +113,15 @@ export function focalPxFromHfov(imageWidthPx: number, hfovDeg: number): number {
   return imageWidthPx / 2 / Math.tan(((hfovDeg / 2) * Math.PI) / 180);
 }
 
+/**
+ * The focal length in pixels of a frame whose long side spans `hfovDeg` (a camera's field of view is given
+ * across its sensor's long side). A phone held upright streams portrait frames, whose width is the short
+ * side: taking that width as the field of view's put the face at about half its real distance.
+ */
+export function focalPxForFrame(frameWidthPx: number, frameHeightPx: number, hfovDeg: number): number {
+  return focalPxFromHfov(Math.max(frameWidthPx, frameHeightPx), hfovDeg);
+}
+
 export const HVID_MM = 11.7;
 export const HVID_SD_MM = 0.45;
 

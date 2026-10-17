@@ -9,7 +9,7 @@ import type { EyeSegmentation } from "../cv/segmentation";
 import { processFrame } from "../inference/pipeline";
 import type { PhotorefractionEstimator } from "../inference/estimators";
 import type { FaceObservation } from "../tracking/faceTracker";
-import { distanceFromIris, eyeCropRect, focalPxFromHfov, rollFromEyes } from "../tracking/eyeGeometry";
+import { distanceFromIris, eyeCropRect, focalPxForFrame, rollFromEyes } from "../tracking/eyeGeometry";
 import type {
   AgeGroup,
   CaptureMetadata,
@@ -73,8 +73,14 @@ export function cropEyes(ctx: CanvasRenderingContext2D, obs: FaceObservation): L
   });
 }
 
-export function estimateDistance(obs: FaceObservation, frameWidth: number, ctx: LiveContext) {
-  const f = focalPxFromHfov(frameWidth, ctx.hfovDeg) * (ctx.zoom ?? 1);
+/** The face's distance from the iris's size in a frame of `frameWidth` x `frameHeight` camera pixels. */
+export function estimateDistance(
+  obs: FaceObservation,
+  frameWidth: number,
+  frameHeight: number,
+  ctx: LiveContext,
+) {
+  const f = focalPxForFrame(frameWidth, frameHeight, ctx.hfovDeg) * (ctx.zoom ?? 1);
   const d = (obs.eyes.OD.iris.r + obs.eyes.OS.iris.r) / 2;
   return distanceFromIris(2 * d, f, ctx.hvidMm);
 }
@@ -117,13 +123,14 @@ export function buildMetadata(args: {
   eye: EyeSide;
   obs: FaceObservation;
   frameWidth: number;
+  frameHeight: number;
   ctx: LiveContext;
   deviceRotationDeg: number;
   illumination: Illumination;
   frameIndex: number;
   motionPx: number | null;
 }): CaptureMetadata {
-  const dist = estimateDistance(args.obs, args.frameWidth, args.ctx);
+  const dist = estimateDistance(args.obs, args.frameWidth, args.frameHeight, args.ctx);
   const manual = args.ctx.manualDistanceM;
   return {
     eye: args.eye,

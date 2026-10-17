@@ -10,7 +10,7 @@ import { scaleRgba } from "../cv/draw";
 import { imageDataToRgba } from "../cv/image";
 import { grabFrame, illuminationFor, MIN_CROP_PX } from "../protocol/live";
 import { FRAME_INTERVAL_MS, TORCH_SETTLE_MS } from "../protocol/protocol";
-import { eyeCropRect, focalPxFromHfov } from "../tracking/eyeGeometry";
+import { eyeCropRect, focalPxForFrame } from "../tracking/eyeGeometry";
 import type { Circle, DeviceProfile } from "../types";
 import { benchMetadata, processBenchFrame, type BenchRun, type BenchShot, type BenchStep } from "./run";
 
@@ -36,12 +36,13 @@ export function cropAround(ctx: CanvasRenderingContext2D, search: Circle) {
  */
 export function expectedSearchRadiusPx(
   frameWidthPx: number,
+  frameHeightPx: number,
   device: DeviceProfile,
   hfovDeg: number | null,
   pupilMm: number,
   distanceM: number,
 ) {
-  const f = focalPxFromHfov(frameWidthPx, hfovDeg ?? device.hfovDeg);
+  const f = focalPxForFrame(frameWidthPx, frameHeightPx, hfovDeg ?? device.hfovDeg);
   return Math.max(6, (f * pupilMm) / 1000 / distanceM);
 }
 

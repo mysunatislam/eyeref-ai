@@ -105,7 +105,14 @@ export function BenchCapture({
         c = {
           cx: w / 2,
           cy: h / 2,
-          r: expectedSearchRadiusPx(w, run.device, s.hfovDeg, run.setup.pupilMm, run.setup.workingDistanceM),
+          r: expectedSearchRadiusPx(
+            w,
+            h,
+            run.device,
+            s.hfovDeg,
+            run.setup.pupilMm,
+            run.setup.workingDistanceM,
+          ),
         };
       } else if (was && (was[0] !== w || was[1] !== h)) {
         // the frames turned with the screen: a phone turned about its camera keeps the model eye where it
