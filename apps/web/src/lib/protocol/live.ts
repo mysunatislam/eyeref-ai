@@ -28,6 +28,8 @@ export interface LiveContext {
   hvidMm: number;
   ageGroup: AgeGroup;
   manualDistanceM: number | null;
+  /** the camera's zoom: hfovDeg is the lens's, and zooming narrows it */
+  zoom?: number;
 }
 
 export interface LiveEyeCrop {
@@ -72,9 +74,37 @@ export function cropEyes(ctx: CanvasRenderingContext2D, obs: FaceObservation): L
 }
 
 export function estimateDistance(obs: FaceObservation, frameWidth: number, ctx: LiveContext) {
-  const f = focalPxFromHfov(frameWidth, ctx.hfovDeg);
+  const f = focalPxFromHfov(frameWidth, ctx.hfovDeg) * (ctx.zoom ?? 1);
   const d = (obs.eyes.OD.iris.r + obs.eyes.OS.iris.r) / 2;
   return distanceFromIris(2 * d, f, ctx.hvidMm);
+}
+
+/** Camera pixels across the iris the live view aims for. Below IRIS_MIN_PX crescents are mismeasured
+ * (docs/PHOTOREFRACTION.md, section 7); the target leaves room for the face to move. */
+export const IRIS_MIN_PX = 30;
+export const IRIS_TARGET_PX = 40;
+/** past this, a phone's zoom is mostly digital and the face tracker loses the face as it moves */
+export const MAX_AUTO_ZOOM = 3;
+
+/**
+ * The zoom to switch to so the iris spans about IRIS_TARGET_PX, or null to stay. It changes only when the iris
+ * is under IRIS_MIN_PX, or over 2.5 times the target while zoomed in, and stays within the camera's range and
+ * MAX_AUTO_ZOOM. A phone zooms by cropping its sensor before it scales the picture to the stream, so up to the
+ * sensor's own resolution the eye gains real pixels.
+ */
+export function nextZoom(
+  irisPx: number,
+  zoom: number,
+  range: { min: number; max: number; step: number } | null,
+): number | null {
+  if (!range || !(irisPx > 0)) return null;
+  const tooBig = irisPx > 2.5 * IRIS_TARGET_PX && zoom > range.min;
+  if (irisPx >= IRIS_MIN_PX && !tooBig) return null;
+  const hi = Math.max(range.min, Math.min(range.max, MAX_AUTO_ZOOM));
+  let z = Math.min(hi, Math.max(range.min, (zoom * IRIS_TARGET_PX) / irisPx));
+  if (range.step > 0) z = range.min + Math.round((z - range.min) / range.step) * range.step;
+  z = Math.min(hi, z);
+  return Math.abs(z - zoom) < Math.max(range.step, 0.05) ? null : z;
 }
 
 export function illuminationFor(device: DeviceProfile, torchOn: boolean): Illumination {

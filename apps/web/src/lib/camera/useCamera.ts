@@ -25,6 +25,7 @@ export function useCamera() {
   const [facing, setFacing] = useState<Facing>("environment");
   const [caps, setCaps] = useState<CameraCaps | null>(null);
   const [torchOn, setTorchOn] = useState(false);
+  const [zoom, setZoomState] = useState(1);
 
   const stop = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -60,6 +61,7 @@ export function useCamera() {
           zoom?: { min: number; max: number; step: number };
         };
         const st = track.getSettings();
+        setZoomState((st as MediaTrackSettings & { zoom?: number }).zoom ?? 1);
         setCaps({
           torch: Boolean(c.torch),
           zoom: c.zoom ? { min: c.zoom.min, max: c.zoom.max, step: c.zoom.step } : null,
@@ -102,11 +104,12 @@ export function useCamera() {
     if (!track) return;
     try {
       await track.applyConstraints({ advanced: [{ zoom } as MediaTrackConstraintSet] });
+      setZoomState((track.getSettings() as MediaTrackSettings & { zoom?: number }).zoom ?? zoom);
     } catch {
       /* unsupported */
     }
   }, []);
 
   useEffect(() => stop, [stop]);
-  return { videoRef, status, error, facing, caps, torchOn, start, stop, setTorch, setZoom };
+  return { videoRef, status, error, facing, caps, torchOn, zoom, start, stop, setTorch, setZoom };
 }
