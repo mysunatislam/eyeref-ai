@@ -52,7 +52,7 @@ from ..optics.power_vector import SphCylAxis
 from ..pipeline import process_frame
 from ..simulation.bench import run_simulated_bench
 from ..simulation.cohort import SessionConfig, make_subject, run_simulated_assessment
-from ..storage import LocalStorage, StorageKeyError
+from ..storage import StorageKeyError, storage_from_env
 from ..types import (
     CaptureMetadata,
     Circle,
@@ -352,7 +352,7 @@ def create_app(database_url: Optional[str] = None, data_dir: str = DATA_DIR,
                        allow_headers=["authorization", "content-type"])
 
     db = Database(database_url)
-    storage = LocalStorage(os.path.join(data_dir, "objects"))
+    storage = storage_from_env(data_dir)
     if auth.production and not storage.encrypted:
         raise UnsafeConfigError("EYEREF_ENV=production requires EYEREF_STORAGE_KEY so eye images are encrypted at rest")
     if storage.encrypted and (plain := unencrypted_images(db)):
