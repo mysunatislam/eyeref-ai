@@ -87,7 +87,10 @@ export function LiveStage({
     setShowLandmarks,
     zoom,
     setZoom,
+    testTorch,
+    confirmTorch,
   } = useLiveTracker(ctx, estimator, screenAngle);
+  const [torchTest, setTorchTest] = useState<"idle" | "asked" | "failed">("idle");
   // the phone's turn from the head, read from the picture: the frame's rotation and the eyes' tilt in it
   const measuredRot = t.face && t.rollDeg !== null ? probedRotationDeg(frameRotationDeg, t.rollDeg) : null;
   const rotationOff =
@@ -302,6 +305,42 @@ export function LiveStage({
             >
               <RefreshCw /> Switch camera
             </Button>
+          </div>
+        )}
+        {status === "live" && device.camera === "rear" && facing === "environment" && !caps?.torch && (
+          <div
+            className="border-warn/40 bg-warn-soft text-ink-2 space-y-2 rounded-xl border px-3 py-2 text-xs"
+            data-testid="torch-test"
+          >
+            <p>
+              The browser did not say it can switch on the flash. Some phones (iPhone Safari) can, without
+              saying so: test it.
+            </p>
+            {torchTest === "asked" ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-ink font-medium">Did the flash light up?</span>
+                <Button size="sm" onClick={() => (confirmTorch(), setTorchTest("idle"))}>
+                  Yes
+                </Button>
+                <Button size="sm" variant="secondary" onClick={() => setTorchTest("failed")}>
+                  No
+                </Button>
+              </div>
+            ) : (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={async () => setTorchTest((await testTorch()) ? "asked" : "failed")}
+              >
+                <Flashlight /> Test flash
+              </Button>
+            )}
+            {torchTest === "failed" && (
+              <p>
+                This browser cannot switch on the flash, so the eyes cannot be measured here. On iPhone,
+                update iOS and use Safari; otherwise use Chrome on an Android phone.
+              </p>
+            )}
           </div>
         )}
         {t.irisPx !== null && t.irisPx < IRIS_MIN_PX && zoomTo === null && (

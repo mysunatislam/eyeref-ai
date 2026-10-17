@@ -51,8 +51,7 @@ export function flashMissing(args: {
   if (!args.hasSource) return "This device profile has no light beside the lens: choose a phone profile";
   if (args.deviceCamera !== "rear") return null;
   if (args.facing === "user") return "The front camera has no flash beside it: switch to the back camera";
-  if (!args.torch)
-    return "This browser does not let the app switch on the flash. Try Chrome on an Android phone";
+  if (!args.torch) return "The browser did not report a flash: tap Test flash under the picture";
   return null;
 }
 

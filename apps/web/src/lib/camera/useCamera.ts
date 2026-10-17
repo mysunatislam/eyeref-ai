@@ -17,6 +17,27 @@ export interface CameraCaps {
   label: string;
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const torchSetting = (track: MediaStreamTrack) =>
+  (track.getSettings() as MediaTrackSettings & { torch?: boolean }).torch;
+
+/**
+ * Whether the camera's torch can be switched on. Some browsers (Safari on iPhone) can switch it on but leave
+ * it out of the capabilities they list, so a back camera without it listed is asked to turn it on briefly,
+ * and the setting it then reports decides.
+ */
+async function probeTorch(track: MediaStreamTrack): Promise<boolean> {
+  try {
+    await track.applyConstraints({ advanced: [{ torch: true } as MediaTrackConstraintSet] });
+    await sleep(150);
+    const on = torchSetting(track) === true;
+    await track.applyConstraints({ advanced: [{ torch: false } as MediaTrackConstraintSet] });
+    return on;
+  } catch {
+    return false;
+  }
+}
+
 export function useCamera() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -74,8 +95,14 @@ export function useCamera() {
           await videoRef.current.play().catch(() => undefined);
         }
         // the camera the browser gave, which can differ from the one asked for
-        setFacing(st.facingMode === "user" || st.facingMode === "environment" ? st.facingMode : want);
+        const gave = st.facingMode === "user" || st.facingMode === "environment" ? st.facingMode : want;
+        setFacing(gave);
         setStatus("live");
+        // some browsers list the torch only once the video plays, and some never do
+        const later = (track.getCapabilities?.() ?? {}) as { torch?: boolean };
+        if (!c.torch && later.torch) setCaps((k) => (k ? { ...k, torch: true } : k));
+        else if (!c.torch && gave === "environment" && (await probeTorch(track)))
+          setCaps((k) => (k ? { ...k, torch: true } : k));
       } catch (e) {
         const name = (e as DOMException).name;
         setStatus(name === "NotAllowedError" ? "denied" : "error");
@@ -99,6 +126,15 @@ export function useCamera() {
     }
   }, []);
 
+  /** Blink the torch so the person can see whether it works; `confirmTorch` records that it did. */
+  const testTorch = useCallback(async () => {
+    if (!(await setTorch(true))) return false;
+    await sleep(600);
+    await setTorch(false);
+    return true;
+  }, [setTorch]);
+  const confirmTorch = useCallback(() => setCaps((k) => (k ? { ...k, torch: true } : k)), []);
+
   const setZoom = useCallback(async (zoom: number) => {
     const track = streamRef.current?.getVideoTracks()[0];
     if (!track) return;
@@ -111,5 +147,19 @@ export function useCamera() {
   }, []);
 
   useEffect(() => stop, [stop]);
-  return { videoRef, status, error, facing, caps, torchOn, zoom, start, stop, setTorch, setZoom };
+  return {
+    videoRef,
+    status,
+    error,
+    facing,
+    caps,
+    torchOn,
+    zoom,
+    start,
+    stop,
+    setTorch,
+    testTorch,
+    confirmTorch,
+    setZoom,
+  };
 }

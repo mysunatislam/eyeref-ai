@@ -355,6 +355,8 @@ export function useLiveTracker(
     torchOn: cam.torchOn,
     zoom: cam.zoom,
     setZoom: cam.setZoom,
+    testTorch: cam.testTorch,
+    confirmTorch: cam.confirmTorch,
     startCamera: cam.start,
     stopCamera: cam.stop,
     lmStatus,
