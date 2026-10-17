@@ -1,6 +1,6 @@
 "use client";
 import { Camera, Eye, Flashlight, Loader2, RefreshCw, ScanFace } from "lucide-react";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { probedRotationDeg, turnToTarget, useScreenAngle } from "@/lib/camera/or
 import { rgbaToDataUrl } from "@/lib/cv/draw";
 import { isUsable } from "@/lib/cv/quality";
 import { DEFAULT_GATING } from "@/lib/inference/fusion";
+import { IRIS_MIN_PX, nextZoom } from "@/lib/protocol/live";
 import { activeDevice, buildProtocol, COUNTDOWN_S, estimatorFor } from "@/lib/protocol/protocol";
 import { evaluateReadiness, rotationError } from "@/lib/protocol/readiness";
 import { useSettings } from "@/lib/settings";
@@ -72,6 +73,8 @@ export function LiveStage({
     captureBurst,
     showLandmarks,
     setShowLandmarks,
+    zoom,
+    setZoom,
   } = useLiveTracker(ctx, estimator, screenAngle);
   // the phone's turn from the head, read from the picture: the frame's rotation and the eyes' tilt in it
   const measuredRot = t.face && t.rollDeg !== null ? probedRotationDeg(frameRotationDeg, t.rollDeg) : null;
@@ -82,6 +85,15 @@ export function LiveStage({
   const [capturing, setCapturing] = useState(false);
   const [prepOk, setPrepOk] = useState(false);
   const frameCounter = useRef(0);
+  // zoom in until the iris has enough camera pixels, between bursts and at most every 1.5 s, so each change
+  // shows in the picture before the next is judged
+  const zoomTo = t.irisPx !== null ? nextZoom(t.irisPx, zoom, caps?.zoom ?? null) : null;
+  const lastZoom = useRef(0);
+  useEffect(() => {
+    if (zoomTo === null || capturing || status !== "live" || Date.now() - lastZoom.current < 1500) return;
+    lastZoom.current = Date.now();
+    void setZoom(zoomTo);
+  }, [zoomTo, capturing, status, setZoom]);
 
   const startCamera = useCallback(async () => {
     await ensureLandmarker();
@@ -185,10 +197,13 @@ export function LiveStage({
                 </Badge>
                 <Badge className="bg-black/60 text-white">{t.fps.toFixed(0)} fps</Badge>
                 {t.irisPx !== null && (
-                  <Badge className={t.irisPx < 30 ? "bg-bad/80 text-white" : "bg-black/60 text-white"}>
+                  <Badge
+                    className={t.irisPx < IRIS_MIN_PX ? "bg-bad/80 text-white" : "bg-black/60 text-white"}
+                  >
                     iris {t.irisPx.toFixed(0)} px
                   </Badge>
                 )}
+                {zoom > 1.01 && <Badge className="bg-black/60 text-white">{zoom.toFixed(1)}× zoom</Badge>}
                 {torchOn && (
                   <Badge className="bg-warn text-white">
                     <Flashlight className="size-3" /> pulse
@@ -218,12 +233,13 @@ export function LiveStage({
             </Button>
           </div>
         )}
-        {t.irisPx !== null && t.irisPx < 30 && (
+        {t.irisPx !== null && t.irisPx < IRIS_MIN_PX && zoomTo === null && (
           <p className="border-warn/40 bg-warn-soft text-ink-2 rounded-xl border px-3 py-2 text-xs">
             The iris spans only {t.irisPx.toFixed(0)} pixels, so the pupil is under{" "}
-            {(t.irisPx / 2).toFixed(0)} px. Crescent width cannot be measured reliably at this resolution. Use
-            optical zoom or a telephoto lens, or the native app (higher-resolution stills). See Device
-            Calibration docs.
+            {(t.irisPx / 2).toFixed(0)} px, and{" "}
+            {caps?.zoom ? "the camera cannot zoom further" : "this camera cannot zoom"}. Crescent width cannot
+            be measured reliably below {IRIS_MIN_PX} px across the iris. Use a phone with optical zoom or 4K
+            video.
           </p>
         )}
       </div>

@@ -90,9 +90,21 @@ export function useLiveTracker(
     obs: null,
     processed: null,
   });
-  const live = useRef({ ctx, estimator, frameRotationDeg, torchOn: cam.torchOn, showLandmarks });
+  const live = useRef({
+    ctx: { ...ctx, zoom: cam.zoom },
+    estimator,
+    frameRotationDeg,
+    torchOn: cam.torchOn,
+    showLandmarks,
+  });
   useLayoutEffect(() => {
-    live.current = { ctx, estimator, frameRotationDeg, torchOn: cam.torchOn, showLandmarks };
+    live.current = {
+      ctx: { ...ctx, zoom: cam.zoom },
+      estimator,
+      frameRotationDeg,
+      torchOn: cam.torchOn,
+      showLandmarks,
+    };
   });
 
   const nextTs = () => {
@@ -308,6 +320,8 @@ export function useLiveTracker(
     frameRotationDeg,
     caps: cam.caps,
     torchOn: cam.torchOn,
+    zoom: cam.zoom,
+    setZoom: cam.setZoom,
     startCamera: cam.start,
     stopCamera: cam.stop,
     lmStatus,

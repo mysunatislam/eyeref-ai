@@ -190,7 +190,10 @@ frames each row:
 | 17 | 1080p video | 2% | 1.03 D | 75% |
 
 So at 1 m a browser's 1080p video is not enough: the method needs about 30 camera pixels across the
-iris, which is 4K video or about 2× optical zoom. The live view warns below 30 px. Below about 24 px most
+iris, which is 4K video or about 2× zoom. Where the browser lets it, the live view zooms the camera in, up to
+3×, until the iris spans about 40 px, and allows for the zoom when it reads distance from the iris. It warns
+when the camera cannot zoom far enough. A phone zooms by cropping its sensor before it scales the picture to
+the video, so up to the sensor's own resolution the eye gains real pixels. Below about 24 px most
 frames fail on glare, because the flash's reflex on the cornea fills a larger share of the pupil's few
 pixels. How bright that reflex is on a real sensor is a guess in the simulator (it fills about one camera
 pixel), so the glare rate at low resolution must be measured on real phones. Letting more glare through
