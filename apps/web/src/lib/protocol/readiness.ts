@@ -211,23 +211,45 @@ export interface BurstSummary {
   needed: number;
   /** the commonest reasons images were rejected, most frequent first */
   reasons: string[];
+  /** what to change for the commonest reason */
+  fix?: string;
 }
+
+/** What the person can change for each reason an image is rejected (cv/quality HARD_FAILURE_TEXT). */
+export const FAILURE_FIX: Record<string, string> = {
+  pupil_not_found: "Keep both eyes wide open and look at the flash.",
+  image_blurred: "Rest the phone on something steady and keep still.",
+  too_few_pixels: "Wait for the picture to zoom in before you capture.",
+  reflex_saturated:
+    "The eyes are too bright: keep the phone 1 m away and turn off other lights shining at the face.",
+  excessive_glare:
+    "A bright reflection covers the pupil: use only this phone's flash, with no other torch or lamp shining at the eyes.",
+  pupil_occluded: "Open the eyes wide, without squinting at the flash.",
+  pupil_too_small: "Make the room dimmer and wait a minute for the pupils to widen.",
+  head_rotated: "Face the phone straight on, chin level.",
+  gaze_off_axis: "Look straight at the flash beside the camera lens.",
+  motion: "Rest the phone on something steady and keep still.",
+  distance_out_of_range: "Stay at about 1 m from the phone.",
+  no_red_reflex: "The flash did not light the eyes: tap Test flash, and use this phone's own flash.",
+  face_lost: "Keep the face in the middle of the picture and still until the beep.",
+};
 
 /** What one capture gave: usable eye images, and why the others were rejected. */
 export function burstSummary(recs: FrameRecord[], framesPerEye: number): BurstSummary {
   const counts = new Map<string, number>();
   for (const r of recs)
     if (!isUsable(r.quality)) for (const h of r.quality.hardFailures) counts.set(h, (counts.get(h) ?? 0) + 1);
-  const reasons = [...counts.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
-    .map(([k]) => HARD_FAILURE_TEXT[k] ?? k);
-  // frames the tracker lost the face in never become records
-  if (recs.length < 2 * framesPerEye) reasons.push("Face lost in some frames");
+  // frames the tracker lost the face in never become records (one record per eye per frame)
+  const lost = 2 * framesPerEye - recs.length;
+  if (lost > 0) counts.set("face_lost", lost);
+  const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
+  const usable = recs.filter((r) => isUsable(r.quality)).length;
+  const needed = 2 * DEFAULT_GATING.minUsableFramesPerMeridian;
   return {
-    usable: recs.filter((r) => isUsable(r.quality)).length,
+    usable,
     total: 2 * framesPerEye,
-    needed: 2 * DEFAULT_GATING.minUsableFramesPerMeridian,
-    reasons,
+    needed,
+    reasons: top.map(([k]) => (k === "face_lost" ? "Face lost in some frames" : (HARD_FAILURE_TEXT[k] ?? k))),
+    fix: usable < needed && top.length ? FAILURE_FIX[top[0]![0]] : undefined,
   };
 }

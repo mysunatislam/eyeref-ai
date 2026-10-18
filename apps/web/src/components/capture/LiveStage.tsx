@@ -225,6 +225,7 @@ export function LiveStage({
           className="border-line relative overflow-hidden rounded-2xl border bg-black"
           data-camera={status}
           data-landmarker={lmStatus}
+          data-face={t.face ? "found" : "lost"}
         >
           <div className="relative aspect-video w-full">
             <video
@@ -492,6 +493,7 @@ export function LiveStage({
                 >
                   Last capture: {lastBurst.usable} of {lastBurst.total} eye images usable.
                   {lastBurst.reasons.length > 0 && <> Rejected for: {lastBurst.reasons.join("; ")}.</>}
+                  {lastBurst.fix && <strong className="mt-1 block">{lastBurst.fix}</strong>}
                 </p>
               )}
               <Button size="lg" className="w-full" disabled={!readiness.ready || capturing} onClick={capture}>

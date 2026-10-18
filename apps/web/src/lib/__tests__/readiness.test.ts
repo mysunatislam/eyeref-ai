@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { burstSummary, evaluateReadiness, flashMissing, type ReadinessInput } from "../protocol/readiness";
+import { HARD_FAILURE_TEXT } from "../cv/quality";
+import {
+  burstSummary,
+  evaluateReadiness,
+  FAILURE_FIX,
+  flashMissing,
+  type ReadinessInput,
+} from "../protocol/readiness";
 import { frame } from "./fixtures";
 
 const base: ReadinessInput = {
@@ -69,7 +76,30 @@ describe("a capture's summary", () => {
     ];
     const s = burstSummary(recs, 5);
     expect(s).toMatchObject({ usable: 2, total: 10 });
-    expect(s.reasons[0]).toBe("No red reflex (light source off?)");
-    expect(s.reasons).toContain("Face lost in some frames");
+    // five of the ten eye images never came: the face was lost in those frames
+    expect(s.reasons[0]).toBe("Face lost in some frames");
+    expect(s.reasons[1]).toBe("No red reflex (light source off?)");
+    expect(s.fix).toBe(FAILURE_FIX.face_lost);
+  });
+
+  it("says what to change for the commonest reason, and nothing once enough images are usable", () => {
+    const glare = () => {
+      const f = frame("OD", 0, -2, "reject");
+      f.quality.hardFailures = ["excessive_glare"];
+      return f;
+    };
+    const s = burstSummary([frame("OD", 0, -2), frame("OS", 0, -2), ...Array.from({ length: 8 }, glare)], 5);
+    expect(s.reasons).toEqual(["Corneal glare covers the pupil"]);
+    expect(s.fix).toMatch(/only this phone's flash/);
+    expect(
+      burstSummary(
+        Array.from({ length: 10 }, () => frame("OD", 0, -2)),
+        5,
+      ).fix,
+    ).toBeUndefined();
+  });
+
+  it("has a fix for every reason an image can be rejected", () => {
+    for (const k of Object.keys(HARD_FAILURE_TEXT)) expect(FAILURE_FIX[k], k).toBeTruthy();
   });
 });
