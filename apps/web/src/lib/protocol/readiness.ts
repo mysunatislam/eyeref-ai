@@ -221,7 +221,7 @@ export const FAILURE_FIX: Record<string, string> = {
   image_blurred: "Rest the phone on something steady and keep still.",
   too_few_pixels: "Wait for the picture to zoom in before you capture.",
   reflex_saturated:
-    "The eyes are too bright: keep the phone 1 m away and turn off other lights shining at the face.",
+    "The eyes came out too bright: add a little light behind the phone (a lamp or screen) so the camera exposes less, and keep 1 m away.",
   excessive_glare:
     "A bright reflection covers the pupil: use only this phone's flash, with no other torch or lamp shining at the eyes.",
   pupil_occluded: "Open the eyes wide, without squinting at the flash.",

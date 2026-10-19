@@ -57,6 +57,13 @@ describe("quality model", () => {
   it("rejects a blink", () => expect(q({ eyelidOpening: 0.15, seed: 8 }).grade).toBe("reject"));
   it("rejects motion", () =>
     expect(q({ blurSigmaPx: 3.5, seed: 9 }, { motionPxPerFrame: 8 }).hardFailures).toContain("motion"));
+  it.each([-4, 0])("calls a reflex washed out to white over-exposed, not glare (R=%d)", (sph) => {
+    const h = q({ refraction: { sph, cyl: 0, axis: null }, exposure: 4, seed: 3 }).hardFailures;
+    expect(h).toContain("reflex_saturated");
+    expect(h).not.toContain("excessive_glare");
+    const { image } = renderEye({ refraction: { sph, cyl: 0, axis: null }, seed: 3 });
+    expect(extractFeatures(image, 270, IRIS).segmentation?.glint).not.toBeNull();
+  });
   it("rejects small pupils", () =>
     expect(q({ pupilDiameterMm: 2.5, seed: 10 }).hardFailures).toContain("pupil_too_small"));
   it("rejects head rotation", () =>

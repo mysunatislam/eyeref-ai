@@ -92,6 +92,12 @@ def detect_iris_hough(img_rgb: np.ndarray) -> Optional[Circle]:
     return Circle(cx=float(cx), cy=float(cy), r=float(r))
 
 
+# The largest share of the iris region a corneal glint can cover. The flash's reflection off the cornea is a dot;
+# a bright, colourless patch larger than this is the red reflex itself washed out to white by over-exposure, which
+# quality reports as an over-exposed reflex, not as glare.
+MAX_GLINT_SHARE = 0.06
+
+
 def detect_glint(img_rgb: np.ndarray, region: np.ndarray) -> tuple[Optional[tuple[float, float]], np.ndarray]:
     L = luma(img_rgb)
     f = img_rgb.astype(np.float64)
@@ -102,6 +108,8 @@ def detect_glint(img_rgb: np.ndarray, region: np.ndarray) -> tuple[Optional[tupl
         return None, mask
     n, lab, stats, cent = cv2.connectedComponentsWithStats(cand.astype(np.uint8), connectivity=8)
     best = 1 + int(np.argmax(stats[1:, cv2.CC_STAT_AREA]))
+    if stats[best, cv2.CC_STAT_AREA] > MAX_GLINT_SHARE * region.sum():
+        return None, mask
     mask = lab == best
     mask = cv2.dilate(mask.astype(np.uint8), np.ones((3, 3), np.uint8), iterations=2).astype(bool)
     return (float(cent[best][0]), float(cent[best][1])), mask
