@@ -2,7 +2,7 @@
  * Capture-readiness indicators shared by the live camera and Simulation Mode.
  * Thresholds deliberately mirror the quality model so the guidance predicts acceptance.
  */
-import { DEFAULT_GATING } from "../inference/fusion";
+import { APP_VERSION, DEFAULT_GATING } from "../inference/fusion";
 import { HARD_FAILURE_TEXT, isUsable } from "../cv/quality";
 import type { FrameRecord, QualityGrade } from "../types";
 
@@ -252,4 +252,46 @@ export function burstSummary(recs: FrameRecord[], framesPerEye: number): BurstSu
     reasons: top.map(([k]) => (k === "face_lost" ? "Face lost in some frames" : (HARD_FAILURE_TEXT[k] ?? k))),
     fix: usable < needed && top.length ? FAILURE_FIX[top[0]![0]] : undefined,
   };
+}
+
+export interface CameraFacts {
+  width: number;
+  height: number;
+  zoom: number;
+  /** whether the flash was found (listed by the browser, probed, or confirmed by the person) */
+  flash: boolean;
+  /** the face was found only on a brightened view */
+  lowLight: boolean;
+  userAgent: string;
+}
+
+const num = (v: number | null | undefined, d = 1) => (v === null || v === undefined ? "?" : v.toFixed(d));
+
+/**
+ * One capture as plain text the person can paste into a message, so whoever helps them can see why its images
+ * were rejected. Numbers about the camera and image quality only: no pictures and no eye results.
+ */
+export function captureDetails(recs: FrameRecord[], framesPerEye: number, cam: CameraFacts): string {
+  const s = burstSummary(recs, framesPerEye);
+  const sha = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA?.slice(0, 7);
+  const lines = [
+    "EyeRef capture details (numbers only: no pictures, no eye results)",
+    `app ${APP_VERSION}${sha ? ` (${sha})` : ""}; ${cam.userAgent}`,
+    `camera ${cam.width}x${cam.height}, zoom ${num(cam.zoom)}x, flash ${cam.flash ? "found" : "not found"}, light ${
+      recs[0]?.metadata.illumination ?? "?"
+    }${cam.lowLight ? ", face found only on a brightened view" : ""}`,
+    `usable ${s.usable} of ${s.total} (needs ${s.needed})${s.reasons.length ? `; ${s.reasons.join("; ")}` : ""}`,
+  ];
+  for (const r of recs) {
+    const p = r.features.pupil;
+    const camPx = p ? (2 * p.r) / r.metadata.cropUpsample : null;
+    lines.push(
+      `${r.metadata.eye} #${r.metadata.frameIndex}: ${r.quality.grade} [${r.quality.hardFailures.join(",") || "-"}] ` +
+        `pupil ${num(r.features.pupilDiameterMm)} mm / ${num(camPx, 0)} px, reflex ${num(r.features.reflexMeanLuma, 2)}, ` +
+        `scores exposure ${num(r.quality.subscores.exposure, 2)} saturation ${num(r.quality.subscores.saturation, 2)} ` +
+        `sharpness ${num(r.quality.subscores.sharpness, 2)}, ${num(r.metadata.workingDistanceM, 2)} m, ` +
+        `motion ${num(r.metadata.motionPxPerFrame)} px`,
+    );
+  }
+  return lines.join("\n");
 }

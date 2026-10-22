@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { HARD_FAILURE_TEXT } from "../cv/quality";
 import {
   burstSummary,
+  captureDetails,
   evaluateReadiness,
   FAILURE_FIX,
   flashMissing,
@@ -101,5 +102,28 @@ describe("a capture's summary", () => {
 
   it("has a fix for every reason an image can be rejected", () => {
     for (const k of Object.keys(HARD_FAILURE_TEXT)) expect(FAILURE_FIX[k], k).toBeTruthy();
+  });
+});
+
+describe("a capture's details to paste into a message", () => {
+  it("lists the camera, the summary and each image's quality, without eye results", () => {
+    const bad = frame("OS", 0, -2, "reject");
+    bad.quality.hardFailures = ["reflex_saturated"];
+    const text = captureDetails([frame("OD", 0, -2), bad], 1, {
+      width: 1920,
+      height: 1080,
+      zoom: 2,
+      flash: true,
+      lowLight: false,
+      userAgent: "test-agent",
+    });
+    const lines = text.split("\n");
+    expect(lines[1]).toContain("test-agent");
+    expect(lines[2]).toMatch(/^camera 1920x1080, zoom 2\.0x, flash found/);
+    expect(lines[3]).toMatch(/^usable 1 of 2/);
+    expect(lines).toHaveLength(6);
+    expect(lines[5]).toMatch(/^OS #\d+: reject \[reflex_saturated\] pupil/);
+    // no refraction or estimate leaves the device this way
+    expect(text).not.toMatch(/sph|cyl|axis|diopt|refraction|power/i);
   });
 });

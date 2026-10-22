@@ -15,6 +15,7 @@ import { activeDevice, buildProtocol, COUNTDOWN_S, estimatorFor } from "@/lib/pr
 import { beep, TONES, unlockAudio } from "@/lib/protocol/beep";
 import {
   burstSummary,
+  captureDetails,
   distanceAdvice,
   evaluateReadiness,
   flashMissing,
@@ -101,6 +102,9 @@ export function LiveStage({
   const [prepOk, setPrepOk] = useState(false);
   const [auto, setAuto] = useState(false);
   const [lastBurst, setLastBurst] = useState<BurstSummary | null>(null);
+  // the last capture as text to paste into a message (captureDetails)
+  const [lastDetails, setLastDetails] = useState<string | null>(null);
+  const [copied, setCopied] = useState<"idle" | "done" | "failed">("idle");
   const readySince = useRef<number | null>(null);
   const lastAuto = useRef(0);
   const frameCounter = useRef(0);
@@ -183,6 +187,18 @@ export function LiveStage({
         DEFAULT_GATING.minUsableFramesPerMeridian;
       const passed = good("OD") && good("OS");
       setLastBurst(burstSummary(recs, s.framesPerMeridian));
+      const v = videoRef.current;
+      setLastDetails(
+        captureDetails(recs, s.framesPerMeridian, {
+          width: v?.videoWidth ?? 0,
+          height: v?.videoHeight ?? 0,
+          zoom,
+          flash: Boolean(caps?.torch),
+          lowLight: t.lowLight,
+          userAgent: navigator.userAgent,
+        }),
+      );
+      setCopied("idle");
       if (passed) {
         beep(TONES.good);
         setTimeout(() => beep(TONES.good), 180);
@@ -495,6 +511,28 @@ export function LiveStage({
                   {lastBurst.reasons.length > 0 && <> Rejected for: {lastBurst.reasons.join("; ")}.</>}
                   {lastBurst.fix && <strong className="mt-1 block">{lastBurst.fix}</strong>}
                 </p>
+              )}
+              {lastDetails && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="w-full"
+                  data-testid="copy-details"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(lastDetails);
+                      setCopied("done");
+                    } catch {
+                      setCopied("failed");
+                    }
+                  }}
+                >
+                  {copied === "done"
+                    ? "Copied: paste it into a message"
+                    : copied === "failed"
+                      ? "Could not copy on this browser"
+                      : "Copy capture details (numbers only)"}
+                </Button>
               )}
               <Button size="lg" className="w-full" disabled={!readiness.ready || capturing} onClick={capture}>
                 {capturing ? <Loader2 className="animate-spin" /> : <Eye />}
