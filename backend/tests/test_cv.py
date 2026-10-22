@@ -97,6 +97,18 @@ def test_quality_rejects_blur_and_motion():
     assert "motion" in q.hard_failures
 
 
+@pytest.mark.parametrize("R", [-4.0, 0.0])
+def test_over_exposed_reflex_is_not_called_glare(R):
+    """A reflex washed out to white is an over-exposed reflex, not a corneal glint covering the pupil."""
+    img, gt, iris = _render(refraction=SphCylAxis(R, 0.0, None), exposure=4.0, seed=3)
+    f, seg = extract_features(img, 270.0, iris_hint=iris)
+    q = assess_quality(img, seg, f, _meta())
+    assert "reflex_saturated" in q.hard_failures
+    assert "excessive_glare" not in q.hard_failures
+    clean, _, iris = _render(refraction=SphCylAxis(R, 0.0, None), seed=3)
+    assert extract_features(clean, 270.0, iris_hint=iris)[1].glint is not None
+
+
 def test_quality_rejects_small_pupil():
     img, gt, iris = _render(pupil_diameter_mm=2.5, seed=10)
     f, seg = extract_features(img, 270.0, iris_hint=iris)

@@ -31,6 +31,13 @@ export interface EyeSegmentation {
   height: number;
 }
 
+/**
+ * The largest share of the iris region a corneal glint can cover. The flash's reflection off the cornea is a dot;
+ * a bright, colourless patch larger than this is the red reflex itself washed out to white by over-exposure, which
+ * quality reports as an over-exposed reflex, not as glare.
+ */
+export const MAX_GLINT_SHARE = 0.06;
+
 function detectGlint(
   img: RgbaImage,
   region: Uint8Array,
@@ -40,6 +47,8 @@ function detectGlint(
   const S = saturationMap(img);
   const cand = new Uint8Array(w * h);
   let any = false;
+  let regionN = 0;
+  for (let i = 0; i < w * h; i++) if (region[i]) regionN++;
   for (let i = 0; i < w * h; i++)
     if (region[i] && L[i]! > 0.82 && S[i]! < 0.35) {
       cand[i] = 1;
@@ -49,9 +58,10 @@ function detectGlint(
   const { labels, stats } = connectedComponents(cand, w, h);
   let best = 1;
   for (let k = 2; k < stats.length; k++) if (stats[k]!.area > stats[best]!.area) best = k;
+  const st = stats[best]!;
+  if (st.area > MAX_GLINT_SHARE * regionN) return { glint: null, mask: new Uint8Array(w * h) };
   const m = new Uint8Array(w * h);
   for (let i = 0; i < w * h; i++) if (labels[i] === best) m[i] = 1;
-  const st = stats[best]!;
   return { glint: [st.sx / st.area, st.sy / st.area], mask: dilate3(m, w, h, 2) };
 }
 

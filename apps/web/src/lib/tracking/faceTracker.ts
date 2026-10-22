@@ -9,6 +9,7 @@
 import type { FaceLandmarker as FaceLandmarkerT } from "@mediapipe/tasks-vision";
 import type { HeadPose } from "../types";
 import { eyesFromLandmarks, headPoseFromMatrix, type EyeObservation } from "./eyeGeometry";
+import { isFull, toFrame, type TrackView } from "./views";
 
 // Self-hosted by scripts/fetch-models.mjs (runs before every build), so no third-party
 // server is contacted at runtime. Override only to serve them from your own CDN.
@@ -51,13 +52,51 @@ export function loadFaceLandmarker(): Promise<FaceLandmarkerT> {
   return landmarkerPromise;
 }
 
-export function observe(lm: FaceLandmarkerT, video: HTMLVideoElement, tsMs: number): FaceObservation | null {
+/** How much a brightened frame is lifted for the tracker when the face cannot be found in a dim room. */
+export const LOW_LIGHT_GAIN = 3;
+
+/**
+ * The part of the video frame the tracker should look at (`view`), drawn into `canvas`, and brightened when the
+ * view asks for it: in a dim room (which the method needs, so the pupils are wide) a face a metre away is too dark
+ * for the tracker. Null when the view is the plain whole frame, which the tracker reads from the video directly.
+ * Measurements always read the raw frame.
+ */
+export function viewFrame(
+  video: HTMLVideoElement,
+  canvas: HTMLCanvasElement,
+  view: TrackView,
+): HTMLCanvasElement | null {
+  const w = video.videoWidth;
+  const h = video.videoHeight;
+  if (!w || !h || (!view.bright && isFull(view, w, h))) return null;
+  if (canvas.width !== view.w) canvas.width = view.w;
+  if (canvas.height !== view.h) canvas.height = view.h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  if (view.bright) ctx.filter = `brightness(${LOW_LIGHT_GAIN}) contrast(1.1)`;
+  ctx.drawImage(video, view.x, view.y, view.w, view.h, 0, 0, view.w, view.h);
+  ctx.filter = "none";
+  return canvas;
+}
+
+/**
+ * Face landmarks from the video, or from `source` (`view` of the same frame, from `viewFrame`) when given.
+ * Landmark coordinates are in the video's pixels either way.
+ */
+export function observe(
+  lm: FaceLandmarkerT,
+  video: HTMLVideoElement,
+  tsMs: number,
+  source?: HTMLCanvasElement | null,
+  view?: TrackView | null,
+): FaceObservation | null {
   const w = video.videoWidth;
   const h = video.videoHeight;
   if (!w || !h) return null;
-  const r = lm.detectForVideo(video, tsMs);
-  const face = r.faceLandmarks?.[0];
-  if (!face) return null;
+  const r = lm.detectForVideo(source ?? video, tsMs);
+  const found = r.faceLandmarks?.[0];
+  if (!found) return null;
+  const face = source && view ? found.map((p) => toFrame(p, view, w, h)) : found;
   const eyes = eyesFromLandmarks(face, w, h, false);
   if (!eyes) return null;
   const m = r.facialTransformationMatrixes?.[0]?.data;

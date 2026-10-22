@@ -24,7 +24,8 @@ import {
 } from "../protocol/live";
 import { FRAME_INTERVAL_MS, TORCH_SETTLE_MS } from "../protocol/protocol";
 import type { EyeSide, QualityGrade } from "../types";
-import { loadFaceLandmarker, observe, type FaceObservation } from "./faceTracker";
+import { loadFaceLandmarker, observe, viewFrame, type FaceObservation } from "./faceTracker";
+import { fits, searchViews, type Box, type TrackView } from "./views";
 
 export interface Telemetry {
   face: boolean;
@@ -42,6 +43,8 @@ export interface Telemetry {
   crescent: Record<EyeSide, boolean>;
   irisPx: number | null;
   fps: number;
+  /** the face is found only in a brightened copy of the frame: the room is darker than the tracker needs */
+  lowLight: boolean;
 }
 
 const EMPTY: Telemetry = {
@@ -60,9 +63,70 @@ const EMPTY: Telemetry = {
   crescent: { OD: false, OS: false },
   irisPx: null,
   fps: 0,
+  lowLight: false,
 };
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+interface TrackState {
+  /** the view the face was last found in; null while searching */
+  view: { current: TrackView | null };
+  /** where the face was last seen, in frame pixels */
+  lastBox: { current: Box | null };
+  /** which search view to try next */
+  search: { current: number };
+  /** whether the brightened frame found the face last time (the room is dim) */
+  bright: { current: boolean };
+  canvas: { current: HTMLCanvasElement | null };
+  ts: () => number;
+}
+
+/** search views a capture frame tries before giving up on it (each is one more run of the tracker) */
+const CAPTURE_TRIES = 3;
+
+/**
+ * One tracker pass. While the face is found, the tracker keeps looking at the view it was found in, so it can
+ * follow the face from frame to frame. Once lost, each pass tries the next of `searchViews` (a crop around where
+ * the face was, the centre, the whole frame; plain, then brightened) until one finds it. With `both`, a pass tries
+ * up to CAPTURE_TRIES views at once (for captures).
+ */
+function track(
+  lm: FaceLandmarker,
+  video: HTMLVideoElement,
+  st: TrackState,
+  both = false,
+): FaceObservation | null {
+  const W = video.videoWidth;
+  const H = video.videoHeight;
+  const canvas = () => st.canvas.current ?? (st.canvas.current = document.createElement("canvas"));
+  const look = (v: TrackView) => observe(lm, video, st.ts(), viewFrame(video, canvas(), v), v);
+  const held = st.view.current;
+  if (held && fits(held, W, H)) {
+    const obs = look(held);
+    if (obs) {
+      st.lastBox.current = obs.faceBox;
+      return obs;
+    }
+    st.search.current = 0;
+    if (!both) {
+      st.view.current = null;
+      return null;
+    }
+  }
+  st.view.current = null;
+  const views = searchViews(W, H, st.lastBox.current, st.bright.current);
+  for (let k = 0; k < (both ? CAPTURE_TRIES : 1); k++) {
+    const v = views[st.search.current++ % views.length]!;
+    const obs = look(v);
+    if (obs) {
+      st.view.current = v;
+      st.lastBox.current = obs.faceBox;
+      st.bright.current = v.bright;
+      return obs;
+    }
+  }
+  return null;
+}
 
 /**
  * `screenAngleDeg` is how far the screen is turned (`useScreenAngle`). The browser turns the camera's
@@ -84,6 +148,12 @@ export function useLiveTracker(
   const [telemetry, setTelemetry] = useState<Telemetry>(EMPTY);
   const [showLandmarks, setShowLandmarks] = useState(true);
   const busy = useRef(false);
+  // the part of the frame the tracker looks at, and where it last saw the face (tracking/views)
+  const view = useRef<TrackView | null>(null);
+  const lastBox = useRef<Box | null>(null);
+  const search = useRef(0);
+  const bright = useRef(false);
+  const viewCanvas = useRef<HTMLCanvasElement | null>(null);
   const lastTs = useRef(0);
   const lastIris = useRef<{ x: number; y: number } | null>(null);
   const latest = useRef<{ obs: FaceObservation | null; processed: LiveProcessed[] | null }>({
@@ -144,7 +214,7 @@ export function useLiveTracker(
       const lm = lmRef.current;
       if (!video || !lm || busy.current || video.readyState < 2) return;
       const now = performance.now();
-      const obs = observe(lm, video, nextTs());
+      const obs = track(lm, video, { view, lastBox, search, bright, canvas: viewCanvas, ts: nextTs });
       frames++;
       if (now - fpsT0 > 1000) {
         fps = (frames * 1000) / (now - fpsT0);
@@ -175,6 +245,7 @@ export function useLiveTracker(
                 eye,
                 obs,
                 frameWidth: video.videoWidth,
+                frameHeight: video.videoHeight,
                 ctx: lctx,
                 deviceRotationDeg: rot,
                 illumination: ill,
@@ -209,7 +280,7 @@ export function useLiveTracker(
           setTelemetry({ ...EMPTY, luma, fps });
           return;
         }
-        const d = estimateDistance(obs, video.videoWidth, lctx);
+        const d = estimateDistance(obs, video.videoWidth, video.videoHeight, lctx);
         const pick = <T>(f: (p: LiveProcessed) => T, fallback: T) => ({
           OD: processed?.find((p) => p.eye === "OD") ? f(processed.find((p) => p.eye === "OD")!) : fallback,
           OS: processed?.find((p) => p.eye === "OS") ? f(processed.find((p) => p.eye === "OS")!) : fallback,
@@ -218,6 +289,7 @@ export function useLiveTracker(
           eye: "OD",
           obs,
           frameWidth: video.videoWidth,
+          frameHeight: video.videoHeight,
           ctx: lctx,
           deviceRotationDeg: rot,
           illumination: "none",
@@ -243,6 +315,7 @@ export function useLiveTracker(
           crescent: pick((p) => p.record.features.crescentPresent, false),
           irisPx: obs.eyes.OD.iris.r * 2,
           fps,
+          lowLight: view.current?.bright ?? false,
         });
       }
     };
@@ -267,7 +340,12 @@ export function useLiveTracker(
         }
         let prev: { x: number; y: number } | null = null;
         for (let i = 0; i < n; i++) {
-          const obs = observe(lm, video, nextTs());
+          const obs = track(
+            lm,
+            video,
+            { view, lastBox, search, bright, canvas: viewCanvas, ts: nextTs },
+            true,
+          );
           const g = grabFrame(
             video,
             frameCanvas.current ?? (frameCanvas.current = document.createElement("canvas")),
@@ -287,6 +365,7 @@ export function useLiveTracker(
                   eye,
                   obs,
                   frameWidth: video.videoWidth,
+                  frameHeight: video.videoHeight,
                   ctx: lctx,
                   deviceRotationDeg: rot,
                   illumination: ill,
@@ -322,6 +401,8 @@ export function useLiveTracker(
     torchOn: cam.torchOn,
     zoom: cam.zoom,
     setZoom: cam.setZoom,
+    testTorch: cam.testTorch,
+    confirmTorch: cam.confirmTorch,
     startCamera: cam.start,
     stopCamera: cam.stop,
     lmStatus,

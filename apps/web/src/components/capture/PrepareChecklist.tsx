@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 const ITEMS = [
-  "Dim the room lights (a TV or window behind the camera is too bright).",
+  "Use the back camera. The light is the small flash beside the back lens; the app flashes it briefly at each capture.",
+  "Dim the room, but not to black: one lamp or a screen behind the phone, facing the person, and nothing bright behind the person.",
   "Remove glasses. Contact lenses may stay in; record it in the profile.",
-  "Hold the phone at eye height, rear camera facing the person. A helper should hold it, or rest it on a stand.",
-  "The person looks at the small light next to the lens, not at the screen.",
-  "Both eyes open, no hair over the eyes, head straight.",
+  "Phone at eye height, about 1 m away, back camera facing the eyes. A helper holds it, or it leans on a shelf or a stack of books.",
+  "The person looks at the flash, not at the screen, with both eyes open and the head straight, and holds still while it counts down.",
+  "After each capture, turn the phone around its lens to the next angle on the dial (0°, 45°, 90°, 135°). The head stays still.",
 ];
 
 /** Checklist + 60 s dark-adaptation timer (larger pupils widen the measurable range). */

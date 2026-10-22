@@ -1,5 +1,5 @@
 "use client";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Camera, FlaskConical } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,6 +35,38 @@ export function ProfileStep({
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
+      {!induced && (
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <div>
+              <CardTitle>What should the app measure?</CardTitle>
+              <CardDescription>
+                {s.simulationMode
+                  ? "Simulation Mode is on: the app draws virtual eyes and measures those. The camera stays off, so nothing here measures your eyes, and the distance is simulated too."
+                  : "The camera measures the eyes in front of it."}
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="What to measure">
+            <Button
+              role="radio"
+              aria-checked={!s.simulationMode}
+              variant={s.simulationMode ? "secondary" : "primary"}
+              onClick={() => set({ simulationMode: false })}
+            >
+              <Camera /> Real eyes, with the camera
+            </Button>
+            <Button
+              role="radio"
+              aria-checked={s.simulationMode}
+              variant={s.simulationMode ? "primary" : "secondary"}
+              onClick={() => set({ simulationMode: true })}
+            >
+              <FlaskConical /> Virtual eyes (simulation)
+            </Button>
+          </CardContent>
+        </Card>
+      )}
       <Card>
         <CardHeader>
           <div>
@@ -79,7 +111,7 @@ export function ProfileStep({
           </Field>
           {s.simulationMode && !induced ? (
             <Field
-              label="Virtual subject (Simulation Mode)"
+              label="Virtual subject to simulate (not the person in front of the phone)"
               hint={SIM_PRESETS.find((p) => p.id === preset)?.description}
             >
               <Select value={preset} onChange={(e) => setPreset(e.target.value)}>

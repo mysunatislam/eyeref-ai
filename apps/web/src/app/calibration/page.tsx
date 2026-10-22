@@ -203,7 +203,9 @@ export default function CalibrationPage() {
             <div>
               <CardTitle>Camera field of view</CardTitle>
               <CardDescription>
-                Photograph a ruler at a known distance and read its width in pixels from the photo.
+                Photograph a ruler at a known distance, laid along the photo&apos;s long side, and read its
+                length in pixels. The field of view is the one across the long side, whichever way the phone
+                is held.
               </CardDescription>
             </div>
           </CardHeader>
@@ -218,7 +220,7 @@ export default function CalibrationPage() {
               <Field label="Ruler in image (px)">
                 <Input value={r.objPx} onChange={(e) => setR({ ...r, objPx: e.target.value })} />
               </Field>
-              <Field label="Image width (px)">
+              <Field label="Image long side (px)">
                 <Input value={r.imgPx} onChange={(e) => setR({ ...r, imgPx: e.target.value })} />
               </Field>
             </div>

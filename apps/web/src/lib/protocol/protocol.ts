@@ -81,36 +81,38 @@ export interface SimPreset {
 export const SIM_PRESETS: SimPreset[] = [
   {
     id: "random",
-    label: "Random virtual subject",
-    description: "Seeded from the subject label; mixed refractive errors.",
+    label: "Random virtual eyes",
+    description:
+      "A made-up eye pair seeded from the nickname: myopic, hyperopic or neither at random. It is not your eyes.",
   },
   {
     id: "myope",
-    label: "Moderate myope",
-    description: "−3.00 D sphere both eyes.",
+    label: "Virtual moderate myope",
+    description:
+      "Virtual eyes of −3.00 and −3.25 D. The result shows what the app reads for them, not for you.",
     apply: (s) => ((s.od = { sph: -3, cyl: 0, axis: null }), (s.os = { sph: -3.25, cyl: 0, axis: null })),
   },
   {
     id: "hyperope",
-    label: "Hyperope",
+    label: "Virtual hyperope",
     description: "+2.50 D. The eyes focus on the light and hide most of it: expect a range, not a number.",
     apply: (s) => ((s.od = { sph: 2.5, cyl: 0, axis: null }), (s.os = { sph: 2.25, cyl: 0, axis: null })),
   },
   {
     id: "emmetrope",
-    label: "Emmetrope",
+    label: "Virtual emmetrope",
     description: "Plano. A young eye focuses on the light and reads mildly myopic: expect a range.",
     apply: (s) => ((s.od = { sph: 0, cyl: 0, axis: null }), (s.os = { sph: 0.25, cyl: 0, axis: null })),
   },
   {
     id: "astigmat",
-    label: "Myopic astigmat",
+    label: "Virtual myopic astigmat",
     description: "−2.00 / −1.50 × 180. CYL/AXIS only shown if the research flag is on and gates pass.",
     apply: (s) => ((s.od = { sph: -2, cyl: -1.5, axis: 180 }), (s.os = { sph: -2, cyl: -1.5, axis: 175 })),
   },
   {
     id: "aniso",
-    label: "Anisometrope",
+    label: "Virtual anisometrope",
     description: "OD −0.50, OS −3.50: tests the anisometropia flag.",
     apply: (s) => ((s.od = { sph: -0.5, cyl: 0, axis: null }), (s.os = { sph: -3.5, cyl: 0, axis: null })),
   },

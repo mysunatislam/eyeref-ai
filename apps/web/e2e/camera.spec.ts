@@ -35,3 +35,17 @@ test("camera mode starts and loads the self-hosted face tracker without CSP viol
   expect(errors).toEqual([]);
   expect(thirdParty, "the app must not contact third-party servers").toEqual([]);
 });
+
+test("the first step says whether the camera or virtual eyes are measured, and switches between them", async ({
+  page,
+}) => {
+  await page.goto("/assess");
+  const real = page.getByRole("radio", { name: /Real eyes, with the camera/ });
+  const virtual = page.getByRole("radio", { name: /Virtual eyes \(simulation\)/ });
+  await expect(virtual).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByText(/nothing here measures your eyes/)).toBeVisible();
+  await real.click();
+  await expect(real).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByText("SIMULATED DATA")).toHaveCount(0);
+  await expect(page.getByLabel(/Virtual subject/)).toHaveCount(0);
+});
